@@ -1,24 +1,11 @@
 import { Delivery, DeliveryStatus } from '../types';
+import { canTransition, getValidNextStates } from 'shared-engine/state-machine';
 
 export interface TransitionValidationResult {
   isValid: boolean;
   error?: string;
   allowedNextStatuses: DeliveryStatus[];
 }
-
-const VALID_TRANSITIONS: Record<DeliveryStatus, DeliveryStatus[]> = {
-  PLANNED: ['SCHEDULED', 'CANCELLED'],
-  SCHEDULED: ['LOADING', 'CANCELLED'],
-  LOADING: ['IN_TRANSIT', 'CANCELLED'],
-  IN_TRANSIT: ['ARRIVED', 'FAILED' as any, 'REJECTED'],
-  ARRIVED: ['UNLOADED', 'REJECTED'],
-  UNLOADED: ['POD_SUBMITTED', 'REJECTED'],
-  POD_SUBMITTED: ['POD_VERIFIED', 'REQUIRES_REVIEW' as any, 'REJECTED'],
-  POD_VERIFIED: ['DELIVERED'],
-  DELIVERED: [], // Terminal normal state
-  REJECTED: [],  // Terminal exception state
-  CANCELLED: [], // Terminal exception state
-};
 
 /**
  * Validates delivery status transition based on operational business prerequisites
@@ -27,9 +14,9 @@ export function validateDeliveryTransition(
   delivery: Delivery,
   targetStatus: DeliveryStatus
 ): TransitionValidationResult {
-  const allowedNext = VALID_TRANSITIONS[delivery.status] || [];
+  const allowedNext = getValidNextStates(delivery.status);
 
-  if (!allowedNext.includes(targetStatus)) {
+  if (!canTransition(delivery.status, targetStatus)) {
     return {
       isValid: false,
       error: `Invalid transition: Cannot move delivery from ${delivery.status} to ${targetStatus}.`,

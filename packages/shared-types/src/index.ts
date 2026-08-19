@@ -165,7 +165,14 @@ export type DeliveryStatus =
   | 'REJECTED'
   | 'CANCELLED'
 
-export type VarianceStatus = 'WITHIN_TOLERANCE' | 'ABOVE_TOLERANCE'
+export type VarianceStatus = 'WITHIN_TOLERANCE' | 'ABOVE_TOLERANCE' | 'APPROVED_ADJUSTMENT'
+
+export type VarianceReason =
+  | 'MEASUREMENT_VARIANCE'
+  | 'MOISTURE_CONTENT'
+  | 'SPILLAGE_IN_TRANSIT'
+  | 'LOADING_ERROR'
+  | 'UNDER_INVESTIGATION'
 
 export interface QuarryLoadingInfo {
   method: 'WEIGHBRIDGE' | 'DIMENSION'
