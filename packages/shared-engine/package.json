@@ -1,0 +1,26 @@
+{
+  "name": "shared-engine",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./quantity": "./src/quantity.engine.ts",
+    "./freight": "./src/freight.engine.ts",
+    "./finance": "./src/finance.engine.ts",
+    "./contract": "./src/contract.engine.ts",
+    "./state-machine": "./src/state-machine.engine.ts"
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "shared-types": "*"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "eslint": "^9.39.1",
+    "typescript": "5.9.2"
+  }
+}

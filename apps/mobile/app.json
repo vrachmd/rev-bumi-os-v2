@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "REV BUMI NUSANTARA OS",
+    "slug": "rev-bumi-nusantara-os",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#003C16",
+          "image": "./assets/splash.png",
+          "imageWidth": 200,
+          "resizeMode": "contain"
+        }
+      ]
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#003C16",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.revbuminusantaraos"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

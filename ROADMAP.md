@@ -1,0 +1,169 @@
+# ROADMAP — REV Bumi OS menuju Produksi
+
+> Tujuan akhir: **sistem operasional produksi** untuk rantai pasok agregat PT REV Bumi Nusantara Perkasa.
+> Status: prototype/demo → **produksi**. Dokumen ini menjadi acuan prioritas kerja seluruh tim/agen berikutnya.
+> Keputusan backend: **Supabase (free tier) sekarang → deployment penuh di cloud GCP / Alibaba Cloud** (lihat §3, §4-Fase 4, §5).
+
+---
+
+## 1. Kondisi Saat Ini (Inventory)
+
+Sudah ada dan berfungsi:
+- **Dual-platform**: `apps/web` (cockpit desktop, Next.js 16) + `apps/mobile` (Expo/React Native PWA lapangan).
+- **Engine bisnis** (web): `quantity`, `freight`, `finance`, `contract`, `state-machine` — fungsi murni, mudah di-unit-test.
+- **State machine pengiriman**: SCHEDULED → LOADING → IN_TRANSIT → ARRIVED → UNLOADED → POD_SUBMITTED → POD_VERIFIED → DELIVERED.
+- **8 role pengguna** (model RBAC, masih client-side).
+- **Audit trail** tercatat (masih di localStorage).
+- **Routing & geocoding**: OSRM (ETA truk 45 km/jam) di mobile, Nominatim (geocode alamat) di web.
+- **Master data + CRUD**: pelanggan, proyek/site (dengan koordinat + auto-geocode), kontrak, quarry multi-sumber, vendor armada, tarif angkut.
+- **Monorepo Turborepo** dengan paket siap pakai: `packages/api-client` (HTTP client — digantikan Supabase SDK), `shared-engine`, `shared-types`, `shared-utils`, `ui`.
+
+Batas utama (gabungan 8 gap fondasi di bawah) → solusinya: **migrasi ke Supabase** (single source of truth) dengan jalur portabel ke cloud.
+
+---
+
+## 2. Backlog Fondasi Produksi (8 Gap)
+
+| ID | Gap | Dampak | Prioritas |
+|----|-----|--------|-----------|
+| **F-01** | Tidak ada backend / single source of truth. Web & mobile berjalan di localStorage terpisah; data lapangan tidak pernah sampai ke cockpit kantor. | Integrasi 3 pilar (quarry→site→keuangan) belum nyata; data hilang saat browser dibersihkan; tidak multi-user. | 🔴 Kritikal |
+| **F-02** | Auth & RBAC tidak ditegakkan (8 role hanya switch profil client-side). | Modul keuangan/audit tidak aman untuk produksi. | 🔴 Kritikal |
+| **F-03** | Audit trail "immutable" palsu (localStorage, bisa diubah via console). | Pelanggaran aturan immutability audit (AGENTS.md) di lingkungan nyata. | 🟠 Tinggi |
+| **F-04** | GPS, tanda tangan, timestamp 100% dipercaya tanpa verifikasi server. | Rentan manipulasi klaim susut & ongkos angkut (nilai uang). | 🟠 Tinggi |
+| **F-05** | Tidak ada offline queue & sinkronisasi mobile. | Lapangan (quarry/site) sering minim sinyal. | 🟠 Tinggi |
+| **F-06** | Master data tidak konsisten antar-app (densitas hardcoded `?? 1.6`, seed di-mirror manual). | Drift data → ETA/perhitungan bisa salah. | 🟡 Sedang |
+| **F-07** | Belum ada unit test engine bisnis & CI. | Perubahan regresi tidak terdeteksi. | 🟡 Sedang |
+| **F-08** | Tidak ada migrasi/versioning data tersimpan saat struktur berubah. | Data lama bisa rusak setelah update. | 🟡 Sedang |
+
+---
+
+## 3. Keputusan Arsitektur (Ditetapkan)
+
+| Keputusan | Nilai | Catatan |
+|---|---|---|
+| **Backend sekarang** | **Supabase** (Postgres + Auth + RLS + Realtime + Storage + Edge Functions) | Gratis (free tier) untuk development & operasional awal |
+| **Target akhir** | **Deployment penuh di cloud GCP / Alibaba Cloud** | Migrasi bertahap, bukan tulis ulang (lihat §5) |
+| **Jalur migrasi DB** | Supabase Postgres → **GCP Cloud SQL / Alibaba RDS PostgreSQL** | Postgres standar → portabilitas terjaga, schema & query tetap |
+| **Auth** | Supabase Auth (JWT) sekarang → auth cloud/self-host saat produksi penuh | RLS tetap dipakai selama Supabase |
+| **Web & PWA** | Vercel (free) sekarang → GCP Cloud Run / Alibaba (containerized Next.js) saat produksi penuh | PWA mobile di-host statis bersama web |
+| **Storage** | Supabase Storage → GCS / Alibaba OSS | Foto bukti & tanda tangan |
+| **Migrasi data lama** | Tool import sekali pakai dari localStorage → Supabase | Fase 0 |
+
+Dasar pertimbangan: efisiensi pengembangan berbasis AI (kode minimal, siklus cepat) + cepat ke produksi + biaya Rp 0 di awal. Supabase adalah Postgres, sehingga **keputusan ini tidak mengunci vendor** — jalur ke GCP/Alibaba tetap mulus.
+
+---
+
+## 4. Fase Pengerjaan (Urutan Kerja)
+
+### Fase 0 — Fondasi Data & Autentikasi 🔴
+Deliverable:
+- Setup **Supabase project** (region terdekat) + schema database via **SQL migrations** (customer, project, kontrak, quarry, vendor, kendaraan, delivery, weighbridge, pod, reconciliation, invoice, payment, audit_log) — data model dari `MARKDOWN.md.md` §Fase 1 menjadi acuan.
+- **Seed data** dipindah dari `seedData.ts` → seed SQL / script migrasi.
+- Web & mobile memakai **`@supabase/supabase-js`** (+ `@supabase/ssr` untuk Next.js) — `packages/api-client` tidak dipakai untuk CRUD, cukup layanan Supabase.
+- **Auth + RBAC server-side**: Supabase Auth (8 role) + **Row Level Security (RLS)** per tabel.
+- Halaman login web & mobile + sesi.
+- Tool **import data localStorage lama** ke Supabase.
+**Exit criteria:** ritase yang dibuat di mobile muncul real-time di cockpit web (single source of truth via Supabase Realtime). Akses modul keuangan/audit hanya untuk role berwenang (teruji RLS).
+
+**Status (Fase 0 berjalan):**
+- ✅ Schema + RLS + seed via SQL migrations ter-apply (24 tabel, 46 policy; `0001`–`0004`).
+- ✅ 3 akun riil (SUPER_ADMIN, QUARRY_CHECKER, SITE_CHECKER); `disable_signup` aktif.
+- ✅ Login web & mobile + gating sesi; **profil & role asli diambil dari tabel `profiles`** (bukan demo).
+- ✅ Tool **Sinkronisasi Data** (localStorage → Supabase) sukses: 0 failed untuk seluruh data operasional (delivery, weighbridge, POD, reconciliation, invoice, payment). Master data tidak di-import karena sudah ada dari seed SQL.
+- ⏳ **Belum**: realtime (ritase mobile → cockpit web) & data layer web masih baca dari localStorage.
+
+**Status (Fase 0.6 berjalan):**
+- ✅ **Deliveries sudah single-source via Supabase**: `AppContext` saat terautentikasi memuat delivery dari DB (fetch + nested) dan **subscribe Realtime** (deliveries, weighbridge, POD, reconciliation, cost).
+- ✅ **Write-through delivery**: seluruh aksi (terbitkan, update, status, timbang, POD, rekonsiliasi, verifikasi, hapus) menulis ke Supabase.
+- ✅ **Finance single-source**: `supabaseFinance.ts` (fetch invoices+items+payments, upsert invoice/items, upsert payment + update invoice, subscribe Realtime); `AppContext` load + realtime saat authed; write-through di `createInvoice` & `recordPayment`.
+- ✅ **Master data single-source**: `supabaseMaster.ts` (fetch 9 tabel master + contract_source_quarries saat authed; upsert bundle & delete per entitas); seluruh saver master web write-through.
+- ✅ Teruji E2E: insert delivery/invoice di DB → muncul otomatis di cockpit tanpa reload; submit invoice dari UI → tersimpan di DB (+ items); catat payment dari UI → tersimpan + invoice jadi PARTIALLY_PAID; master produk dari DB tampil (5 produk).
+ - ✅ **Mobile online**: `supabaseData.ts` (fetch master + deliveries dari DB dengan ID DB riil, upsert delivery + weighbridge + pod, delete, subscribe Realtime); `useAppStore` → `setOnline`/`hydrateMaster`/`hydrateDeliveries`, seluruh aksi ritase **write-through** ke Supabase saat online; `App.tsx` hydrate online saat login + realtime refresh. Typecheck mobile lulus.
+ - ✅ **Penyamaan format web↔mobile (anti-konflik)**: seed mobile ID diselaraskan DB (`prod-01`/`quarry-01`/`vendor-01`/`veh-01`/`cont-01`+`proj-01`/`frate-01`); `MobileFreightPricingModel` 6 nilai + `FreightRateItem.projectId` (kanonik DB `freight_rates.project_id`); `measurementMode` 3 nilai DB; `quarry_loading_info`/`site_unloading_info` pakai skema kanonik web (`measurementMethod`/`grossWeightKg`/`quarryPhotoUrl`/`loadedAt`/`truckBedDimensions` + `measuredVolumeM3`/`gpsLatitude`/`gpsLongitude`/`signatureUrl`/`varianceVolumeM3` dll) dengan fallback legacy; `DashboardScreen` `resolveRate`/`eligibleVendorIds` via `projectIdOf(contractId)`; `useAppStore` `densityByProduct` `prod-01..05` + `contracts: ContractItem[]`. Typecheck `turbo check-types` 7/7 lulus.
+ - 🔧 Bug diperbaiki selama E2E: form Record Payment `step` mismatch (min=1 + step=10000 memblokir submit nilai normal → `step="any"`); `payments.recorded_by` uuid (sebelumnya dikirim `fullName`).
+ - ⏳ Belum: verifikasi lapangan mobile (device/emulator), offline queue (Fase 1), hapus tab `data-sync`/`supabaseImport.ts` (setelah verifikasi tak ada pembaca localStorage lain).
+
+### Fase 0.5 — Persiapan Migrasi Cloud (sejalan dengan Fase 0-1)
+Deliverable:
+- Dokumentasi skema & RLS dalam **SQL ter-portable** (tanpa fitur eksklusif Supabase yang menghambat).
+- Strategi pemisahan konfigurasi (env) Supabase vs GCP/Alibaba agar swap provider tidak mengubah kode aplikasi (hanya SDK endpoint).
+**Exit criteria:** aplikasi berjalan sama baik di endpoint Supabase maupun endpoint Postgres/API standar dengan perubahan konfigurasi minimal.
+
+### Fase 0.6 — Supabase sebagai Single Source of Truth (Pengganti Sinkronisasi Manual) 🔴
+Latar: tombol **Sinkronisasi Data** (`data-sync`) adalah **jembatan migrasi sementara** (localStorage → Supabase). Setelah data layer web/mobile dibaca langsung dari Supabase, tombol ini **tidak diperlukan lagi**.
+Deliverable:
+- Refactor `AppContext` web agar **baca/tulis langsung via Supabase** (fetch + realtime subscribe), bukan init dari localStorage/seed.
+- Mobile memakai Supabase sebagai sumber data online (offline queue tetap di Fase 1).
+- Hapus/hilangkan tab `data-sync` (dan `supabaseImport.ts`) setelah verifikasi tidak ada lagi pembaca localStorage; jangan dihapus sebelum itu.
+- Tampilkan status koneksi "terhubung langsung" sebagai pengganti indikator sinkron.
+**Exit criteria:** tidak ada lagi alur import manual — perubahan di mobile/quarry muncul di cockpit web tanpa menekan tombol apa pun.
+
+### Fase 1 — Integritas Data, Evidence & Offline 🟠
+Deliverable:
+- Audit log **append-only** di server (RLS insert-only, tanpa update/delete).
+- Verifikasi server-side: GPS dalam radius quarry/site, timestamp memakai server clock, watermark foto bukti.
+- **Offline queue** mobile (antrian aksi + sinkron saat online via Realtime/PostgREST, konflik di-handle per delivery).
+- Konsolidasi master data: densitas per material × quarry, kapasitas payload kendaraan (validasi jembatan timbang), tarif angkut terpusat.
+**Exit criteria:** petugas lapangan dapat bekerja offline penuh lalu tersinkron otomatis; audit log tidak dapat diubah dari sisi mana pun; foto/koordinat bukti diverifikasi server.
+
+### Fase 2 — Kualitas, Pengujian & Ketahanan 🟡
+Deliverable:
+- Pindahkan engine bisnis ke `packages/shared-engine` agar web & mobile memakai kode yang sama.
+- Unit test: `quantity`, `freight`, `finance`, `contract`, `state-machine` + engine ETA.
+- CI (mis. GitHub Actions): lint + typecheck + test di setiap PR.
+- Skema migrasi/versioning data (pattern migrations).
+**Exit criteria:** semua engine lolos unit test; PR tidak bisa merge bila lint/test gagal; upgrade skema tidak merusak data.
+
+### Fase 3 — Go-Live & Operasional 🚀
+Deliverable:
+- Deploy tahap awal (gratis): **Supabase Free + Vercel** (web + PWA), domain & SSL.
+- Seed data master riil (quarry, vendor, kontrak, densitas) + onboarding.
+- UAT lapangan (quarry & site) + pelatihan petugas.
+- Monitoring, backup harian, runbook pemulihan.
+- **Mitigasi free tier**: pantau pause Supabase (1 minggu idle), kuota egress storage, dan kuota fungsi.
+**Exit criteria:** sistem dipakai operasional harian multi-user, backup terverifikasi, SLA internal disepakati.
+
+### Fase 4 — Migrasi Penuh ke Cloud (GCP / Alibaba Cloud) 🏢
+Tujuan: deployment production-grade di cloud publik sesuai target akhir, sambil **mempertahankan fungsi yang sudah berjalan** (tanpa tulis ulang besar).
+Deliverable:
+- **Database**: migrasi data Supabase → GCP Cloud SQL / Alibaba RDS PostgreSQL (pg_dump/restore atau streaming).
+- **API/Auth**: pindah dari Supabase → API self-host (mis. container di GCP Cloud Run / Alibaba) + auth cloud; RLS digantikan validasi di service layer.
+- **Web & PWA**: containerized Next.js di Cloud Run / Alibaba; static PWA di CDN.
+- **Storage**: foto/tanda tangan → GCS / Alibaba OSS (dengan signed URL).
+- **Realtime**: WebSocket/gRPC self-managed menggantikan Supabase Realtime (atau tetap via gateway).
+- **Observability**: logging, tracing, alerting (GCP Cloud Monitoring / Alibaba CloudMonitor).
+- **Penskalaan & biaya**: sizing instance, auto-scaling, backup otomatis, DR.
+**Exit criteria:** seluruh alur operasional (quarry → site → invoice) berjalan di cloud GCP/Alibaba dengan downtime migrasi minimal, data terverifikasi utuh.
+
+---
+
+## 5. Strategi Migrasi ke Cloud (GCP / Alibaba Cloud)
+
+Prinsip: **jaga portabilitas dari hari pertama** agar keputusan Supabase tidak mengunci vendor.
+
+1. **Skema & RLS dalam SQL standar** — hindari fitur eksklusif provider; dokumentasikan sebagai migrasi versioning.
+2. **Enkapsulasi akses data** — aplikasi memakai interface (mis. `DataService`) sehingga backend (Supabase SDK vs REST/Prisma) bisa ditukar via konfigurasi.
+3. **Env-driven** — endpoint, kunci, region di environment variable, bukan hardcode.
+4. **Backup berjalan** — export berkala dari Supabase (data + storage) agar migrasi cloud tidak kehilangan data.
+5. **Uji paralel** — jalankan instance cloud (staging) berdampingan sebelum cutover, verifikasi rekonsiliasi & audit identik.
+
+---
+
+## 6. Fitur Produk yang Bisa Menyusul (setelah fondasi kokoh)
+
+- Tarif angkut **per-km** (jarak sudah dihitung via OSRM).
+- **AR aging / umur piutang** pelanggan.
+- Analitik eksekutif: margin kotor per proyek, burn-rate kontrak.
+- Integrasi **Surat Jalan elektronik** & QR scan di gate.
+- Notifikasi realtime dispatcher (ritase masuk / truk tiba / ETA).
+
+---
+
+## 7. Catatan Proses untuk Agen Berikutnya
+
+1. **Tidak membangun fitur baru sebelum F-01 & F-02 selesai** — fondasi data & auth adalah prioritas mutlak.
+2. **Backend = Supabase** (free tier), target akhir GCP/Alibaba — selalu tulis kode & SQL yang **portabel** (env-driven, hindari vendor lock-in).
+3. Setiap perubahan skema data: tulis **SQL migration** (versioning), jangan mengubah langsung.
+4. Pertahankan invariant yang sudah ada: state machine pengiriman, toleransi susut ≤ 2%, audit immutability (RLS insert-only), dual-platform, densitas per material.
+5. Verifikasi build/lint: `turbo check-types`, `turbo lint`, `turbo test` (setelah Fase 2).
+6. Pantau limit free tier (pause Supabase, egress storage, kuota fungsi) sejak operasional awal.
