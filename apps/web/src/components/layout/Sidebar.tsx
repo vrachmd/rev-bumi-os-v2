@@ -35,8 +35,7 @@ export type NavTab =
   | 'payments'
   | 'master-data'
   | 'reports'
-  | 'audit-admin'
-  | 'data-sync';
+  | 'audit-admin';
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -146,12 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'audit-admin', label: 'Audit Trail & Koreksi', icon: History },
       ],
     },
-    {
-      category: 'SISTEM',
-      items: [
-        { id: 'data-sync', label: 'Sinkronisasi Supabase', icon: GitCompare },
-      ],
-    },
+    // data-sync dihapus Fase 0.6 exit — Supabase single source, tidak perlu import manual
   ];
 
   return (

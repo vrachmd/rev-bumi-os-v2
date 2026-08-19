@@ -21,9 +21,6 @@ import { MasterDataView } from './components/master/MasterDataView';
 import { ReportsView } from './components/reports/ReportsView';
 import { AuditAdminView } from './components/audit/AuditAdminView';
 import { AuthGate } from './components/auth/AuthGate';
-import { DataSyncView } from './components/system/DataSyncView';
-
-const DEMO_MODE_KEY = 'rev_demo_mode';
 
 const MainLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
@@ -68,7 +65,6 @@ const MainLayout: React.FC = () => {
           {activeTab === 'master-data' && <MasterDataView />}
           {activeTab === 'reports' && <ReportsView />}
           {activeTab === 'audit-admin' && <AuditAdminView />}
-          {activeTab === 'data-sync' && <DataSyncView />}
         </main>
       </div>
     </div>
@@ -76,26 +72,9 @@ const MainLayout: React.FC = () => {
 };
 
 export default function App() {
-  const [demoMode, setDemoMode] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem(DEMO_MODE_KEY) === '1';
-    } catch {
-      return false;
-    }
-  });
-
-  const handleDemoContinue = () => {
-    try {
-      localStorage.setItem(DEMO_MODE_KEY, '1');
-    } catch {
-      // localStorage tidak tersedia; lanjut tanpa persist.
-    }
-    setDemoMode(true);
-  };
-
   return (
     <AppProvider>
-      <AuthGate onDemoContinue={handleDemoContinue} demoMode={demoMode}>
+      <AuthGate>
         <MainLayout />
       </AuthGate>
     </AppProvider>

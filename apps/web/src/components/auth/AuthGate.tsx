@@ -5,16 +5,12 @@ import { LoginView } from './LoginView';
 
 interface AuthGateProps {
   children: React.ReactNode;
-  onDemoContinue: () => void;
-  demoMode: boolean;
 }
 
 /**
- * Gate autentikasi web.
- * - Bila Supabase dikonfigurasi & demo belum diaktifkan: wajib sesi aktif.
- * - Bila demo diaktifkan atau Supabase belum dikonfigurasi: langsung tampilkan aplikasi.
+ * Gate autentikasi web — Go-Live: wajib Supabase session (RLS 8 role), tanpa demo.
  */
-export const AuthGate: React.FC<AuthGateProps> = ({ children, onDemoContinue, demoMode }) => {
+export const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const configured = isSupabaseConfigured();
@@ -44,8 +40,8 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, onDemoContinue, de
     );
   }
 
-  if (configured && !session && !demoMode) {
-    return <LoginView onDemoContinue={onDemoContinue} />;
+  if (!session) {
+    return <LoginView />;
   }
 
   return <>{children}</>;

@@ -63,10 +63,6 @@ const TAB_TITLES: Record<NavTab, { title: string; subtitle: string }> = {
     title: 'Audit Trail & Workflow Koreksi',
     subtitle: 'Riwayat Perubahan Tidak Terhapuskan & Pengajuan Koreksi Resmi',
   },
-  'data-sync': {
-    title: 'Sinkronisasi Data ke Supabase',
-    subtitle: 'Impor localStorage → Supabase (single source of truth)',
-  },
 };
 
 const ROLES: { id: Role; label: string }[] = [

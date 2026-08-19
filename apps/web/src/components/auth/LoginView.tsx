@@ -3,10 +3,10 @@ import { LogIn, AlertTriangle, Loader2 } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 
 interface LoginViewProps {
-  onDemoContinue: () => void;
+  onDemoContinue?: () => void;
 }
 
-export const LoginView: React.FC<LoginViewProps> = ({ onDemoContinue }) => {
+export const LoginView: React.FC<LoginViewProps> = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
