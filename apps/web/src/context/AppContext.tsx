@@ -88,6 +88,7 @@ interface AppContextType {
   vehicles: Vehicle[];
   drivers: Driver[];
   freightRates: FreightRate[];
+  quarryMaterialCosts: QuarryMaterialCost[];
   deliveries: Delivery[];
   invoices: Invoice[];
   payments: Payment[];
@@ -1556,6 +1557,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         vehicles,
         drivers,
         freightRates,
+        quarryMaterialCosts,
         deliveries,
         invoices,
         payments,

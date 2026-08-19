@@ -17,6 +17,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run check-types
+      - run: npx turbo run test
       - run: npm run build --workspace=web
       # E2E RLS (anon key dari Secrets, bukan hardcode)
       - run: node apps/web/e2e17-mobile-rls.cjs
