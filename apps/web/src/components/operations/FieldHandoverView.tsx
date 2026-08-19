@@ -45,11 +45,20 @@ export const FieldHandoverView: React.FC<FieldHandoverViewProps> = ({
     products,
     vehicles,
     drivers,
+    quarryMaterialCosts,
     currentProfile,
     recordQuarryLoading,
     recordSiteArrival,
     recordSiteUnloading,
   } = useApp();
+
+  const getDensity = (productId: string, quarryId?: string): number => {
+    if (quarryId) {
+      const qmc = quarryMaterialCosts.find((x) => x.productId === productId && x.quarryId === quarryId);
+      if (qmc?.density != null) return qmc.density;
+    }
+    return products.find((p) => p.id === productId)?.density || 1.6;
+  };
 
   // Tab: 'quarry-loading' | 'site-unloading' | 'handover-pipeline'
   const [activeStage, setActiveStage] = useState<'quarry-loading' | 'site-unloading' | 'handover-pipeline'>(
@@ -96,17 +105,23 @@ export const FieldHandoverView: React.FC<FieldHandoverViewProps> = ({
   const [siteGps, setSiteGps] = useState<{ lat: number; lng: number }>({ lat: -6.78912, lng: 108.01234 });
   const [isGettingGps, setIsGettingGps] = useState(false);
 
-  // Computed calculations for Quarry Loading
-  const activeProduct = products.find((p) => p.id === activeLoadingDelivery?.productId);
-  const activeDensity = activeProduct?.density || 1.60;
+  // Computed calculations for Quarry Loading — density per quarry×product (qmc) fallback products.density
+  const activeDensity = getDensity(activeLoadingDelivery?.productId ?? '', activeLoadingDelivery?.quarryId);
   const netWeightKg = Math.max(0, grossKg - tareKg);
   const calculatedM3FromWeight = Number(((netWeightKg / 1000) / activeDensity).toFixed(2));
   const calculatedM3FromDimensions = Number((dimLengthM * dimWidthM * dimHeightM).toFixed(2));
   const finalLoadingM3 = loadingMethod === 'WEIGHBRIDGE' ? calculatedM3FromWeight : calculatedM3FromDimensions;
 
+  // Validasi kapasitas kendaraan (overload warning)
+  const activeVehicle = vehicles.find((v) => v.id === activeLoadingDelivery?.vehicleId);
+  const nominalM3 = activeVehicle?.nominalCapacityM3 || 0;
+  const maxM3 = nominalM3 * 1.05;
+  const maxKg = maxM3 * activeDensity * 1000;
+  const isOverloadWeight = loadingMethod === 'WEIGHBRIDGE' && netWeightKg > maxKg && nominalM3 > 0;
+  const isOverloadVolume = finalLoadingM3 > maxM3 && nominalM3 > 0;
+
   // Computed calculations for Site Unloading
-  const unloadingProduct = products.find((p) => p.id === activeUnloadingDelivery?.productId);
-  const unloadingDensity = unloadingProduct?.density || 1.6;
+  const unloadingDensity = getDensity(activeUnloadingDelivery?.productId ?? '', activeUnloadingDelivery?.quarryId);
   const calculatedSiteM3FromDimensions = Number((siteDimLengthM * siteDimWidthM * siteDimHeightM).toFixed(2));
   const activeLoadedM3 = activeUnloadingDelivery?.loadedVolumeM3 || 24.0;
   const varianceM3 = Number((activeLoadedM3 - siteReceivedM3).toFixed(2));
@@ -130,15 +145,15 @@ export const FieldHandoverView: React.FC<FieldHandoverViewProps> = ({
   // Open Loading Modal
   const handleOpenLoading = (del: Delivery) => {
     setActiveLoadingDelivery(del);
-    const prod = products.find((p) => p.id === del.productId);
-    const dens = prod?.density || 1.6;
+    const dens = getDensity(del.productId, del.quarryId);
     const initialNetKg = del.loadedWeightKg || Math.round(del.loadedVolumeM3 * dens * 1000) || 38400;
     setTareKg(12000);
     setGrossKg(initialNetKg + 12000);
     setDimLengthM(5.4);
     setDimWidthM(2.3);
     setDimHeightM(del.loadedVolumeM3 > 0 ? Number((del.loadedVolumeM3 / (5.4 * 2.3)).toFixed(2)) : 1.4);
-    setQuarryNotes(`Muatan ${prod?.name || 'material agregat'} dari Quarry.`);
+    const prodName = products.find((p) => p.id === del.productId)?.name || 'material agregat';
+    setQuarryNotes(`Muatan ${prodName} dari Quarry.`);
   };
 
   // Submit Quarry Loading
@@ -804,6 +819,16 @@ export const FieldHandoverView: React.FC<FieldHandoverViewProps> = ({
                 </div>
               )}
 
+              {(isOverloadWeight || isOverloadVolume) && (
+                <div className="p-3 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 text-xs">
+                  <p className="font-bold">⚠️ Overload — melebihi kapasitas kendaraan</p>
+                  <p>
+                    Kapasitas: {nominalM3} m³ (+5% toleransi {maxM3.toFixed(2)} m³) · {maxKg.toLocaleString('id-ID')} kg @ {activeDensity.toFixed(2)} ton/m³ · Muatan: {finalLoadingM3} m³{' '}
+                    {loadingMethod === 'WEIGHBRIDGE' ? `· ${netWeightKg.toLocaleString('id-ID')} kg` : ''}
+                  </p>
+                </div>
+              )}
+
               {/* Photo & Notes */}
               <div>
                 <label className="font-semibold text-slate-700 block mb-1">Catatan Kondisi Muatan di Quarry:</label>
@@ -991,7 +1016,7 @@ export const FieldHandoverView: React.FC<FieldHandoverViewProps> = ({
                   <span className="text-[10px] font-bold text-teal-300 uppercase">Acuan Volume Bak</span>
                   <p className="font-mono font-black text-2xl mt-0.5">{formatVolumeM3(refVolumeM3)}</p>
                   <p className="text-[11px] text-teal-200 mt-1">
-                    Estimasi Tonase ({unloadingProduct?.name || 'material agregat'}):{' '}
+                    Estimasi Tonase ({products.find((p) => p.id === activeUnloadingDelivery?.productId)?.name || 'material agregat'}):{' '}
                     <span className="font-black text-amber-300">{formatWeightTon(Math.round(refTons * 1000))}</span>
                     <span className="opacity-80"> · Volume × Densitas {unloadingDensity.toFixed(2)} ton/m³</span>
                   </p>
