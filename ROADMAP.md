@@ -153,9 +153,10 @@ Prinsip: **jaga portabilitas dari hari pertama** agar keputusan Supabase tidak m
 
 - Tarif angkut **per-km** (jarak sudah dihitung via OSRM).
 - **AR aging / umur piutang** pelanggan.
-- Analitik eksekutif: margin kotor per proyek, burn-rate kontrak.
+- Analitik eksekutif: margin kotor per proyek, burn-rate kontrak — **mobile Finance & Analytics** (`docs/plan/F3-mobile-finance-analytics.md:1`, checkpoint `checkpoint-20260820-golive`).
 - Integrasi **Surat Jalan elektronik** & QR scan di gate.
 - Notifikasi realtime dispatcher (ritase masuk / truk tiba / ETA).
+- **Mobile Finance Dashboard PWA** — KPI `Pendapatan/HPP/Laba` per `proj-01..08` di HP `MANAGEMENT` (OTA via `eas update` tanpa rebuild APK).
 
 ---
 
