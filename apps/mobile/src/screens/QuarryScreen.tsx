@@ -19,7 +19,6 @@ import { captureRef } from 'react-native-view-shot';
 import { calculateVolumeFromDimensions, convertWeightToVolume } from 'shared-engine';
 import { useAppStore } from '../store/useAppStore';
 import { useSwipeBack } from '../hooks/useSwipeBack';
-import { productDensities } from '../data/seed';
 import { StatusBadge } from '../components/StatusBadge';
 import { EvidenceViewer } from '../components/EvidenceViewer';
 import {
@@ -83,7 +82,7 @@ interface QuarryDetailViewProps {
 }
 
 export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }) => {
-  const { deliveries, products, quarries, vendors, recordQuarryLoading, dispatchTruck } =
+  const { deliveries, products, quarries, vendors, vehicles, getDensity, recordQuarryLoading, dispatchTruck } =
     useAppStore();
   const [method, setMethod] = useState<'WEIGHBRIDGE' | 'DIMENSION'>('WEIGHBRIDGE');
   const [grossKg, setGrossKg] = useState('38000');
@@ -138,7 +137,11 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
   const panHandlers = useSwipeBack(onBack);
 
   const delivery = deliveries.find((d) => d.id === id);
-  const density = delivery ? productDensities[delivery.productId] ?? 1.6 : 1.6;
+  const density = delivery ? getDensity(delivery.productId, delivery.quarryId) : 1.6;
+  const vehicle = delivery ? vehicles.find((v) => v.id === delivery.vehicleId) : null;
+  const nominalM3 = vehicle ? Number(vehicle.detail.match(/([\d.]+)\s*m³/)?.[1] ?? 0) : 0;
+  const maxM3 = nominalM3 * 1.05;
+  const maxKg = maxM3 * density * 1000;
 
   const previewVolume = useMemo(() => {
     if (!delivery) return 0;
@@ -151,6 +154,14 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
       Number(heightM) || 0
     );
   }, [delivery, method, grossKg, tareKg, lengthM, widthM, heightM, density]);
+
+  const overload = useMemo(() => {
+    if (!delivery || previewVolume <= 0 || nominalM3 <= 0) return null;
+    const netKg = method === 'WEIGHBRIDGE' ? (Number(grossKg) || 0) - (Number(tareKg) || 0) : 0;
+    if (method === 'WEIGHBRIDGE' && netKg > maxKg) return `Overload: ${netKg.toLocaleString('id-ID')} kg > kapasitas ${maxKg.toLocaleString('id-ID')} kg (${nominalM3} m³ × ${density.toFixed(2)})`;
+    if (previewVolume > maxM3) return `Overload volume: ${previewVolume.toFixed(2)} m³ > kapasitas ${nominalM3} m³ (+5% toleransi ${maxM3.toFixed(2)} m³)`;
+    return null;
+  }, [delivery, previewVolume, nominalM3, maxM3, maxKg, method, grossKg, tareKg, density]);
 
   if (!delivery) return null;
 
@@ -324,9 +335,15 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
                 <Text style={styles.previewLabel}>Volume Muat (m³)</Text>
                 <Text style={styles.previewValue}>{formatVolume(previewVolume)}</Text>
                 <Text style={styles.previewHint}>
-                  Netto = Gross − Tare; Volume = Netto(ton) ÷ Densitas
+                  Netto = Gross − Tare; Volume = Netto(ton) ÷ Densitas {density.toFixed(2)} (per quarry)
                 </Text>
               </View>
+
+              {overload && (
+                <View style={styles.overloadCard}>
+                  <Text style={styles.overloadText}>⚠️ {overload}</Text>
+                </View>
+              )}
 
               <View style={styles.formCard}>
                 <Text style={styles.fieldLabel}>Bukti Dokumentasi Loading (Foto)</Text>
@@ -568,6 +585,15 @@ const styles = StyleSheet.create({
   previewLabel: { color: '#A7D7B6', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
   previewValue: { color: '#FFFFFF', fontSize: 28, fontWeight: '900', marginVertical: 2 },
   previewHint: { color: '#A7D7B6', fontSize: 9, textAlign: 'center' },
+  overloadCard: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 12,
+  },
+  overloadText: { fontSize: 11, fontWeight: '800', color: '#92400E' },
   signBtn: {
     backgroundColor: '#F1F5F9',
     borderWidth: 1,
