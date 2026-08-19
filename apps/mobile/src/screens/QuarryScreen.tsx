@@ -172,6 +172,11 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
   const quarryGps = quarries.find((q) => q.id === delivery.quarryId)?.gps ?? DEFAULT_QUARRY_GPS;
 
   const record = () => {
+    // Server timestamp enforcement: evidenceAt tidak boleh beda >5 menit dari jam device (proxy server)
+    if (evidenceAt && Math.abs(new Date(evidenceAt).getTime() - Date.now()) > 5 * 60 * 1000) {
+      setEvidenceError('Timestamp foto tidak sesuai jam server (>5 menit) — ambil ulang foto bukti.');
+      return;
+    }
     if (method === 'WEIGHBRIDGE') {
       recordQuarryLoading(delivery.id, {
         method: 'WEIGHBRIDGE',
@@ -393,6 +398,7 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
                           <Text style={styles.wmBrand}>REV BUMI NUSANTARA</Text>
                         </View>
                         <View style={styles.wmDivider} />
+                        <Text style={styles.wmText}>🧾 {delivery.deliveryNumber}</Text>
                         <Text style={styles.wmText}>
                           📅 {formatDateLong(evidenceAt)} · {formatClockSeconds(evidenceAt)}
                         </Text>
