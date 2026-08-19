@@ -58,8 +58,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onDemoContinue }) => {
               <div className="mb-4 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-xs">
                 <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>
-                  Supabase belum dikonfigurasi (cek <code className="font-mono">.env.local</code>).
-                  Gunakan mode demo untuk lanjut.
+                  Supabase belum dikonfigurasi (cek <code className="font-mono">.env.local</code> di Vercel →
+                  Environment Variables).
                 </span>
               </div>
             )}
@@ -112,15 +112,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onDemoContinue }) => {
               </button>
             </form>
 
-            {configured && (
-              <button
-                type="button"
-                onClick={onDemoContinue}
-                className="mt-3 w-full text-center text-xs text-slate-500 hover:text-slate-700 py-1"
-              >
-                Lanjut sebagai demo (tanpa login)
-              </button>
-            )}
+            {/* Demo dihapus untuk Go-Live — wajib login Supabase (RLS 8 role) */}
           </div>
         </div>
       </div>
