@@ -41,6 +41,7 @@ import {
   upsertMasterToSupabase,
   deleteMasterEntityFromSupabase,
   MasterDataBundle,
+  QuarryMaterialCost,
 } from '../lib/supabaseMaster';
 import {
   AuditLog,
@@ -361,6 +362,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setVehicles(bundle.vehicles);
         setDrivers(bundle.drivers);
         setFreightRates(bundle.freightRates);
+        setQuarryMaterialCosts(bundle.quarryMaterialCosts);
       } catch {
         // Offline / belum punya akses; pertahankan state lokal (seed/demo).
       }
@@ -389,6 +391,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [vehicles, setVehicles] = useState<Vehicle[]>(() => safeLoad('rev_vehicles', initialVehicles));
   const [drivers, setDrivers] = useState<Driver[]>(() => safeLoad('rev_drivers', initialDrivers));
   const [freightRates, setFreightRates] = useState<FreightRate[]>(() => safeLoad('rev_freight_rates', initialFreightRates));
+  const [quarryMaterialCosts, setQuarryMaterialCosts] = useState<QuarryMaterialCost[]>([]);
   const [deliveries, setDeliveries] = useState<Delivery[]>(() => safeLoad('rev_deliveries', initialDeliveries));
   const [invoices, setInvoices] = useState<Invoice[]>(() => safeLoad('rev_invoices', initialInvoices));
   const [payments, setPayments] = useState<Payment[]>(() => safeLoad('rev_payments', initialPayments));
@@ -514,6 +517,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       vehicles: [],
       drivers: [],
       freightRates: [],
+      quarryMaterialCosts: [],
     };
     upsertMasterToSupabase({ ...empty, ...partial })
       .then((results) => {

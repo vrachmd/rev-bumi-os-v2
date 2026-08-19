@@ -17,6 +17,13 @@ import {
  * terautentikasi; perubahan master dari UI juga di-write-through ke DB.
  */
 
+export interface QuarryMaterialCost {
+  quarryId: string;
+  productId: string;
+  costPerM3: number;
+  density: number | null;
+}
+
 export interface MasterDataBundle {
   products: Product[];
   quarries: Quarry[];
@@ -27,6 +34,7 @@ export interface MasterDataBundle {
   vehicles: Vehicle[];
   drivers: Driver[];
   freightRates: FreightRate[];
+  quarryMaterialCosts: QuarryMaterialCost[];
 }
 
 export interface MasterSyncResult {
@@ -166,7 +174,7 @@ const mapFreightRate = (r: any): FreightRate => ({
  * Ambil seluruh master data dari Supabase.
  */
 export async function fetchMasterFromSupabase(): Promise<MasterDataBundle> {
-  const [prod, quar, cust, proj, contr, vend, veh, drv, rate, src] = await Promise.all([
+  const [prod, quar, cust, proj, contr, vend, veh, drv, rate, src, qmc] = await Promise.all([
     supabase.from('products').select('*'),
     supabase.from('quarries').select('*'),
     supabase.from('customers').select('*'),
@@ -177,6 +185,7 @@ export async function fetchMasterFromSupabase(): Promise<MasterDataBundle> {
     supabase.from('drivers').select('*'),
     supabase.from('freight_rates').select('*'),
     supabase.from('contract_source_quarries').select('*'),
+    supabase.from('quarry_material_costs').select('quarry_id, product_id, cost_per_m3, density'),
   ]);
 
   if (prod.error) throw prod.error;
@@ -205,6 +214,12 @@ export async function fetchMasterFromSupabase(): Promise<MasterDataBundle> {
     vehicles: (veh.data ?? []).map(mapVehicle),
     drivers: (drv.data ?? []).map(mapDriver),
     freightRates: (rate.data ?? []).map(mapFreightRate),
+    quarryMaterialCosts: (qmc.data ?? []).map((r: any) => ({
+      quarryId: r.quarry_id,
+      productId: r.product_id,
+      costPerM3: num(r.cost_per_m3),
+      density: r.density != null ? num(r.density) : null,
+    })),
   };
 }
 

@@ -102,7 +102,7 @@ interface ReconciliationDbRow {
  * dari Supabase dalam bentuk tipe mobile, dengan ID = ID DB asli.
  */
 export async function fetchMobileMasterFromSupabase(): Promise<MobileMasterBundle> {
-  const [prodRes, quarryRes, vendorRes, vehicleRes, contractRes, projectRes, freightRes] =
+  const [prodRes, quarryRes, vendorRes, vehicleRes, contractRes, projectRes, freightRes, qmcRes] =
     await Promise.all([
       supabase.from('products').select('*').eq('is_active', true),
       supabase.from('quarries').select('*').eq('is_active', true),
@@ -111,6 +111,7 @@ export async function fetchMobileMasterFromSupabase(): Promise<MobileMasterBundl
       supabase.from('contracts').select('*').eq('status', 'ACTIVE'),
       supabase.from('projects').select('*'),
       supabase.from('freight_rates').select('*').eq('is_active', true),
+      supabase.from('quarry_material_costs').select('quarry_id, product_id, density, cost_per_m3'),
     ]);
 
   if (prodRes.error) throw prodRes.error;
@@ -120,6 +121,7 @@ export async function fetchMobileMasterFromSupabase(): Promise<MobileMasterBundl
   if (contractRes.error) throw contractRes.error;
   if (projectRes.error) throw projectRes.error;
   if (freightRes.error) throw freightRes.error;
+  if (qmcRes.error) throw qmcRes.error;
 
   const products: PickItem[] = (prodRes.data ?? []).map((p) => ({
     id: p.id,
@@ -181,7 +183,14 @@ export async function fetchMobileMasterFromSupabase(): Promise<MobileMasterBundl
     unloadingFee: r.unloading_fee != null ? Number(r.unloading_fee) : undefined,
   }));
 
-  return { products, quarries, vendors, vehicles, contracts, freightRates };
+  const quarryMaterialCosts = (qmcRes.data ?? []).map((r: any) => ({
+    quarryId: r.quarry_id as string,
+    productId: r.product_id as string,
+    density: r.density != null ? Number(r.density) : null,
+    costPerM3: Number(r.cost_per_m3),
+  }));
+
+  return { products, quarries, vendors, vehicles, contracts, freightRates, quarryMaterialCosts };
 }
 
 /**

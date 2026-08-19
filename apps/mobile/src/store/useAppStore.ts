@@ -39,6 +39,7 @@ import type {
   MobileVendorSupplyType,
   PickItem,
   QuarryLoadingInput,
+  QuarryMaterialCost,
   UnloadingInput,
   VehicleItem,
   VendorItem,
@@ -64,6 +65,7 @@ interface AppState {
   vehicles: VehicleItem[];
   contracts: ContractItem[];
   freightRates: FreightRateItem[];
+  quarryMaterialCosts: QuarryMaterialCost[];
   isOnline: boolean;
   pendingCount: number;
   lastSyncAt: string | null;
@@ -73,6 +75,7 @@ interface AppState {
   refreshQueueStatus: () => Promise<void>;
   hydrateMaster: (bundle: MobileMasterBundle) => void;
   hydrateDeliveries: (deliveries: DeliveryItem[]) => void;
+  getDensity: (productId: string, quarryId: string) => number;
   addVendor: (name: string, detail?: string, supplyType?: MobileVendorSupplyType) => string;
   addVehicle: (transportVendorId: string, name: string, detail?: string) => string;
   addRitase: (input: NewRitaseInput) => void;
@@ -218,6 +221,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   vehicles,
   contracts,
   freightRates,
+  quarryMaterialCosts: [],
   isOnline: false,
   pendingCount: 0,
   lastSyncAt: null,
@@ -255,9 +259,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       vehicles: bundle.vehicles,
       contracts: bundle.contracts,
       freightRates: bundle.freightRates,
+      quarryMaterialCosts: bundle.quarryMaterialCosts ?? [],
     }),
 
   hydrateDeliveries: (deliveries) => set({ deliveries }),
+
+  getDensity: (productId, quarryId) => {
+    const state = get();
+    const override = state.quarryMaterialCosts.find((x) => x.productId === productId && x.quarryId === quarryId);
+    if (override?.density != null) return override.density;
+    return densityByProduct(productId);
+  },
 
   addVendor: (name, detail, supplyType = 'TRANSPORT_ONLY') => {
     const id = `V-${Date.now()}`;

@@ -143,6 +143,13 @@ export type RootTabParamList = {
   Rekonsil: undefined;
 };
 
+export interface QuarryMaterialCost {
+  quarryId: string;
+  productId: string;
+  density: number | null;
+  costPerM3: number;
+}
+
 export interface MobileMasterBundle {
   products: PickItem[];
   quarries: PickItem[];
@@ -150,6 +157,7 @@ export interface MobileMasterBundle {
   vehicles: VehicleItem[];
   contracts: ContractItem[];
   freightRates: FreightRateItem[];
+  quarryMaterialCosts: QuarryMaterialCost[];
 }
 
 export interface MobileSyncResult {
