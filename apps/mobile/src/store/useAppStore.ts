@@ -7,15 +7,8 @@ import {
   evaluateTolerance,
 } from 'shared-engine';
 import type { DeliveryStatus } from 'shared-types';
-import {
-  contracts,
-  initialDeliveries,
-  products,
-  quarries,
-  vehicles,
-  vendors,
-  freightRates,
-} from '../data/seed';
+// seed tidak dipakai lagi — fallback last sync, bukan prod-01
+// import seed dihapus sesuai permintaan "jangan pakai seed lagi"
 import {
   deleteMobileDeliveryFromSupabase,
   upsertMobileDeliveryToSupabase,
@@ -29,6 +22,7 @@ import {
   loadDeleteQueue,
   loadQueue,
 } from '../utils/offlineQueue';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type {
   AuditLogItem,
   ContractItem,
@@ -129,6 +123,21 @@ const auditEntry = (
   newValues,
 });
 
+const KEY_LAST_MASTER = 'rev_last_master';
+const KEY_LAST_DELIVERIES = 'rev_last_deliveries';
+
+export async function loadLastSync(): Promise<{ master?: MobileMasterBundle; deliveries?: DeliveryItem[] }> {
+  try {
+    const [m, d] = await Promise.all([AsyncStorage.getItem(KEY_LAST_MASTER), AsyncStorage.getItem(KEY_LAST_DELIVERIES)]);
+    return {
+      master: m ? (JSON.parse(m) as MobileMasterBundle) : undefined,
+      deliveries: d ? (JSON.parse(d) as DeliveryItem[]) : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
 const syncDelivery = (delivery: DeliveryItem | undefined) => {
   if (!delivery) return;
   const online = useAppStore.getState().isOnline;
@@ -210,17 +219,14 @@ const replayOfflineQueue = async () => {
 
 export const useAppStore = create<AppState>((set, get) => ({
   profile: { name: 'Petugas Quarry', role: 'QUARRY_CHECKER' },
-  deliveries: initialDeliveries,
+  deliveries: [],
   auditLogs: [],
-  products,
-  quarries,
-  vendors: vendors.map((v) => ({
-    ...v,
-    detail: `${vehicles.filter((vh) => vh.vendorId === v.id).length} armada`,
-  })),
-  vehicles,
-  contracts,
-  freightRates,
+  products: [],
+  quarries: [],
+  vendors: [],
+  vehicles: [],
+  contracts: [],
+  freightRates: [],
   quarryMaterialCosts: [],
   isOnline: false,
   pendingCount: 0,
@@ -251,7 +257,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ pendingCount: q.length + d.length });
   },
 
-  hydrateMaster: (bundle) =>
+  hydrateMaster: (bundle) => {
     set({
       products: bundle.products,
       quarries: bundle.quarries,
@@ -260,9 +266,14 @@ export const useAppStore = create<AppState>((set, get) => ({
       contracts: bundle.contracts,
       freightRates: bundle.freightRates,
       quarryMaterialCosts: bundle.quarryMaterialCosts ?? [],
-    }),
+    });
+    void AsyncStorage.setItem(KEY_LAST_MASTER, JSON.stringify(bundle));
+  },
 
-  hydrateDeliveries: (deliveries) => set({ deliveries }),
+  hydrateDeliveries: (deliveries) => {
+    set({ deliveries });
+    void AsyncStorage.setItem(KEY_LAST_DELIVERIES, JSON.stringify(deliveries));
+  },
 
   getDensity: (productId, quarryId) => {
     const state = get();
@@ -558,5 +569,5 @@ export const useAppStore = create<AppState>((set, get) => ({
     syncDelivery(get().deliveries.find((d) => d.id === id));
   },
 
-  reset: () => set({ deliveries: initialDeliveries }),
+  reset: () => set({ deliveries: [] }),
 }));

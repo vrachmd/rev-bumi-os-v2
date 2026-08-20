@@ -349,7 +349,9 @@ React.useEffect(() => {
 
       {!isOnline && (
         <View style={styles.offlineBanner}>
-          <Text style={styles.offlineBannerText}>Offline — ritase disimpan lokal, akan sync otomatis saat online</Text>
+          <Text style={styles.offlineBannerText}>
+            {products.length === 0 ? 'Anda tidak terhubung ke server — tidak ada data last sync' : 'Offline — ritase disimpan lokal, akan sync otomatis saat online'}
+          </Text>
           {pendingCount > 0 && <Text style={styles.offlineBannerSub}>{pendingCount} pending di antrian</Text>}
         </View>
       )}
@@ -363,6 +365,12 @@ React.useEffect(() => {
       {isReplaying && (
         <View style={styles.replayingBanner}>
           <Text style={styles.replayingBannerText}>Replaying offline queue...</Text>
+        </View>
+      )}
+      {!isOnline && products.length === 0 && (
+        <View style={styles.offlineErrorCard}>
+          <Text style={styles.offlineErrorTitle}>Anda tidak terhubung ke server</Text>
+          <Text style={styles.offlineErrorSub}>Tidak ada data last sync. Hubungkan ke internet dan tarik untuk refresh.</Text>
         </View>
       )}
 
@@ -1037,4 +1045,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   replayingBannerText: { fontSize: 11, fontWeight: '700', color: '#6D28D9' },
+  offlineErrorCard: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  offlineErrorTitle: { fontSize: 13, fontWeight: '900', color: '#DC2626' },
+  offlineErrorSub: { fontSize: 11, color: '#991B1B', marginTop: 4, textAlign: 'center' },
 });
