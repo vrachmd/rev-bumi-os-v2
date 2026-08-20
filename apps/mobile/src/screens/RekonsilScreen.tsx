@@ -55,6 +55,30 @@ export const RekonsilScreen: React.FC = () => {
         </View>
       </View>
 
+      {/* Chart variance per quarry — polish */}
+      {rekon.length > 0 && (
+        <View style={styles.chartCard}>
+          <Text style={styles.chartTitle}>📊 Variance per Quarry (avg %)</Text>
+          {quarries.map((q) => {
+            const list = rekon.filter((d) => d.quarryId === q.id);
+            if (list.length === 0) return null;
+            const avg = list.reduce((s, d) => s + Math.abs(d.variancePercent ?? 0), 0) / list.length;
+            const bar = Math.min(100, (avg / 5) * 100); // 5% = full
+            const color = avg <= 2 ? '#16A34A' : avg <= 3.5 ? '#F59E0B' : '#DC2626';
+            return (
+              <View key={q.id} style={styles.chartRow}>
+                <Text style={styles.chartLabel}>{q.name.replace('Quarry ', '')}</Text>
+                <View style={styles.chartBarBg}>
+                  <View style={[styles.chartBarFill, { width: `${bar}%`, backgroundColor: color }]} />
+                </View>
+                <Text style={[styles.chartValue, { color }]}>{avg.toFixed(2)}% · {list.length} rit</Text>
+              </View>
+            );
+          })}
+          <Text style={styles.chartHint}>Batas toleransi kontrak 2% · &gt;3.5% butuh investigasi (qmc density per quarry)</Text>
+        </View>
+      )}
+
       <FlatList
         data={rekon}
         keyExtractor={(item) => item.id}
@@ -171,6 +195,22 @@ const styles = StyleSheet.create({
   sumCell: { flex: 1, alignItems: 'center' },
   sumValue: { fontSize: 18, fontWeight: '900', color: '#0F172A' },
   sumLabel: { fontSize: 9, fontWeight: '700', color: '#64748B', marginTop: 2, textTransform: 'uppercase' },
+  chartCard: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 12,
+  },
+  chartTitle: { fontSize: 11, fontWeight: '800', color: '#0F172A', marginBottom: 8 },
+  chartRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
+  chartLabel: { fontSize: 10, fontWeight: '700', color: '#475569', width: 90 },
+  chartBarBg: { flex: 1, height: 10, backgroundColor: '#F1F5F9', borderRadius: 5, overflow: 'hidden', marginHorizontal: 8 },
+  chartBarFill: { height: 10, borderRadius: 5 },
+  chartValue: { fontSize: 10, fontWeight: '800', width: 90, textAlign: 'right' },
+  chartHint: { fontSize: 9, color: '#94A3B8', marginTop: 8, textAlign: 'center' },
   listContent: { padding: 16, paddingBottom: 40 },
   empty: { textAlign: 'center', color: '#94A3B8', marginTop: 24, fontSize: 12 },
   card: {
