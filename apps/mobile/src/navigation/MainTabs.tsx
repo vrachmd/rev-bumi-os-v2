@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { Animated } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { LayoutDashboard, Mountain, Building2, FileText, Wallet } from 'lucide-react-native';
 import { useAppStore } from '../store/useAppStore';
@@ -33,6 +34,22 @@ const TAB_ACCESS: Record<MobileRole, (keyof RootTabParamList)[]> = {
   MANAGEMENT: ['Dashboard', 'Quarry', 'Site', 'Rekonsil', 'Finance'],
 };
 
+const TabIcon: React.FC<{ Icon: React.ComponentType<{ size: number; color: string }>; focused: boolean; color: string }> = ({ Icon, focused, color }) => {
+  const scale = useRef(new Animated.Value(focused ? 1 : 0.9)).current;
+  const opacity = useRef(new Animated.Value(focused ? 1 : 0.7)).current;
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scale, { toValue: focused ? 1.05 : 1, friction: 5, tension: 300, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: focused ? 1 : 0.6, duration: 180, useNativeDriver: true }),
+    ]).start();
+  }, [focused, scale, opacity]);
+  return (
+    <Animated.View style={{ transform: [{ scale }], opacity }}>
+      <Icon size={focused ? 22 : 18} color={focused ? '#003C16' : color} />
+    </Animated.View>
+  );
+};
+
 export const MainTabs: React.FC = () => {
   const role = useAppStore((s) => s.profile.role);
   const routes = TAB_ACCESS[role];
@@ -49,7 +66,7 @@ export const MainTabs: React.FC = () => {
         tabBarHideOnKeyboard: true,
         tabBarIcon: ({ focused, color }) => {
           const Icon = ICONS[route.name];
-          return <Icon size={focused ? 20 : 18} color={focused ? '#003C16' : color} />;
+          return <TabIcon Icon={Icon} focused={focused} color={color} />;
         },
       })}
     >
