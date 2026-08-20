@@ -332,7 +332,7 @@ React.useEffect(() => {
         </View>
         <View style={styles.brandRow}>
           <View style={styles.logoWrap}>
-            <Image source={LOGO_WHITE} style={styles.brandLogo} />
+            <Image source={require('../../assets/logo.png')} style={styles.brandLogo} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.brand}>REV BUMI NUSANTARA OS</Text>
