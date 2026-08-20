@@ -19,6 +19,7 @@ import { useAppStore, NewRitaseInput } from '../store/useAppStore';
 import { useSwipeBack } from '../hooks/useSwipeBack';
 import { KpiCard } from '../components/KpiCard';
 import { StatusBadge } from '../components/StatusBadge';
+import { ProfileScreen } from './ProfileScreen';
 import { Select } from '../components/Select';
 import { EvidenceViewer } from '../components/EvidenceViewer';
 import { formatClock, formatDateShort, formatVolume, formatRupiah, labelFrom } from '../utils/format';
@@ -62,7 +63,6 @@ const toForm = (d: DeliveryItem): NewRitaseInput => ({
 export const DashboardScreen: React.FC = () => {
   const {
     profile,
-    setProfile,
     deliveries,
     products,
     quarries,
@@ -318,34 +318,30 @@ React.useEffect(() => {
     setDeleteReason('');
   };
 
+  const [showProfile, setShowProfile] = useState(false);
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']} {...(showForm ? panHandlers : {})}>
       <StatusBar style="light" />
       <View style={styles.header}>
         <View style={styles.brandRow}>
           <Image source={LOGO_WHITE} style={styles.brandLogo} />
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.brand}>REV BUMI NUSANTARA OS</Text>
-            <Text style={styles.headerSub}>Sistem Operasi Rantai Pasok Material Konstruksi</Text>
+            <Text style={styles.headerSub}>Sistem Operasional REV Bumi Nusantara</Text>
           </View>
+          <Pressable onPress={() => setShowProfile(true)} style={styles.avatarBtn}>
+            <Text style={styles.avatarText}>{profile.name.charAt(0)}</Text>
+          </Pressable>
         </View>
-        <View style={styles.roleBox}>
-          <Text style={styles.roleLabel}>Switch Role</Text>
-          <View style={styles.roleBtns}>
-            {ROLE_OPTIONS.map(({ role, label }) => (
-              <Pressable
-                key={role}
-                onPress={() => setProfile({ name: ROLE_NAMES[role], role })}
-                style={[styles.roleBtn, profile.role === role && styles.roleBtnActive]}
-              >
-                <Text style={[styles.roleBtnText, profile.role === role && styles.roleBtnTextActive]}>
-                  {label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+        <View style={styles.roleBadge}>
+          <Text style={styles.roleBadgeText}>{ROLE_NAMES[profile.role]}</Text>
         </View>
       </View>
+      {showProfile && (
+        <View style={styles.profileOverlay}>
+          <ProfileScreen onClose={() => setShowProfile(false)} />
+        </View>
+      )}
 
       {!isOnline && (
         <View style={styles.offlineBanner}>
@@ -832,6 +828,9 @@ const styles = StyleSheet.create({
   headerSub: { color: '#A7D7B6', fontSize: 11, marginTop: 2 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   brandLogo: { width: 40, height: 40 },
+  avatarBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
+  avatarText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
+  profileOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50, backgroundColor: '#F8FAFC' },
   roleBox: {
     marginTop: 12,
     alignSelf: 'flex-start',
@@ -839,6 +838,15 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 8,
   },
+  roleBadge: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  roleBadgeText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF' },
   roleLabel: { fontSize: 9, color: '#A7D7B6', fontWeight: '700', marginBottom: 6 },
   roleBtns: { flexDirection: 'row', gap: 6 },
   roleBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
