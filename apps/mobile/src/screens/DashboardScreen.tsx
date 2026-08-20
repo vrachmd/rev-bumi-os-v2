@@ -323,18 +323,29 @@ React.useEffect(() => {
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']} {...(showForm ? panHandlers : {})}>
       <StatusBar style="light" />
       <View style={styles.header}>
+        <View style={styles.headerTopRow}>
+          <Text style={styles.headerDate}>{new Date().toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' })}</Text>
+          <View style={styles.onlineRow}>
+            <View style={[styles.onlineDot, { backgroundColor: isOnline ? '#10B981' : '#F59E0B' }]} />
+            <Text style={styles.onlineText}>{isOnline ? 'Online' : 'Offline'}</Text>
+          </View>
+        </View>
         <View style={styles.brandRow}>
-          <Image source={LOGO_WHITE} style={styles.brandLogo} />
+          <View style={styles.logoWrap}>
+            <Image source={LOGO_WHITE} style={styles.brandLogo} />
+          </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.brand}>REV BUMI NUSANTARA OS</Text>
             <Text style={styles.headerSub}>Sistem Operasional REV Bumi Nusantara</Text>
           </View>
           <Pressable onPress={() => setShowProfile(true)} style={styles.avatarBtn}>
             <Text style={styles.avatarText}>{profile.name.charAt(0)}</Text>
+            <View style={[styles.avatarOnline, { backgroundColor: isOnline ? '#10B981' : '#94A3B8' }]} />
           </Pressable>
         </View>
         <View style={styles.roleBadge}>
           <Text style={styles.roleBadgeText}>{ROLE_NAMES[profile.role]}</Text>
+          <Text style={styles.roleBadgeSub}> • {profile.name}</Text>
         </View>
       </View>
       {showProfile && (
@@ -819,17 +830,28 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#003C16',
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 16,
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
+    paddingTop: 10,
+    paddingBottom: 14,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  brand: { color: '#FFFFFF', fontSize: 17, fontWeight: '900', letterSpacing: 0.5, flexShrink: 1 },
-  headerSub: { color: '#A7D7B6', fontSize: 11, marginTop: 2 },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  brandLogo: { width: 40, height: 40 },
-  avatarBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
+  headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  headerDate: { color: '#A7F3D0', fontSize: 10, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
+  onlineRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  onlineDot: { width: 6, height: 6, borderRadius: 3 },
+  onlineText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800', marginLeft: 6 },
+  brand: { color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 0.6, flexShrink: 1 },
+  headerSub: { color: '#A7F3D0', fontSize: 10.5, marginTop: 2, letterSpacing: 0.2 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  logoWrap: { width: 42, height: 42, borderRadius: 10, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 6, elevation: 3 },
+  brandLogo: { width: 32, height: 32 },
+  avatarBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.35)' },
   avatarText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
+  avatarOnline: { position: 'absolute', right: -1, bottom: -1, width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: '#003C16' },
   profileOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50, backgroundColor: '#F8FAFC' },
   roleBox: {
     marginTop: 12,
@@ -841,12 +863,17 @@ const styles = StyleSheet.create({
   roleBadge: {
     marginTop: 12,
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.14)',
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
   },
   roleBadgeText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF' },
+  roleBadgeSub: { fontSize: 11, fontWeight: '400', color: 'rgba(255,255,255,0.85)' },
   roleLabel: { fontSize: 9, color: '#A7D7B6', fontWeight: '700', marginBottom: 6 },
   roleBtns: { flexDirection: 'row', gap: 6 },
   roleBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
