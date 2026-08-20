@@ -30,14 +30,9 @@ export const LoginScreen: React.FC<{ onDone: () => void }> = ({ onDone }) => {
   const [error, setError] = useState<string | null>(null);
   const configured = isSupabaseConfigured();
 
-  const handleDemo = () => {
-    setProfile({ name: 'Petugas Quarry (Demo)', role: 'QUARRY_CHECKER' });
-    onDone();
-  };
-
   const handleLogin = async () => {
     if (!configured) {
-      handleDemo();
+      setError('Supabase belum dikonfigurasi — hubungi admin.');
       return;
     }
     setLoading(true);
@@ -101,9 +96,7 @@ export const LoginScreen: React.FC<{ onDone: () => void }> = ({ onDone }) => {
 
             {!configured && (
               <View style={styles.infoBox}>
-                <Text style={styles.infoText}>
-                  Mode demo — Supabase belum dikonfigurasi. Lanjutkan untuk memakai data lokal.
-                </Text>
+                <Text style={styles.infoText}>Supabase belum dikonfigurasi — hubungi admin.</Text>
               </View>
             )}
 
@@ -144,13 +137,7 @@ export const LoginScreen: React.FC<{ onDone: () => void }> = ({ onDone }) => {
               )}
             </Pressable>
 
-            <Pressable
-              style={({ pressed }) => [styles.demoButton, pressed && styles.buttonPressed]}
-              onPress={handleDemo}
-              disabled={loading}
-            >
-              <Text style={styles.demoButtonText}>Lanjut sebagai Demo Petugas Quarry</Text>
-            </Pressable>
+            {/* Demo dihapus Go-Live — wajib login Supabase */}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

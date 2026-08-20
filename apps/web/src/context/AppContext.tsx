@@ -559,7 +559,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return { success: false, error: 'Kontrak dan Produk Material wajib dipilih.' };
     }
 
-    const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const todayStr = new Date().toISOString().slice(0, 7).replace(/-/g, '');
     const count = deliveries.length + 1;
     const deliveryNumber = data.deliveryNumber || `SJ/RBN/${todayStr}/${String(count).padStart(3, '0')}`;
 

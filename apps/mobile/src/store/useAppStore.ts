@@ -336,14 +336,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     const quarry = state.quarries.find((q) => q.id === input.quarryId);
     const contract = state.contracts.find((c) => c.id === input.contractId);
     const d = new Date();
-    const todayStr = d.toISOString().slice(0, 10).replace(/-/g, '');
+    const todayStr = d.toISOString().slice(0, 7).replace(/-/g, '');
     const count = state.deliveries.length + 1;
-    const pad2 = (n: number) => String(n).padStart(2, '0');
-    // SJ tetap prefix RBN seperti web `SJ/RBN/${YYYYMMDD}/${NNN}` (AppContext.tsx:559),
-    // suffix HHMMSS ditambah untuk anti-duplicate saat web+mobile offline bikin NNN sama.
-    // Hasil tetap unik & readable: SJ/RBN/20260820/001-143015. Validasi unique delivery_number tetap jalan.
-    const suffix = `${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`;
-    const nextNumber = `SJ/RBN/${todayStr}/${String(count).padStart(3, '0')}-${suffix}`;
+    const nextNumber = `SJ/RBN/${todayStr}/${String(count).padStart(3, '0')}`;
     const now = d.toISOString();
     const delivery: DeliveryItem = {
       id: `D-${Date.now()}`,
