@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { BarChart3 } from 'lucide-react-native';
 import { evaluateTolerance } from 'shared-engine';
+import { Select } from '../components/Select';
 import { useAppStore } from '../store/useAppStore';
 import { StatusBadge } from '../components/StatusBadge';
 import { EvidenceViewer } from '../components/EvidenceViewer';
@@ -33,8 +34,11 @@ export const RekonsilScreen: React.FC = () => {
       if (filterStatus === 'ABOVE' && s !== 'ABOVE_TOLERANCE') return false;
     }
     if (filterDate) {
+      // filterDate DD-MM-YYYY → YYYY-MM-DD untuk bandingkan scheduledAt
+      const parts = filterDate.split('-');
+      const iso = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : filterDate;
       const tgl = (d.scheduledAt || d.createdAt).slice(0, 10);
-      if (tgl !== filterDate) return false;
+      if (tgl !== iso) return false;
     }
     return true;
   });
@@ -96,36 +100,36 @@ export const RekonsilScreen: React.FC = () => {
         </View>
       )}
 
-      {/* Filter — di bawah chart biar tidak besar di atas */}
+      {/* Filter — di bawah chart, pakai Select seperti form Ritase biar rapih */}
       <View style={styles.filterBarCompact}>
+        <Select
+          label="Proyek"
+          value={filterProject}
+          placeholder="Semua proyek"
+          options={[{ id: 'ALL', name: 'Semua proyek' }, ...contracts.map((c) => ({ id: c.id, name: labelFrom(contracts, c.id), detail: c.contractNumber }))]}
+          onSelect={(id) => setFilterProject(id)}
+        />
         <View style={styles.filterRowCompact}>
           <View style={styles.filterColCompact}>
-            <Text style={styles.filterLabel}>Tanggal</Text>
-            <TextInput style={styles.filterInputCompact} placeholder="YYYY-MM-DD" value={filterDate} onChangeText={setFilterDate} placeholderTextColor="#94A3B8" />
+            <Text style={styles.filterLabel}>Tanggal (DD-MM-YYYY)</Text>
+            <TextInput style={styles.filterInputCompact} placeholder="DD-MM-YYYY" value={filterDate} onChangeText={setFilterDate} placeholderTextColor="#94A3B8" keyboardType="numbers-and-punctuation" />
           </View>
           <View style={styles.filterColCompact}>
-            <Text style={styles.filterLabel}>Proyek</Text>
-            <View style={styles.pickerWrapCompact}>
-              <Text style={styles.pickerText} numberOfLines={1}>{filterProject === 'ALL' ? 'Semua' : labelFrom(contracts, filterProject)}</Text>
-            </View>
-            <View style={styles.filterChipRowCompact}>
-              <Text style={[styles.filterChipCompact, filterProject === 'ALL' && styles.filterChipActiveCompact]} onPress={() => setFilterProject('ALL')}>Semua</Text>
-              {contracts.slice(0, 3).map((c) => (
-                <Text key={c.id} style={[styles.filterChipCompact, filterProject === c.id && styles.filterChipActiveCompact]} onPress={() => setFilterProject(c.id)} numberOfLines={1}>{labelFrom(contracts, c.id).slice(0, 12)}</Text>
+            <Text style={styles.filterLabel}>Status Toleransi</Text>
+            <View style={styles.filterChipRow}>
+              {(['ALL', 'WITHIN', 'ABOVE'] as const).map((s) => (
+                <Text key={s} style={[styles.filterChip, filterStatus === s && styles.filterChipActive]} onPress={() => setFilterStatus(s)}>
+                  {s === 'ALL' ? 'Semua' : s === 'WITHIN' ? 'Within' : 'Above'}
+                </Text>
               ))}
             </View>
           </View>
         </View>
-        <View style={styles.filterStatusRow}>
-          {(['ALL', 'WITHIN', 'ABOVE'] as const).map((s) => (
-            <Text key={s} style={[styles.filterChip, filterStatus === s && styles.filterChipActive]} onPress={() => setFilterStatus(s)}>
-              {s === 'ALL' ? 'Semua' : s === 'WITHIN' ? 'Within' : 'Above'}
-            </Text>
-          ))}
-          {(filterProject !== 'ALL' || filterStatus !== 'ALL' || filterDate) && (
-            <Text style={styles.filterResetCompact} onPress={() => { setFilterProject('ALL'); setFilterStatus('ALL'); setFilterDate(''); }}>Reset</Text>
-          )}
-        </View>
+        {(filterProject !== 'ALL' || filterStatus !== 'ALL' || filterDate) && (
+          <Text style={styles.filterReset} onPress={() => { setFilterProject('ALL'); setFilterStatus('ALL'); setFilterDate(''); }}>
+            Reset filter
+          </Text>
+        )}
       </View>
 
       <FlatList
