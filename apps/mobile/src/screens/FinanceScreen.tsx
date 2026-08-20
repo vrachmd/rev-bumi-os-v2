@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { TrendingUp, Mountain, Truck, FileText, Wallet, Lock } from 'lucide-react-native';
 import { useAppStore } from '../store/useAppStore';
 
 const formatIDR = (n: number) => `Rp ${Math.round(n).toLocaleString('id-ID')}`;
@@ -21,7 +22,7 @@ export const FinanceScreen: React.FC = () => {
         <StatusBar style="dark" />
         <View style={styles.lockWrap}>
           <View style={styles.lockCard}>
-            <View style={styles.lockIconWrap}><Text style={styles.lockIcon}>🔒</Text></View>
+            <View style={styles.lockIconWrap}><Lock size={22} color="#92400E" /></View>
             <Text style={styles.lockTitle}>Akses Terbatas</Text>
             <Text style={styles.lockSub}>Dashboard keuangan hanya untuk Direksi & Management.</Text>
             <View style={styles.lockBadge}><Text style={styles.lockBadgeText}>Role Anda: {profile.role}</Text></View>
@@ -78,7 +79,7 @@ export const FinanceScreen: React.FC = () => {
         <View style={styles.heroTopRow}>
           <View>
             <Text style={styles.heroEyebrow}>KEUANGAN & ANALYTICS</Text>
-            <Text style={styles.heroTitle}>Finance Cockpit</Text>
+            <View style={styles.heroTitleRow}><Wallet size={18} color="#FFFFFF" /><Text style={styles.heroTitle}> Finance Cockpit</Text></View>
           </View>
           <View style={styles.heroDateBadge}>
             <Text style={styles.heroDateText}>{new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</Text>
@@ -106,25 +107,25 @@ export const FinanceScreen: React.FC = () => {
         {/* KPI 2x2 */}
         <View style={styles.kpiGrid}>
           <View style={[styles.kpiCard, { borderLeftColor: '#0EA5E9' }]}>
-            <View style={[styles.kpiIconWrap, { backgroundColor: '#E0F2FE' }]}><Text style={styles.kpiIcon}>📈</Text></View>
+            <View style={[styles.kpiIconWrap, { backgroundColor: '#E0F2FE' }]}><TrendingUp size={14} color="#0EA5E9" /></View>
             <Text style={styles.kpiLabel}>Pendapatan</Text>
             <Text style={styles.kpiValue} numberOfLines={1} adjustsFontSizeToFit>{formatIDRShort(stats.revenue)}</Text>
             <Text style={styles.kpiSub}>{stats.approvedM3.toFixed(1)} m³ × 175k</Text>
           </View>
           <View style={[styles.kpiCard, { borderLeftColor: '#8B5CF6' }]}>
-            <View style={[styles.kpiIconWrap, { backgroundColor: '#EDE9FE' }]}><Text style={styles.kpiIcon}>⛏️</Text></View>
+            <View style={[styles.kpiIconWrap, { backgroundColor: '#EDE9FE' }]}><Mountain size={14} color="#8B5CF6" /></View>
             <Text style={styles.kpiLabel}>Material</Text>
             <Text style={styles.kpiValue} numberOfLines={1} adjustsFontSizeToFit>{formatIDRShort(stats.materialCost)}</Text>
             <Text style={styles.kpiSub}>qmc cost/m³</Text>
           </View>
           <View style={[styles.kpiCard, { borderLeftColor: '#F59E0B' }]}>
-            <View style={[styles.kpiIconWrap, { backgroundColor: '#FEF3C7' }]}><Text style={styles.kpiIcon}>🚚</Text></View>
+            <View style={[styles.kpiIconWrap, { backgroundColor: '#FEF3C7' }]}><Truck size={14} color="#F59E0B" /></View>
             <Text style={styles.kpiLabel}>Freight</Text>
             <Text style={styles.kpiValue} numberOfLines={1} adjustsFontSizeToFit>{formatIDRShort(stats.freightCost)}</Text>
             <Text style={styles.kpiSub}>per m³/trip/ton</Text>
           </View>
           <View style={[styles.kpiCard, { borderLeftColor: '#10B981' }]}>
-            <View style={[styles.kpiIconWrap, { backgroundColor: '#D1FAE5' }]}><Text style={styles.kpiIcon}>🧾</Text></View>
+            <View style={[styles.kpiIconWrap, { backgroundColor: '#D1FAE5' }]}><FileText size={14} color="#10B981" /></View>
             <Text style={styles.kpiLabel}>HPP Total</Text>
             <Text style={styles.kpiValue} numberOfLines={1} adjustsFontSizeToFit>{formatIDRShort(stats.hpp)}</Text>
             <Text style={styles.kpiSub}>material + freight</Text>
@@ -179,7 +180,8 @@ const styles = StyleSheet.create({
   hero: { backgroundColor: '#003C16', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 },
   heroTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   heroEyebrow: { color: '#A7F3D0', fontSize: 9, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase' },
-  heroTitle: { color: '#FFFFFF', fontSize: 22, fontWeight: '900', marginTop: 2 },
+  heroTitleRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+  heroTitle: { color: '#FFFFFF', fontSize: 22, fontWeight: '900' },
   heroSub: { color: '#A7F3D0', fontSize: 11, marginTop: 2 },
   heroDateBadge: { backgroundColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
   heroDateText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' },

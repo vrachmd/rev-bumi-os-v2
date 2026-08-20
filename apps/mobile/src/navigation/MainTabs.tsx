@@ -1,6 +1,6 @@
 import React from 'react';
-import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { LayoutDashboard, Mountain, Building2, FileText, Wallet } from 'lucide-react-native';
 import { useAppStore } from '../store/useAppStore';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { RekonsilScreen } from '../screens/RekonsilScreen';
@@ -11,12 +11,12 @@ import type { MobileRole, RootTabParamList } from '../types';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
-const ICONS: Record<keyof RootTabParamList, string> = {
-  Dashboard: '📊',
-  Quarry: '⛏️',
-  Site: '🏗️',
-  Rekonsil: '🧾',
-  Finance: '💰',
+const ICONS: Record<keyof RootTabParamList, React.ComponentType<{ size: number; color: string }>> = {
+  Dashboard: LayoutDashboard,
+  Quarry: Mountain,
+  Site: Building2,
+  Rekonsil: FileText,
+  Finance: Wallet,
 };
 
 const COMPONENTS: Record<keyof RootTabParamList, React.ComponentType> = {
@@ -44,11 +44,10 @@ export const MainTabs: React.FC = () => {
         tabBarActiveTintColor: '#003C16',
         tabBarInactiveTintColor: '#94A3B8',
         tabBarLabelStyle: { fontSize: 10, fontWeight: '700' },
-        tabBarIcon: ({ focused }) => (
-          <Text style={{ fontSize: 18, opacity: focused ? 1 : 0.45 }}>
-            {ICONS[route.name]}
-          </Text>
-        ),
+        tabBarIcon: ({ focused, color }) => {
+          const Icon = ICONS[route.name];
+          return <Icon size={18} color={focused ? '#003C16' : color} />;
+        },
       })}
     >
       {routes.map((name) => (

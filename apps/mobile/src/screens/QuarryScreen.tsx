@@ -16,6 +16,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { captureRef } from 'react-native-view-shot';
+import { FileText, Calendar, MapPin, AlertTriangle } from 'lucide-react-native';
 import { calculateVolumeFromDimensions, convertWeightToVolume } from 'shared-engine';
 import { useAppStore } from '../store/useAppStore';
 import { useSwipeBack } from '../hooks/useSwipeBack';
@@ -346,7 +347,7 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
 
               {overload && (
                 <View style={styles.overloadCard}>
-                  <Text style={styles.overloadText}>⚠️ {overload}</Text>
+                  <View style={styles.overloadRow}><AlertTriangle size={14} color="#92400E" /><Text style={styles.overloadText}> {overload}</Text></View>
                 </View>
               )}
 
@@ -398,17 +399,9 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
                           <Text style={styles.wmBrand}>REV BUMI NUSANTARA</Text>
                         </View>
                         <View style={styles.wmDivider} />
-                        <Text style={styles.wmText}>🧾 {delivery.deliveryNumber}</Text>
-                        <Text style={styles.wmText}>
-                          📅 {formatDateLong(evidenceAt)} · {formatClockSeconds(evidenceAt)}
-                        </Text>
-                        <Text style={styles.wmText}>
-                          📍{' '}
-                          {evidencePlace ||
-                            (evidenceGps
-                              ? `${evidenceGps.lat.toFixed(5)}, ${evidenceGps.lng.toFixed(5)}`
-                              : 'lokasi diproses…')}
-                        </Text>
+                        <View style={styles.wmLine}><FileText size={12} color="#FFFFFF" /><Text style={styles.wmText}> {delivery.deliveryNumber}</Text></View>
+                        <View style={styles.wmLine}><Calendar size={12} color="#FFFFFF" /><Text style={styles.wmText}> {formatDateLong(evidenceAt)} · {formatClockSeconds(evidenceAt)}</Text></View>
+                        <View style={styles.wmLine}><MapPin size={12} color="#FFFFFF" /><Text style={styles.wmText}> {evidencePlace || (evidenceGps ? `${evidenceGps.lat.toFixed(5)}, ${evidenceGps.lng.toFixed(5)}` : 'lokasi diproses…')}</Text></View>
                       </View>
                     </View>
                     <Text style={styles.hint}>Membubuhkan watermark tanggal & lokasi…</Text>
@@ -599,7 +592,9 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 12,
   },
-  overloadText: { fontSize: 11, fontWeight: '800', color: '#92400E' },
+  overloadRow: { flexDirection: 'row', alignItems: 'center' },
+  overloadText: { fontSize: 11, fontWeight: '800', color: '#92400E', flex: 1 },
+  wmLine: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
   signBtn: {
     backgroundColor: '#F1F5F9',
     borderWidth: 1,

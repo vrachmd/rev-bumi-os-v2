@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { BarChart3 } from 'lucide-react-native';
 import { evaluateTolerance } from 'shared-engine';
 import { useAppStore } from '../store/useAppStore';
 import { StatusBadge } from '../components/StatusBadge';
@@ -58,7 +59,7 @@ export const RekonsilScreen: React.FC = () => {
       {/* Chart variance per quarry — polish */}
       {rekon.length > 0 && (
         <View style={styles.chartCard}>
-          <Text style={styles.chartTitle}>📊 Variance per Quarry (avg %)</Text>
+          <View style={styles.chartTitleRow}><BarChart3 size={14} color="#0F172A" /><Text style={styles.chartTitle}> Variance per Quarry (avg %)</Text></View>
           {quarries.map((q) => {
             const list = rekon.filter((d) => d.quarryId === q.id);
             if (list.length === 0) return null;
@@ -204,7 +205,8 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     padding: 12,
   },
-  chartTitle: { fontSize: 11, fontWeight: '800', color: '#0F172A', marginBottom: 8 },
+  chartTitle: { fontSize: 11, fontWeight: '800', color: '#0F172A' },
+  chartTitleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   chartRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
   chartLabel: { fontSize: 10, fontWeight: '700', color: '#475569', width: 90 },
   chartBarBg: { flex: 1, height: 10, backgroundColor: '#F1F5F9', borderRadius: 5, overflow: 'hidden', marginHorizontal: 8 },
