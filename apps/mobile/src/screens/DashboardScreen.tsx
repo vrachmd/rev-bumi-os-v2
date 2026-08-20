@@ -84,14 +84,21 @@ export const DashboardScreen: React.FC = () => {
   } = useAppStore();
   const [refreshing, setRefreshing] = useState(false);
   const setOnline = useAppStore((s) => s.setOnline);
+  const hydrateDeliveries = useAppStore((s) => s.hydrateDeliveries);
   useEffect(() => {
     void refreshQueueStatus();
   }, [refreshQueueStatus]);
   const onRefresh = async () => {
     setRefreshing(true);
     await refreshQueueStatus();
-    if (isOnline) setOnline(true);
-    // beri waktu replay
+    if (isOnline) {
+      setOnline(true);
+      try {
+        const { fetchMobileDeliveriesFromSupabase } = await import('../utils/supabaseData');
+        const fresh = await fetchMobileDeliveriesFromSupabase();
+        hydrateDeliveries(fresh);
+      } catch {}
+    }
     setTimeout(() => setRefreshing(false), 800);
   };
   const [showForm, setShowForm] = useState(false);
