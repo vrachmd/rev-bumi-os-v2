@@ -40,7 +40,7 @@ const TabIcon: React.FC<{ Icon: React.ComponentType<{ size: number; color: strin
   useEffect(() => {
     Animated.parallel([
       Animated.spring(scale, { toValue: focused ? 1.05 : 1, friction: 5, tension: 300, useNativeDriver: true }),
-      Animated.timing(opacity, { toValue: focused ? 1 : 0.6, duration: 180, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: focused ? 1 : 0.6, duration: 150, useNativeDriver: true }),
     ]).start();
   }, [focused, scale, opacity]);
   return (

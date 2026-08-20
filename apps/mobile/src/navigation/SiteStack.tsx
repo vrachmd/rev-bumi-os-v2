@@ -9,8 +9,8 @@ export const SiteStack: React.FC = () => {
   useEffect(() => {
     Animated.timing(slide, {
       toValue: selectedId ? 1 : 0,
-      duration: 280,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      duration: 220,
+      easing: Easing.bezier(0.2, 0, 0, 1),
       useNativeDriver: true,
     }).start();
   }, [selectedId, slide]);
