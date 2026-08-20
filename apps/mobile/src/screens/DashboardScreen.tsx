@@ -237,7 +237,8 @@ React.useEffect(() => {
       const v = d.approvedVolumeM3 ?? d.receivedVolumeM3 ?? d.loadedVolumeM3 ?? 0;
       vol += v;
       if (!c) continue;
-      rev += v * 175000;
+      const unitPrice = c.unitPricePerM3 || 175000;
+      rev += v * unitPrice;
       const qmc = quarryMaterialCosts.find((x) => x.productId === d.productId && x.quarryId === d.quarryId);
       const cost = qmc?.costPerM3 ?? 95000;
       mat += v * cost;

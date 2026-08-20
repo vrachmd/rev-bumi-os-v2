@@ -50,6 +50,7 @@ interface ContractDbRow {
   project_id: string;
   product_id: string;
   quarry_id: string;
+  unit_price_per_m3: number | string | null;
 }
 
 interface ProjectDbRow {
@@ -161,6 +162,7 @@ export async function fetchMobileMasterFromSupabase(): Promise<MobileMasterBundl
       id: row.id,
       contractNumber: row.contract_number,
       projectId: row.project_id,
+      unitPricePerM3: row.unit_price_per_m3 != null ? Number(row.unit_price_per_m3) : 0,
       name: project?.name ?? row.contract_number,
       detail: row.contract_number,
       gps:

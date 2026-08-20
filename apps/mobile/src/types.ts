@@ -35,6 +35,7 @@ export interface VehicleItem extends PickItem {
 export interface ContractItem extends PickItem {
   contractNumber: string;
   projectId: string;
+  unitPricePerM3: number;
 }
 
 export interface FreightRateItem {

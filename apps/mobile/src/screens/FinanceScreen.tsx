@@ -43,7 +43,8 @@ export const FinanceScreen: React.FC = () => {
       const vol = d.approvedVolumeM3 ?? d.receivedVolumeM3 ?? d.loadedVolumeM3 ?? 0;
       approvedM3 += vol;
       if (!contract) continue;
-      const rev = vol * 175000;
+      const unitPrice = contract.unitPricePerM3 || 175000;
+      const rev = vol * unitPrice;
       revenue += rev;
       const qmc = quarryMaterialCosts.find((x) => x.productId === d.productId && x.quarryId === d.quarryId);
       const costPerM3 = qmc?.costPerM3 ?? 95000;
