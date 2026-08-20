@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 interface SelectProps {
   label: string;
@@ -30,19 +30,21 @@ export const Select: React.FC<SelectProps> = ({
       </Pressable>
       {open && (
         <View style={styles.options}>
-          {options.map((o) => (
-            <Pressable
-              key={o.id}
-              style={[styles.option, o.id === value && styles.optionActive]}
-              onPress={() => {
-                onSelect(o.id);
-                setOpen(false);
-              }}
-            >
-              <Text style={[styles.optionName, o.id === value && styles.optionNameActive]}>{o.name}</Text>
-              {o.detail ? <Text style={styles.optionDetail}>{o.detail}</Text> : null}
-            </Pressable>
-          ))}
+          <ScrollView style={styles.optionsScroll} nestedScrollEnabled keyboardShouldPersistTaps="handled">
+            {options.map((o) => (
+              <Pressable
+                key={o.id}
+                style={[styles.option, o.id === value && styles.optionActive]}
+                onPress={() => {
+                  onSelect(o.id);
+                  setOpen(false);
+                }}
+              >
+                <Text style={[styles.optionName, o.id === value && styles.optionNameActive]}>{o.name}</Text>
+                {o.detail ? <Text style={styles.optionDetail}>{o.detail}</Text> : null}
+              </Pressable>
+            ))}
+          </ScrollView>
         </View>
       )}
     </View>
@@ -73,7 +75,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
+    maxHeight: 220,
   },
+  optionsScroll: { maxHeight: 220 },
   option: { paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
   optionActive: { backgroundColor: '#ECFDF5' },
   optionName: { fontSize: 13, fontWeight: '600', color: '#0F172A' },
