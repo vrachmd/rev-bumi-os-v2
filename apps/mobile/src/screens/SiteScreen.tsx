@@ -64,7 +64,7 @@ export const SiteListView: React.FC<SiteListViewProps> = ({ onSelect }) => {
                 <StatusBadge status={item.status} />
               </View>
               <Text style={styles.cardMain}>{product} · {quarry}</Text>
-              <Text style={styles.cardProject}>🎯 Tujuan: {project}</Text>
+              <Text style={styles.cardProject}>Tujuan: {project}</Text>
               <Text style={styles.cardSub}>{item.plateNumber} · {item.driverName} · {vendor}</Text>
               {item.status === 'ARRIVED' ? (
                 <Text style={styles.cardAccent}>Truk sudah tiba — lanjutkan pengukuran</Text>
@@ -169,7 +169,7 @@ export const SiteDetailView: React.FC<SiteDetailViewProps> = ({ id, onBack }) =>
         >
           <View style={styles.infoCard}>
             <Text style={styles.infoMain}>{product} · {vendor}</Text>
-            <Text style={styles.infoSub}>🎯 Tujuan: {project}</Text>
+            <Text style={styles.infoSub}>Tujuan: {project}</Text>
             <Text style={styles.infoSub}>
               {delivery.plateNumber} · {delivery.driverName}
             </Text>

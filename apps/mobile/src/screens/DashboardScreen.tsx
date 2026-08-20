@@ -339,19 +339,20 @@ React.useEffect(() => {
 
       {!isOnline && (
         <View style={styles.offlineBanner}>
-          <Text style={styles.offlineBannerText}>● Offline — ritase disimpan lokal, akan sync otomatis saat online</Text>
+          <Text style={styles.offlineBannerText}>Offline — ritase disimpan lokal, akan sync otomatis saat online</Text>
           {pendingCount > 0 && <Text style={styles.offlineBannerSub}>{pendingCount} pending di antrian</Text>}
         </View>
       )}
       {isOnline && pendingCount > 0 && (
         <View style={styles.pendingBanner}>
-          <Text style={styles.pendingBannerText}>⏳ {pendingCount} ritase pending sync — menyinkronkan...</Text>
+          <Text style={styles.pendingBannerText}>{pendingCount} ritase pending sync — menyinkronkan...</Text>
           {lastSyncAt && <Text style={styles.pendingBannerSub}>Last sync: {new Date(lastSyncAt).toLocaleTimeString()}</Text>}
+          <Text style={styles.pendingBannerSub}>Jika tetap, tarik layar ke bawah untuk refresh atau restart Expo Go.</Text>
         </View>
       )}
       {isReplaying && (
         <View style={styles.replayingBanner}>
-          <Text style={styles.replayingBannerText}>↻ Replaying offline queue...</Text>
+          <Text style={styles.replayingBannerText}>Replaying offline queue...</Text>
         </View>
       )}
 

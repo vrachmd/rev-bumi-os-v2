@@ -66,7 +66,7 @@ export const QuarryListView: React.FC<QuarryListViewProps> = ({ onSelect }) => {
                 <StatusBadge status={item.status} />
               </View>
               <Text style={styles.cardMain}>{product} · {quarry}</Text>
-              <Text style={styles.cardProject}>🎯 Tujuan: {project}</Text>
+              <Text style={styles.cardProject}>Tujuan: {project}</Text>
               <Text style={styles.cardSub}>{item.plateNumber} · {item.driverName} · {vendor}</Text>
               {item.status === 'LOADING' ? (
                 <Text style={styles.cardAccent}>Tercatat {formatVolume(item.loadedVolumeM3)} — lanjutkan dispatch</Text>
@@ -271,7 +271,7 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
         >
           <View style={styles.infoCard}>
             <Text style={styles.infoMain}>{product} · {vendor}</Text>
-            <Text style={styles.infoSub}>{projectDetail}</Text>
+            <Text style={styles.infoSub}>Tujuan: {projectDetail}</Text>
             <Text style={styles.infoSub}>
               {delivery.plateNumber} · {delivery.driverName}
             </Text>
