@@ -126,6 +126,10 @@ const auditEntry = (
 const KEY_LAST_MASTER = 'rev_last_master';
 const KEY_LAST_DELIVERIES = 'rev_last_deliveries';
 
+const persistDeliveries = (deliveries: DeliveryItem[]) => {
+  void AsyncStorage.setItem(KEY_LAST_DELIVERIES, JSON.stringify(deliveries));
+};
+
 export async function loadLastSync(): Promise<{ master?: MobileMasterBundle; deliveries?: DeliveryItem[] }> {
   try {
     const [m, d] = await Promise.all([AsyncStorage.getItem(KEY_LAST_MASTER), AsyncStorage.getItem(KEY_LAST_DELIVERIES)]);
@@ -413,10 +417,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     const delivery = state.deliveries.find((d) => d.id === id);
     if (!delivery || delivery.status !== 'SCHEDULED') return;
     const entry = auditEntry(state.profile.name, 'DELETE', id, { ...delivery }, undefined, reason);
+    const next = state.deliveries.filter((d) => d.id !== id);
     set({
-      deliveries: state.deliveries.filter((d) => d.id !== id),
+      deliveries: next,
       auditLogs: [entry, ...state.auditLogs],
     });
+    persistDeliveries(next);
     syncDelete(id);
   },
 
