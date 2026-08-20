@@ -44,9 +44,12 @@ export const MainTabs: React.FC = () => {
         tabBarActiveTintColor: '#003C16',
         tabBarInactiveTintColor: '#94A3B8',
         tabBarLabelStyle: { fontSize: 10, fontWeight: '700' },
+        tabBarStyle: { height: 62, paddingBottom: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#E2E8F0' },
+        animation: 'shift' as const,
+        tabBarHideOnKeyboard: true,
         tabBarIcon: ({ focused, color }) => {
           const Icon = ICONS[route.name];
-          return <Icon size={18} color={focused ? '#003C16' : color} />;
+          return <Icon size={focused ? 20 : 18} color={focused ? '#003C16' : color} />;
         },
       })}
     >
