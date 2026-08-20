@@ -47,16 +47,20 @@ export const FinanceScreen: React.FC = () => {
       const rev = vol * unitPrice;
       revenue += rev;
       const qmc = quarryMaterialCosts.find((x) => x.productId === d.productId && x.quarryId === d.quarryId);
-      const costPerM3 = qmc?.costPerM3 ?? 95000;
-      const mat = vol * costPerM3;
-      materialCost += mat;
-      let fr = 0;
       const rate = freightRates.find((r) => r.quarryId === d.quarryId && r.projectId === contract.projectId);
-      if (rate) {
-        if (rate.pricingModel === 'PER_M3') fr = vol * rate.ratePerUnit;
-        else if (rate.pricingModel === 'PER_TRIP') fr = rate.ratePerUnit;
-        else if (rate.pricingModel === 'PER_TON') fr = vol * (qmc?.density ?? 1.6) * rate.ratePerUnit;
+      const isAllIn = rate?.pricingModel === 'ALL_IN';
+      let mat = 0, fr = 0;
+      if (isAllIn) {
+        fr = vol * rate!.ratePerUnit; // ALL_IN sudah include material+angkut
+      } else {
+        mat = vol * (qmc?.costPerM3 ?? 95000);
+        if (rate) {
+          if (rate.pricingModel === 'PER_M3') fr = vol * rate.ratePerUnit;
+          else if (rate.pricingModel === 'PER_TRIP') fr = rate.ratePerUnit;
+          else if (rate.pricingModel === 'PER_TON') fr = vol * (qmc?.density ?? 1.6) * rate.ratePerUnit;
+        }
       }
+      materialCost += mat;
       freightCost += fr;
       const key = contract.projectId;
       const cur = byProject.get(key) ?? { vol: 0, rev: 0, hpp: 0, count: 0 };

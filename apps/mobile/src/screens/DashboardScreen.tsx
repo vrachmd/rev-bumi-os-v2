@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useAppStore, NewRitaseInput } from '../store/useAppStore';
 import { useSwipeBack } from '../hooks/useSwipeBack';
+import { Truck } from 'lucide-react-native';
 import { KpiCard } from '../components/KpiCard';
 import { StatusBadge } from '../components/StatusBadge';
 import { ProfileScreen } from './ProfileScreen';
@@ -171,13 +172,13 @@ export const DashboardScreen: React.FC = () => {
       });
   }, [detailTarget]);
 
-  const recent = React.useMemo(
-    () =>
-      [...deliveries]
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        .slice(0, 6),
-    [deliveries]
-  );
+  const recent = React.useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return [...deliveries]
+      .filter((d) => (d.scheduledAt || d.createdAt).slice(0, 10) === today)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 6);
+  }, [deliveries]);
 
   // Pre-fetch ETA for IN_TRANSIT items in recent list
 React.useEffect(() => {
@@ -598,13 +599,17 @@ React.useEffect(() => {
             )
           )}
 
-          <Text style={styles.sectionTitle}>Ritase Terbaru</Text>
+          <Text style={styles.sectionTitle}>Ritase Hari Ini</Text>
           <FlatList
             data={recent}
             keyExtractor={(item) => item.id}
             scrollEnabled={false}
             ListEmptyComponent={
-              <Text style={styles.empty}>Belum ada ritase.</Text>
+              <View style={styles.emptyCard}>
+                <View style={styles.emptyIconWrap}><Truck size={22} color="#64748B" /></View>
+                <Text style={styles.emptyTitle}>Belum ada pengiriman hari ini</Text>
+                <Text style={styles.emptySub}>Ritase yang dijadwalkan hari ini akan muncul di sini. Tekan + Tambah Ritase Baru untuk buat SJ hari ini.</Text>
+              </View>
             }
             renderItem={({ item }) => {
               const product = labelFrom(products, item.productId);
@@ -942,6 +947,11 @@ const styles = StyleSheet.create({
   },
   addBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
   empty: { textAlign: 'center', color: '#94A3B8', marginTop: 24, fontSize: 12 },
+  emptyCard: { backgroundColor: '#FFFFFF', borderRadius: 14, borderWidth: 1, borderColor: '#E2E8F0', padding: 20, alignItems: 'center', marginTop: 8 },
+  emptyIconWrap: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
+  emptyIcon: { fontSize: 22 },
+  emptyTitle: { fontSize: 13, fontWeight: '800', color: '#0F172A', marginTop: 2 },
+  emptySub: { fontSize: 11, color: '#64748B', marginTop: 4, textAlign: 'center', lineHeight: 16 },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,

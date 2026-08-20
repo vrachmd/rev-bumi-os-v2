@@ -20,6 +20,11 @@ const ROLE_FROM_DB: Record<string, MobileRole> = {
   QUARRY_CHECKER: 'QUARRY_CHECKER',
   SITE_CHECKER: 'SITE_CHECKER',
   MANAGEMENT: 'MANAGEMENT',
+  SUPER_ADMIN: 'MANAGEMENT',
+  OPERATIONS: 'MANAGEMENT',
+  COMMERCIAL: 'MANAGEMENT',
+  FINANCE: 'MANAGEMENT',
+  DISPATCHER: 'MANAGEMENT',
 };
 
 export const LoginScreen: React.FC<{ onDone: () => void }> = ({ onDone }) => {
