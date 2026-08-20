@@ -222,6 +222,8 @@ React.useEffect(() => {
   const scheduled = deliveries.filter((d) => d.status === 'SCHEDULED').length;
   const delivered = deliveries.filter((d) => d.status === 'DELIVERED').length;
   const totalM3 = deliveries.reduce((s, d) => s + d.loadedVolumeM3, 0);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayCount = deliveries.filter((d) => (d.scheduledAt || d.createdAt).slice(0, 10) === todayStr).length;
 
   const set = <K extends keyof NewRitaseInput>(key: K, value: NewRitaseInput[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -385,7 +387,7 @@ React.useEffect(() => {
         >
           <Text style={styles.sectionTitle}>Ringkasan Operasional</Text>
           <View style={styles.kpiRow}>
-            <KpiCard label="Ritase Hari Ini" value={String(deliveries.length)} sub={`${delivered} selesai`} />
+            <KpiCard label="Ritase Hari Ini" value={String(todayCount)} sub={`${delivered} selesai · ${deliveries.length} total`} />
             <KpiCard label="Dalam Perjalanan" value={String(inTransit)} accent="#7C3AED" />
             <KpiCard label="Terjadwal" value={String(scheduled)} accent="#2563EB" />
           </View>
