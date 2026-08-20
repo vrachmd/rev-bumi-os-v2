@@ -79,6 +79,7 @@ export interface DeliveryItem {
   receivedWeightKg?: number;
   receivedAt?: string;
   gps?: { lat: number; lng: number; accuracy?: number };
+  quarryCheckerName?: string;
 
   signatureQuarry?: string;
   signatureDriver?: string;

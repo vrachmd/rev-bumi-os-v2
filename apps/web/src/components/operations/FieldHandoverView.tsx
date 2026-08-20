@@ -407,7 +407,7 @@ export const FieldHandoverView: React.FC<FieldHandoverViewProps> = ({
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-500">Armada & Supir:</span>
-                          <span className="font-mono font-bold text-slate-900">{veh?.plateNumber} ({drv?.fullName})</span>
+                          <span className="font-mono font-bold text-slate-900">{veh?.plateNumber} ({del.driverName || drv?.fullName || '-'})</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-500">Kapasitas Bak:</span>
@@ -503,12 +503,18 @@ export const FieldHandoverView: React.FC<FieldHandoverViewProps> = ({
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-500">Armada & Supir:</span>
-                          <span className="font-mono font-bold text-slate-900">{veh?.plateNumber} ({drv?.fullName})</span>
+                          <span className="font-mono font-bold text-slate-900">{veh?.plateNumber} ({del.driverName || drv?.fullName || '-'})</span>
                         </div>
                         <div className="flex justify-between bg-slate-50 p-1.5 rounded border border-slate-100 mt-1">
                           <span className="text-slate-600 font-semibold">Hasil Ukur Quarry:</span>
                           <span className="font-mono font-extrabold text-[#003C16]">
-                            {formatVolumeM3(del.loadedVolumeM3)} ({formatWeightTon(del.loadedWeightKg)})
+                            {formatVolumeM3(del.loadedVolumeM3)} (
+                            {formatWeightTon(
+                              del.loadedWeightKg && del.loadedWeightKg > 0
+                                ? del.loadedWeightKg
+                                : Math.round(del.loadedVolumeM3 * (products.find((p) => p.id === del.productId)?.density || 1.6) * 1000)
+                            )}
+                            )
                           </span>
                         </div>
                         {del.quarryLoadingInfo?.checkerName && (

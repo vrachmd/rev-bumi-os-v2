@@ -295,6 +295,8 @@ export async function fetchMobileDeliveriesFromSupabase(): Promise<DeliveryItem[
     if (sigQ) item.signatureQuarry = sigQ;
     const place = (qli.notes as string | undefined) ?? (qli.place as string | undefined);
     if (place) item.evidencePlace = place;
+    const checker = qli.checkerName as string | undefined;
+    if (checker) item.quarryCheckerName = checker;
     const egps = (qli as Record<string, unknown>).gps as { lat: number; lng: number } | undefined;
     if (egps) item.evidenceGps = egps;
     // site_unloading_info kanonik web: measuredVolumeM3/gpsLatitude/gpsLongitude/signatureUrl/unloadedAt
@@ -355,7 +357,7 @@ const toDeliveryDbRow = (d: DeliveryItem): DeliveryDbRow => ({
     ? (() => {
         const loadedAt = d.evidenceAt ?? d.createdAt;
         const common = {
-          checkerName: d.driverName || 'Petugas Lapangan',
+          checkerName: d.quarryCheckerName || 'Petugas Lapangan',
           loadedAt,
           densityUsed: d.densityApplied ?? null,
           notes: d.evidencePlace ?? null,

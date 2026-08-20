@@ -421,7 +421,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!canTransition(delivery.status, 'LOADING')) return;
 
     let loadedVolumeM3 = 0;
-    const base: Partial<DeliveryItem> = { status: 'LOADING' };
+    let loadedWeightKg = 0;
+    let densityApplied = input.method === 'WEIGHBRIDGE' ? input.densityTonPerM3 : state.getDensity(delivery.productId, delivery.quarryId);
+    const base: Partial<DeliveryItem> = { status: 'LOADING', densityApplied, quarryCheckerName: state.profile.name };
 
     if (input.method === 'WEIGHBRIDGE') {
       loadedVolumeM3 = convertWeightToVolume(
@@ -429,10 +431,12 @@ export const useAppStore = create<AppState>((set, get) => ({
         input.tareKg,
         input.densityTonPerM3
       );
+      loadedWeightKg = Math.max(0, input.grossKg - input.tareKg);
       Object.assign(base, {
         loadingMethod: 'WEIGHBRIDGE' as const,
         grossKg: input.grossKg,
         tareKg: input.tareKg,
+        loadedWeightKg,
       });
     } else {
       loadedVolumeM3 = calculateVolumeFromDimensions(
@@ -440,9 +444,11 @@ export const useAppStore = create<AppState>((set, get) => ({
         input.widthM,
         input.heightM
       );
+      loadedWeightKg = Math.round(loadedVolumeM3 * densityApplied * 1000);
       Object.assign(base, {
         loadingMethod: 'DIMENSION' as const,
         dimension: { lengthM: input.lengthM, widthM: input.widthM, heightM: input.heightM },
+        loadedWeightKg,
       });
     }
 
@@ -450,6 +456,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       deliveries: patchDelivery(state.deliveries, id, {
         ...base,
         loadedVolumeM3,
+        loadedWeightKg,
+        densityApplied,
+        quarryCheckerName: state.profile.name,
         evidenceAt: input.evidenceAt,
         photoUri: input.photoUri,
         evidenceGps: input.evidenceGps,
