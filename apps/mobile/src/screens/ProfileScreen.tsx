@@ -6,12 +6,14 @@ import * as ImagePicker from 'expo-image-picker';
 import { User, LogOut, Camera, Image as ImageIcon, ShieldCheck } from 'lucide-react-native';
 import { supabase } from '../utils/supabase';
 import { useAppStore } from '../store/useAppStore';
+import { useSwipeBack } from '../hooks/useSwipeBack';
 
 export const ProfileScreen: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const profile = useAppStore((s) => s.profile);
   const setProfile = useAppStore((s) => s.setProfile);
   const [avatar, setAvatar] = useState<string | null>(null);
   const setOnline = useAppStore((s) => s.setOnline);
+  const panHandlers = useSwipeBack(onClose);
 
   const pickFromGallery = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -35,10 +37,13 @@ export const ProfileScreen: React.FC<{ onClose: () => void }> = ({ onClose }) =>
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={['top']} {...panHandlers}>
       <StatusBar style="light" />
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profil Saya</Text>
+        <View>
+          <Text style={styles.headerTitle}>Profil Saya</Text>
+          <Text style={styles.swipeHint}>‹ geser ke kiri untuk kembali</Text>
+        </View>
         <Pressable onPress={onClose} style={styles.closeBtn}><Text style={styles.closeText}>✕</Text></Pressable>
       </View>
       <ScrollView contentContainerStyle={styles.content}>
@@ -84,6 +89,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F8FAFC' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#003C16' },
   headerTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
+  swipeHint: { color: '#A7F3D0', fontSize: 10, fontWeight: '600', marginTop: 2 },
   closeBtn: { width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
   closeText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   content: { padding: 16, paddingBottom: 32 },
