@@ -16,7 +16,6 @@ import { StatusBar } from 'expo-status-bar';
 import { calculateVolumeFromDimensions } from 'shared-engine';
 import { useAppStore } from '../store/useAppStore';
 import { useSwipeBack } from '../hooks/useSwipeBack';
-import { productDensities } from '../data/seed';
 import { StatusBadge } from '../components/StatusBadge';
 import { EvidenceViewer } from '../components/EvidenceViewer';
 import {
@@ -33,7 +32,7 @@ interface SiteListViewProps {
 }
 
 export const SiteListView: React.FC<SiteListViewProps> = ({ onSelect }) => {
-  const { deliveries, products, quarries, vendors } = useAppStore();
+  const { deliveries, products, quarries, vendors, contracts } = useAppStore();
 
   const siteList = deliveries.filter(
     (d) => d.status === 'IN_TRANSIT' || d.status === 'ARRIVED' || d.status === 'UNLOADED'
@@ -57,6 +56,7 @@ export const SiteListView: React.FC<SiteListViewProps> = ({ onSelect }) => {
           const product = labelFrom(products, item.productId);
           const quarry = labelFrom(quarries, item.quarryId);
           const vendor = labelFrom(vendors, item.transportVendorId);
+          const project = labelFrom(contracts, item.contractId);
           return (
             <Pressable style={styles.card} onPress={() => onSelect(item.id)}>
               <View style={styles.cardTop}>
@@ -64,6 +64,7 @@ export const SiteListView: React.FC<SiteListViewProps> = ({ onSelect }) => {
                 <StatusBadge status={item.status} />
               </View>
               <Text style={styles.cardMain}>{product} · {quarry}</Text>
+              <Text style={styles.cardProject}>🎯 Tujuan: {project}</Text>
               <Text style={styles.cardSub}>{item.plateNumber} · {item.driverName} · {vendor}</Text>
               {item.status === 'ARRIVED' ? (
                 <Text style={styles.cardAccent}>Truk sudah tiba — lanjutkan pengukuran</Text>
@@ -84,7 +85,7 @@ interface SiteDetailViewProps {
 }
 
 export const SiteDetailView: React.FC<SiteDetailViewProps> = ({ id, onBack }) => {
-  const { deliveries, products, quarries, vendors, confirmArrival, recordUnloading, submitPod } =
+  const { deliveries, products, quarries, vendors, contracts, getDensity, confirmArrival, recordUnloading, submitPod } =
     useAppStore();
   const [received, setReceived] = useState(() => {
     const d = deliveries.find((x) => x.id === id);
@@ -120,11 +121,12 @@ export const SiteDetailView: React.FC<SiteDetailViewProps> = ({ id, onBack }) =>
   const product = labelFrom(products, delivery.productId);
   const quarry = labelFrom(quarries, delivery.quarryId);
   const vendor = labelFrom(vendors, delivery.transportVendorId);
+  const project = labelFrom(contracts, delivery.contractId);
   const arrived = delivery.status === 'ARRIVED';
   const unloaded = delivery.status === 'UNLOADED';
   const gpsLocked = arrived || unloaded;
   const variance = delivery.varianceM3 !== undefined ? delivery.varianceM3 : null;
-  const density = productDensities[delivery.productId] ?? 1.6;
+  const density = getDensity(delivery.productId, delivery.quarryId);
   const refTons = refVolume * density;
   const siteGps = delivery.gps ?? SITE_GPS;
 
@@ -152,7 +154,7 @@ export const SiteDetailView: React.FC<SiteDetailViewProps> = ({ id, onBack }) =>
       <View style={styles.header}>
         <Text style={styles.title}>2 · Site Unloading</Text>
         <Text style={styles.subtitle}>
-          {delivery.deliveryNumber} · {quarry} → Site
+          {delivery.deliveryNumber} · {quarry} → {project}
         </Text>
         <Text style={styles.swipeHint}>‹ geser ke kiri untuk kembali</Text>
       </View>
@@ -167,6 +169,7 @@ export const SiteDetailView: React.FC<SiteDetailViewProps> = ({ id, onBack }) =>
         >
           <View style={styles.infoCard}>
             <Text style={styles.infoMain}>{product} · {vendor}</Text>
+            <Text style={styles.infoSub}>🎯 Tujuan: {project}</Text>
             <Text style={styles.infoSub}>
               {delivery.plateNumber} · {delivery.driverName}
             </Text>
@@ -395,6 +398,7 @@ const styles = StyleSheet.create({
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sj: { fontSize: 13, fontWeight: '800', color: '#003C16' },
   cardMain: { fontSize: 13, fontWeight: '600', color: '#0F172A', marginTop: 6 },
+  cardProject: { fontSize: 11, fontWeight: '800', color: '#003C16', marginTop: 3 },
   cardSub: { fontSize: 11, color: '#64748B', marginTop: 2 },
   cardAccent: { fontSize: 11, fontWeight: '700', color: '#0891B2', marginTop: 6 },
   formContent: { padding: 16, paddingBottom: 40 },

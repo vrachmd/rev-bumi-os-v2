@@ -38,7 +38,7 @@ interface QuarryListViewProps {
 }
 
 export const QuarryListView: React.FC<QuarryListViewProps> = ({ onSelect }) => {
-  const { deliveries, products, quarries, vendors } = useAppStore();
+  const { deliveries, products, quarries, vendors, contracts } = useAppStore();
 
   const quarryList = deliveries.filter((d) => d.status === 'SCHEDULED' || d.status === 'LOADING');
 
@@ -58,6 +58,7 @@ export const QuarryListView: React.FC<QuarryListViewProps> = ({ onSelect }) => {
           const product = labelFrom(products, item.productId);
           const quarry = labelFrom(quarries, item.quarryId);
           const vendor = labelFrom(vendors, item.transportVendorId);
+          const project = labelFrom(contracts, item.contractId);
           return (
             <Pressable style={styles.card} onPress={() => onSelect(item.id)}>
               <View style={styles.cardTop}>
@@ -65,6 +66,7 @@ export const QuarryListView: React.FC<QuarryListViewProps> = ({ onSelect }) => {
                 <StatusBadge status={item.status} />
               </View>
               <Text style={styles.cardMain}>{product} · {quarry}</Text>
+              <Text style={styles.cardProject}>🎯 Tujuan: {project}</Text>
               <Text style={styles.cardSub}>{item.plateNumber} · {item.driverName} · {vendor}</Text>
               {item.status === 'LOADING' ? (
                 <Text style={styles.cardAccent}>Tercatat {formatVolume(item.loadedVolumeM3)} — lanjutkan dispatch</Text>
@@ -169,6 +171,8 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
   const product = labelFrom(products, delivery.productId);
   const quarry = labelFrom(quarries, delivery.quarryId);
   const vendor = labelFrom(vendors, delivery.transportVendorId);
+  const { contracts: contractsDetail } = useAppStore();
+  const projectDetail = labelFrom(contractsDetail, delivery.contractId);
   const isLoading = delivery.status === 'LOADING';
   const quarryGps = quarries.find((q) => q.id === delivery.quarryId)?.gps ?? DEFAULT_QUARRY_GPS;
 
@@ -267,6 +271,7 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
         >
           <View style={styles.infoCard}>
             <Text style={styles.infoMain}>{product} · {vendor}</Text>
+            <Text style={styles.infoSub}>{projectDetail}</Text>
             <Text style={styles.infoSub}>
               {delivery.plateNumber} · {delivery.driverName}
             </Text>
@@ -526,6 +531,7 @@ const styles = StyleSheet.create({
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sj: { fontSize: 13, fontWeight: '800', color: '#003C16' },
   cardMain: { fontSize: 13, fontWeight: '600', color: '#0F172A', marginTop: 6 },
+  cardProject: { fontSize: 11, fontWeight: '800', color: '#003C16', marginTop: 3 },
   cardSub: { fontSize: 11, color: '#64748B', marginTop: 2 },
   cardAccent: { fontSize: 11, fontWeight: '700', color: '#EA580C', marginTop: 6 },
   formContent: { padding: 16, paddingBottom: 40 },
