@@ -849,9 +849,9 @@ const styles = StyleSheet.create({
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   logoWrap: { width: 42, height: 42, borderRadius: 10, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 6, elevation: 3, overflow: 'hidden' },
   brandLogo: { width: 42, height: 42, resizeMode: 'cover' },
-  avatarBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.35)' },
-  avatarText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
-  avatarOnline: { position: 'absolute', right: -1, bottom: -1, width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: '#003C16' },
+  avatarBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#A7F3D0', shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, elevation: 4 },
+  avatarText: { color: '#003C16', fontSize: 15, fontWeight: '900' },
+  avatarOnline: { position: 'absolute', right: -2, bottom: -2, width: 12, height: 12, borderRadius: 6, borderWidth: 2.5, borderColor: '#003C16', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 3, elevation: 2 },
   profileOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50, backgroundColor: '#F8FAFC' },
   roleBox: {
     marginTop: 12,
