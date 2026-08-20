@@ -53,55 +53,6 @@ export const RekonsilScreen: React.FC = () => {
         <Text style={styles.subtitle}>Kubikasi muat vs terima & ambang toleransi 2%</Text>
       </View>
 
-      {/* Filter */}
-      <View style={styles.filterBar}>
-        <View style={styles.filterRow}>
-          <Text style={styles.filterLabel}>Tanggal (YYYY-MM-DD):</Text>
-          <View style={styles.filterInputWrap}>
-            <Text style={styles.filterInput} onPress={() => {}}>{filterDate || 'Semua tanggal'}</Text>
-            <Text style={styles.filterClear} onPress={() => setFilterDate('')}>{filterDate ? '× Hapus' : ''}</Text>
-          </View>
-          <TextInput
-            style={styles.hiddenInput}
-            placeholder="YYYY-MM-DD"
-            value={filterDate}
-            onChangeText={setFilterDate}
-            placeholderTextColor="#94A3B8"
-          />
-        </View>
-        <View style={styles.filterRow2}>
-          <View style={styles.filterCol}>
-            <Text style={styles.filterLabel}>Proyek</Text>
-            <View style={styles.pickerWrap}>
-              <Text style={styles.pickerText} numberOfLines={1}>{filterProject === 'ALL' ? 'Semua proyek' : labelFrom(contracts, filterProject)}</Text>
-            </View>
-            <View style={styles.pickerOptions}>
-              <Text style={styles.pickerOption} onPress={() => setFilterProject('ALL')}>Semua proyek</Text>
-              {contracts.slice(0, 6).map((c) => (
-                <Text key={c.id} style={styles.pickerOption} onPress={() => setFilterProject(c.id)} numberOfLines={1}>
-                  {labelFrom(contracts, c.id)}
-                </Text>
-              ))}
-            </View>
-          </View>
-          <View style={styles.filterCol}>
-            <Text style={styles.filterLabel}>Status</Text>
-            <View style={styles.filterChipRow}>
-              {(['ALL', 'WITHIN', 'ABOVE'] as const).map((s) => (
-                <Text key={s} style={[styles.filterChip, filterStatus === s && styles.filterChipActive]} onPress={() => setFilterStatus(s)}>
-                  {s === 'ALL' ? 'Semua' : s === 'WITHIN' ? 'Within' : 'Above'}
-                </Text>
-              ))}
-            </View>
-          </View>
-        </View>
-        {(filterProject !== 'ALL' || filterStatus !== 'ALL' || filterDate) && (
-          <Text style={styles.filterReset} onPress={() => { setFilterProject('ALL'); setFilterStatus('ALL'); setFilterDate(''); }}>
-            Reset filter
-          </Text>
-        )}
-      </View>
-
       <View style={styles.summary}>
         <View style={styles.sumCell}>
           <Text style={styles.sumValue}>{rekon.length}</Text>
@@ -144,6 +95,38 @@ export const RekonsilScreen: React.FC = () => {
           <Text style={styles.chartHint}>Batas toleransi kontrak 2% · &gt;3.5% butuh investigasi (qmc density per quarry)</Text>
         </View>
       )}
+
+      {/* Filter — di bawah chart biar tidak besar di atas */}
+      <View style={styles.filterBarCompact}>
+        <View style={styles.filterRowCompact}>
+          <View style={styles.filterColCompact}>
+            <Text style={styles.filterLabel}>Tanggal</Text>
+            <TextInput style={styles.filterInputCompact} placeholder="YYYY-MM-DD" value={filterDate} onChangeText={setFilterDate} placeholderTextColor="#94A3B8" />
+          </View>
+          <View style={styles.filterColCompact}>
+            <Text style={styles.filterLabel}>Proyek</Text>
+            <View style={styles.pickerWrapCompact}>
+              <Text style={styles.pickerText} numberOfLines={1}>{filterProject === 'ALL' ? 'Semua' : labelFrom(contracts, filterProject)}</Text>
+            </View>
+            <View style={styles.filterChipRowCompact}>
+              <Text style={[styles.filterChipCompact, filterProject === 'ALL' && styles.filterChipActiveCompact]} onPress={() => setFilterProject('ALL')}>Semua</Text>
+              {contracts.slice(0, 3).map((c) => (
+                <Text key={c.id} style={[styles.filterChipCompact, filterProject === c.id && styles.filterChipActiveCompact]} onPress={() => setFilterProject(c.id)} numberOfLines={1}>{labelFrom(contracts, c.id).slice(0, 12)}</Text>
+              ))}
+            </View>
+          </View>
+        </View>
+        <View style={styles.filterStatusRow}>
+          {(['ALL', 'WITHIN', 'ABOVE'] as const).map((s) => (
+            <Text key={s} style={[styles.filterChip, filterStatus === s && styles.filterChipActive]} onPress={() => setFilterStatus(s)}>
+              {s === 'ALL' ? 'Semua' : s === 'WITHIN' ? 'Within' : 'Above'}
+            </Text>
+          ))}
+          {(filterProject !== 'ALL' || filterStatus !== 'ALL' || filterDate) && (
+            <Text style={styles.filterResetCompact} onPress={() => { setFilterProject('ALL'); setFilterStatus('ALL'); setFilterDate(''); }}>Reset</Text>
+          )}
+        </View>
+      </View>
 
       <FlatList
         data={rekon}
@@ -303,6 +286,16 @@ const styles = StyleSheet.create({
   chartBarFill: { height: 10, borderRadius: 5 },
   chartValue: { fontSize: 10, fontWeight: '800', width: 90, textAlign: 'right' },
   chartHint: { fontSize: 9, color: '#94A3B8', marginTop: 8, textAlign: 'center' },
+  filterBarCompact: { marginHorizontal: 16, marginTop: 12, backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 10 },
+  filterRowCompact: { flexDirection: 'row', gap: 10 },
+  filterColCompact: { flex: 1 },
+  filterInputCompact: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6, fontSize: 11, color: '#0F172A' },
+  pickerWrapCompact: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 8, padding: 6, marginTop: 4 },
+  filterChipRowCompact: { flexDirection: 'row', gap: 4, marginTop: 6, flexWrap: 'wrap' },
+  filterChipCompact: { fontSize: 10, fontWeight: '700', color: '#64748B', backgroundColor: '#F1F5F9', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8, overflow: 'hidden' },
+  filterChipActiveCompact: { color: '#FFFFFF', backgroundColor: '#003C16' },
+  filterStatusRow: { flexDirection: 'row', gap: 6, marginTop: 10, alignItems: 'center' },
+  filterResetCompact: { fontSize: 11, fontWeight: '700', color: '#DC2626', marginLeft: 'auto' },
   listContent: { padding: 16, paddingBottom: 40 },
   empty: { textAlign: 'center', color: '#94A3B8', marginTop: 24, fontSize: 12 },
   card: {
