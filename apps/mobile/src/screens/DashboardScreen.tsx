@@ -331,21 +331,14 @@ React.useEffect(() => {
           </View>
         </View>
         <View style={styles.brandRow}>
-          <View style={styles.logoWrap}>
-            <Image source={require('../../assets/logo.png')} style={styles.brandLogo} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.brand}>REV BUMI NUSANTARA OS</Text>
-            <Text style={styles.headerSub}>Sistem Operasional REV Bumi Nusantara</Text>
-          </View>
           <Pressable onPress={() => setShowProfile(true)} style={styles.avatarBtn}>
             <Text style={styles.avatarText}>{profile.name.charAt(0)}</Text>
             <View style={[styles.avatarOnline, { backgroundColor: isOnline ? '#10B981' : '#94A3B8' }]} />
           </Pressable>
-        </View>
-        <View style={styles.roleBadge}>
-          <Text style={styles.roleBadgeText}>{ROLE_NAMES[profile.role]}</Text>
-          <Text style={styles.roleBadgeSub}> • {profile.name}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.brand}>{profile.name}</Text>
+            <Text style={styles.headerSub}>{ROLE_NAMES[profile.role]} • Sistem Operasional REV Bumi Nusantara</Text>
+          </View>
         </View>
       </View>
       {showProfile && (
