@@ -10,7 +10,7 @@ import { EvidenceViewer } from '../components/EvidenceViewer';
 import { formatVolume, labelFrom } from '../utils/format';
 
 export const RekonsilScreen: React.FC = () => {
-  const { deliveries, products, quarries, vendors, profile, advancePod } = useAppStore();
+  const { deliveries, products, quarries, vendors, contracts, profile, advancePod } = useAppStore();
   const isManager = profile.role === 'MANAGEMENT';
   const [viewer, setViewer] = useState<{
     uri: string;
@@ -91,6 +91,13 @@ export const RekonsilScreen: React.FC = () => {
           const product = labelFrom(products, item.productId);
           const quarry = labelFrom(quarries, item.quarryId);
           const vendor = labelFrom(vendors, item.transportVendorId);
+          const contract = contracts.find((c) => c.id === item.contractId);
+          const projectName = contract ? labelFrom(contracts, item.contractId) : '-';
+          // tanggal kirim: scheduledAt || createdAt
+          const tgl = (() => {
+            const d = new Date(item.scheduledAt || item.createdAt);
+            return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+          })();
           const variance = item.varianceM3 ?? 0;
           const percent = item.variancePercent ?? 0;
           const toleranceStatus = evaluateTolerance(percent, 2);
@@ -104,6 +111,7 @@ export const RekonsilScreen: React.FC = () => {
                 <Text style={styles.sj}>{item.deliveryNumber}</Text>
                 <StatusBadge status={item.status} />
               </View>
+              <Text style={styles.cardSub}>{tgl} · {projectName}</Text>
               <Text style={styles.cardMain}>{product} · {quarry} · {vendor}</Text>
 
               <View style={styles.volRow}>
@@ -226,6 +234,7 @@ const styles = StyleSheet.create({
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sj: { fontSize: 13, fontWeight: '800', color: '#003C16' },
   cardMain: { fontSize: 12, fontWeight: '600', color: '#0F172A', marginTop: 6 },
+  cardSub: { fontSize: 11, color: '#64748B', marginTop: 2 },
   volRow: {
     flexDirection: 'row',
     backgroundColor: '#F8FAFC',

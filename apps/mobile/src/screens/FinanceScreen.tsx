@@ -170,10 +170,10 @@ export const FinanceScreen: React.FC = () => {
 
         {/* Insight */}
         <View style={styles.insightCard}>
-          <Text style={styles.insightTitle}>💡 Sumber & Catatan</Text>
-          <Text style={styles.insightText}>• <Text style={styles.insightBold}>Density & cost</Text> per quarry×product dari `quarry_material_costs` (fallback `products.density 1.6`).</Text>
-          <Text style={styles.insightText}>• <Text style={styles.insightBold}>Freight</Text> `frate-01..13` per `projectId` — `ALL_IN` sudah include material.</Text>
-          <Text style={styles.insightText}>• <Text style={styles.insightBold}>Approved</Text> = `min(loaded, received)` toleransi 2% — update OTA `eas update` tanpa APK baru.</Text>
+          <Text style={styles.insightTitle}>Sumber & Catatan</Text>
+          <Text style={styles.insightText}><Text style={styles.insightBold}>Density & cost</Text> per quarry×product dari `quarry_material_costs` (fallback `products.density 1.6`).</Text>
+          <Text style={styles.insightText}><Text style={styles.insightBold}>Freight</Text> `frate-01..13` per `projectId` — `ALL_IN` sudah include material.</Text>
+          <Text style={styles.insightText}><Text style={styles.insightBold}>Approved</Text> = `min(loaded, received)` toleransi 2% — update OTA `eas update` tanpa APK baru.</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
