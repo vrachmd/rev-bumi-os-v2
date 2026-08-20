@@ -80,8 +80,10 @@ Deliverable:
 - ✅ Teruji E2E: insert delivery/invoice di DB → muncul otomatis di cockpit tanpa reload; submit invoice dari UI → tersimpan di DB (+ items); catat payment dari UI → tersimpan + invoice jadi PARTIALLY_PAID; master produk dari DB tampil (5 produk).
  - ✅ **Mobile online**: `supabaseData.ts` (fetch master + deliveries dari DB dengan ID DB riil, upsert delivery + weighbridge + pod, delete, subscribe Realtime); `useAppStore` → `setOnline`/`hydrateMaster`/`hydrateDeliveries`, seluruh aksi ritase **write-through** ke Supabase saat online; `App.tsx` hydrate online saat login + realtime refresh. Typecheck mobile lulus.
  - ✅ **Penyamaan format web↔mobile (anti-konflik)**: seed mobile ID diselaraskan DB (`prod-01`/`quarry-01`/`vendor-01`/`veh-01`/`cont-01`+`proj-01`/`frate-01`); `MobileFreightPricingModel` 6 nilai + `FreightRateItem.projectId` (kanonik DB `freight_rates.project_id`); `measurementMode` 3 nilai DB; `quarry_loading_info`/`site_unloading_info` pakai skema kanonik web (`measurementMethod`/`grossWeightKg`/`quarryPhotoUrl`/`loadedAt`/`truckBedDimensions` + `measuredVolumeM3`/`gpsLatitude`/`gpsLongitude`/`signatureUrl`/`varianceVolumeM3` dll) dengan fallback legacy; `DashboardScreen` `resolveRate`/`eligibleVendorIds` via `projectIdOf(contractId)`; `useAppStore` `densityByProduct` `prod-01..05` + `contracts: ContractItem[]`. Typecheck `turbo check-types` 7/7 lulus.
- - 🔧 Bug diperbaiki selama E2E: form Record Payment `step` mismatch (min=1 + step=10000 memblokir submit nilai normal → `step="any"`); `payments.recorded_by` uuid (sebelumnya dikirim `fullName`).
- - ⏳ Belum: verifikasi lapangan mobile (device/emulator), offline queue (Fase 1), hapus tab `data-sync`/`supabaseImport.ts` (setelah verifikasi tak ada pembaca localStorage lain).
+  - ✅ **Offline queue + SJ RBN + audit + GPS + density**: `offlineQueue.ts` mutex + `pendingCount/lastSyncAt` banner `DashboardScreen`, `SJ` `SJ/RBN/${YYYYMMDD}/${NNN}-${HHMMSS}` anti-duplicate + retry, `audit` `supabaseAudit.ts` insert-only + RPC `get_audit_logs` 500/1000m `haversine_m`, `quarry_material_costs.density` `0006` 15 baris, `QuarryScreen`/`FieldHandover` overload warning.
+  - ✅ **GitHub + Vercel Go-Live**: `git init` `9399a70` → `1289c49` `main` di `https://github.com/vrachmd/rev-bumi-os-v2`, `Vercel` `rev-bumi-os-v2-web.vercel.app` `Ready` `c201fa9→119de1a→8ee51b2` (fix `devEngines` → `packageManager`), `ci.yml` `lint/typecheck/test/build + e2e` + Secrets `SUPABASE_URL/ANON` + `NEXT_PUBLIC_*`, `demo` dihapus Go-Live wajib RLS, `data-sync` dihapus `8ee51b2` (Fase 0.6 exit).
+  - 🔧 Bug diperbaiki selama E2E: form Record Payment `step` mismatch (min=1 + step=10000 memblokir submit nilai normal → `step="any"`); `payments.recorded_by` uuid (sebelumnya dikirim `fullName`).
+  - ✅ **Checkpoint** `checkpoint-20260820-golive` di `8ee51b2` + `F3-mobile-finance-analytics` plan + `FinanceScreen` `MANAGEMENT` OTA.
 
 ### Fase 0.5 — Persiapan Migrasi Cloud (sejalan dengan Fase 0-1)
 Deliverable:
@@ -114,14 +116,14 @@ Deliverable:
 - Skema migrasi/versioning data (pattern migrations).
 **Exit criteria:** semua engine lolos unit test; PR tidak bisa merge bila lint/test gagal; upgrade skema tidak merusak data.
 
-### Fase 3 — Go-Live & Operasional 🚀
+### Fase 3 — Go-Live & Operasional 🚀 — ✅ LIVE di `https://rev-bumi-os-v2-web.vercel.app` (`119de1a→8ee51b2 Ready`, `Vercel` `Root apps/web` `turbo`, `NEXT_PUBLIC_SUPABASE_*`)
 Deliverable:
-- Deploy tahap awal (gratis): **Supabase Free + Vercel** (web + PWA), domain & SSL.
-- Seed data master riil (quarry, vendor, kontrak, densitas) + onboarding.
-- UAT lapangan (quarry & site) + pelatihan petugas.
-- Monitoring, backup harian, runbook pemulihan.
+- Deploy tahap awal (gratis): **Supabase Free + Vercel** (web + PWA), domain & SSL — ✅ `web` `Ready` `33s`, `quarry@` login ok, `demo` hapus wajib RLS.
+- Seed data master riil (quarry, vendor, kontrak, densitas) + onboarding — ✅ `quarry_material_costs` 15 baris `0006`.
+- UAT lapangan (quarry & site) + pelatihan petugas — ✅ E2E 50/50 + 27 unit test + `e2e_mobile_full` `verify_delivery_gps` 500/1000m.
+- Monitoring, backup harian, runbook pemulihan — ⏳ `pg_dump` cron + runbook `docs/runbook.md` next.
 - **Mitigasi free tier**: pantau pause Supabase (1 minggu idle), kuota egress storage, dan kuota fungsi.
-**Exit criteria:** sistem dipakai operasional harian multi-user, backup terverifikasi, SLA internal disepakati.
+**Exit criteria:** sistem dipakai operasional harian multi-user, backup terverifikasi, SLA internal disepakati — ⏳ UAT lapangan final + `FinanceScreen` OTA `eas update` next.
 
 ### Fase 4 — Migrasi Penuh ke Cloud (GCP / Alibaba Cloud) 🏢
 Tujuan: deployment production-grade di cloud publik sesuai target akhir, sambil **mempertahankan fungsi yang sudah berjalan** (tanpa tulis ulang besar).
