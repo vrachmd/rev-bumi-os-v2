@@ -240,13 +240,18 @@ React.useEffect(() => {
       const unitPrice = c.unitPricePerM3 || 175000;
       rev += v * unitPrice;
       const qmc = quarryMaterialCosts.find((x) => x.productId === d.productId && x.quarryId === d.quarryId);
-      const cost = qmc?.costPerM3 ?? 95000;
-      mat += v * cost;
       const rate = freightRates.find((r) => r.quarryId === d.quarryId && r.projectId === c.projectId);
-      if (rate) {
-        if (rate.pricingModel === 'PER_M3') fr += v * rate.ratePerUnit;
-        else if (rate.pricingModel === 'PER_TRIP') fr += rate.ratePerUnit;
-        else if (rate.pricingModel === 'PER_TON') fr += v * (qmc?.density ?? 1.6) * rate.ratePerUnit;
+      const isAllIn = rate?.pricingModel === 'ALL_IN';
+      if (isAllIn) {
+        fr += v * rate!.ratePerUnit; // ALL_IN sudah include material+angkut
+      } else {
+        const cost = qmc?.costPerM3 ?? 95000;
+        mat += v * cost;
+        if (rate) {
+          if (rate.pricingModel === 'PER_M3') fr += v * rate.ratePerUnit;
+          else if (rate.pricingModel === 'PER_TRIP') fr += rate.ratePerUnit;
+          else if (rate.pricingModel === 'PER_TON') fr += v * (qmc?.density ?? 1.6) * rate.ratePerUnit;
+        }
       }
     }
     const hpp = mat + fr;
@@ -416,19 +421,19 @@ React.useEffect(() => {
         >
           <Text style={styles.sectionTitle}>Ringkasan Operasional</Text>
           <View style={styles.kpiRow}>
-            <KpiCard label="Ritase Hari Ini" value={String(todayCount)} sub={`${delivered} selesai · ${deliveries.length} total`} />
-            <KpiCard label="Dalam Perjalanan" value={String(inTransit)} accent="#7C3AED" />
-            <KpiCard label="Terjadwal" value={String(scheduled)} accent="#2563EB" />
+            <KpiCard label="Hari Ini" value={String(todayCount)} sub={`${delivered} selesai`} />
+            <KpiCard label="In Transit" value={String(inTransit)} accent="#7C3AED" sub={`${scheduled} terjadwal`} />
+            <KpiCard label="Terjadwal" value={String(scheduled)} accent="#2563EB" sub={`${deliveries.length} total`} />
           </View>
           <View style={styles.kpiRow}>
             {isFinanceRole && todayFinance ? (
               <>
-                <KpiCard label="Pendapatan Hari Ini" value={`Rp ${(todayFinance.rev / 1e6).toFixed(1)}jt`} sub={`${todayFinance.vol.toFixed(1)} m³`} accent="#0EA5E9" />
-                <KpiCard label="HPP Hari Ini" value={`Rp ${(todayFinance.hpp / 1e6).toFixed(1)}jt`} sub="material+freight" accent="#8B5CF6" />
-                <KpiCard label="Laba Hari Ini" value={`Rp ${(todayFinance.gross / 1e6).toFixed(1)}jt`} sub={`${todayFinance.rev > 0 ? ((todayFinance.gross / todayFinance.rev) * 100).toFixed(1) : '0'}% margin · ${todayFinance.vol.toFixed(1)} m³`} accent="#10B981" />
+                <KpiCard label="Pendapatan" value={`Rp ${(todayFinance.rev / 1e6).toFixed(1)}jt`} sub={`${todayFinance.vol.toFixed(1)} m³`} accent="#0EA5E9" />
+                <KpiCard label="HPP" value={`Rp ${(todayFinance.hpp / 1e6).toFixed(1)}jt`} sub="hari ini" accent="#8B5CF6" />
+                <KpiCard label="Laba" value={`Rp ${(todayFinance.gross / 1e6).toFixed(1)}jt`} sub={`${todayFinance.rev > 0 ? ((todayFinance.gross / todayFinance.rev) * 100).toFixed(1) : '0'}%`} accent="#10B981" />
               </>
             ) : (
-              <KpiCard label="Volume Muat" value={`${totalM3.toFixed(1)} m³`} sub="Total semua ritase" accent="#B45309" />
+              <KpiCard label="Volume Muat" value={`${totalM3.toFixed(1)} m³`} sub={`${todayCount} hari ini`} accent="#B45309" />
             )}
           </View>
 
