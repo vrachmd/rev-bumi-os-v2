@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { BarChart3 } from 'lucide-react-native';
@@ -18,10 +18,26 @@ export const RekonsilScreen: React.FC = () => {
     place?: string;
     gps?: { lat: number; lng: number };
   } | null>(null);
+  const [filterProject, setFilterProject] = useState<string>('ALL');
+  const [filterStatus, setFilterStatus] = useState<'ALL' | 'WITHIN' | 'ABOVE'>('ALL');
+  const [filterDate, setFilterDate] = useState<string>('');
 
-  const rekon = deliveries.filter(
+  const rekonAll = deliveries.filter(
     (d) => d.receivedVolumeM3 !== undefined && d.receivedVolumeM3 > 0
   );
+  const rekon = rekonAll.filter((d) => {
+    if (filterProject !== 'ALL' && d.contractId !== filterProject) return false;
+    if (filterStatus !== 'ALL') {
+      const s = evaluateTolerance(d.variancePercent ?? 0, 2);
+      if (filterStatus === 'WITHIN' && s !== 'WITHIN_TOLERANCE') return false;
+      if (filterStatus === 'ABOVE' && s !== 'ABOVE_TOLERANCE') return false;
+    }
+    if (filterDate) {
+      const tgl = (d.scheduledAt || d.createdAt).slice(0, 10);
+      if (tgl !== filterDate) return false;
+    }
+    return true;
+  });
 
   const within = rekon.filter(
     (d) => evaluateTolerance(d.variancePercent ?? 0, 2) === 'WITHIN_TOLERANCE'
@@ -35,6 +51,55 @@ export const RekonsilScreen: React.FC = () => {
       <View style={styles.header}>
         <Text style={styles.title}>Rekonsiliasi</Text>
         <Text style={styles.subtitle}>Kubikasi muat vs terima & ambang toleransi 2%</Text>
+      </View>
+
+      {/* Filter */}
+      <View style={styles.filterBar}>
+        <View style={styles.filterRow}>
+          <Text style={styles.filterLabel}>Tanggal (YYYY-MM-DD):</Text>
+          <View style={styles.filterInputWrap}>
+            <Text style={styles.filterInput} onPress={() => {}}>{filterDate || 'Semua tanggal'}</Text>
+            <Text style={styles.filterClear} onPress={() => setFilterDate('')}>{filterDate ? '× Hapus' : ''}</Text>
+          </View>
+          <TextInput
+            style={styles.hiddenInput}
+            placeholder="YYYY-MM-DD"
+            value={filterDate}
+            onChangeText={setFilterDate}
+            placeholderTextColor="#94A3B8"
+          />
+        </View>
+        <View style={styles.filterRow2}>
+          <View style={styles.filterCol}>
+            <Text style={styles.filterLabel}>Proyek</Text>
+            <View style={styles.pickerWrap}>
+              <Text style={styles.pickerText} numberOfLines={1}>{filterProject === 'ALL' ? 'Semua proyek' : labelFrom(contracts, filterProject)}</Text>
+            </View>
+            <View style={styles.pickerOptions}>
+              <Text style={styles.pickerOption} onPress={() => setFilterProject('ALL')}>Semua proyek</Text>
+              {contracts.slice(0, 6).map((c) => (
+                <Text key={c.id} style={styles.pickerOption} onPress={() => setFilterProject(c.id)} numberOfLines={1}>
+                  {labelFrom(contracts, c.id)}
+                </Text>
+              ))}
+            </View>
+          </View>
+          <View style={styles.filterCol}>
+            <Text style={styles.filterLabel}>Status</Text>
+            <View style={styles.filterChipRow}>
+              {(['ALL', 'WITHIN', 'ABOVE'] as const).map((s) => (
+                <Text key={s} style={[styles.filterChip, filterStatus === s && styles.filterChipActive]} onPress={() => setFilterStatus(s)}>
+                  {s === 'ALL' ? 'Semua' : s === 'WITHIN' ? 'Within' : 'Above'}
+                </Text>
+              ))}
+            </View>
+          </View>
+        </View>
+        {(filterProject !== 'ALL' || filterStatus !== 'ALL' || filterDate) && (
+          <Text style={styles.filterReset} onPress={() => { setFilterProject('ALL'); setFilterStatus('ALL'); setFilterDate(''); }}>
+            Reset filter
+          </Text>
+        )}
       </View>
 
       <View style={styles.summary}>
@@ -191,6 +256,23 @@ const styles = StyleSheet.create({
   },
   title: { color: '#FFFFFF', fontSize: 20, fontWeight: '900' },
   subtitle: { color: '#A7D7B6', fontSize: 12, marginTop: 2 },
+  filterBar: { marginHorizontal: 16, marginTop: 12, backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 12 },
+  filterRow: { marginBottom: 10 },
+  filterRow2: { flexDirection: 'row', gap: 10 },
+  filterCol: { flex: 1 },
+  filterLabel: { fontSize: 10, fontWeight: '700', color: '#475569', marginBottom: 4 },
+  filterInputWrap: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
+  filterInput: { fontSize: 12, color: '#0F172A' },
+  filterClear: { fontSize: 11, fontWeight: '700', color: '#DC2626' },
+  hiddenInput: { position: 'absolute', opacity: 0, height: 0 },
+  pickerWrap: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 8, padding: 8 },
+  pickerText: { fontSize: 11, color: '#0F172A' },
+  pickerOptions: { marginTop: 6, gap: 4 },
+  pickerOption: { fontSize: 11, color: '#003C16', paddingVertical: 4 },
+  filterChipRow: { flexDirection: 'row', gap: 6, marginTop: 4 },
+  filterChip: { fontSize: 10, fontWeight: '700', color: '#64748B', backgroundColor: '#F1F5F9', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8, overflow: 'hidden' },
+  filterChipActive: { color: '#FFFFFF', backgroundColor: '#003C16' },
+  filterReset: { fontSize: 11, fontWeight: '700', color: '#DC2626', textAlign: 'center', marginTop: 8 },
   summary: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
