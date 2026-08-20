@@ -70,6 +70,7 @@ export const DashboardScreen: React.FC = () => {
     contracts,
     vehicles,
     freightRates,
+    quarryMaterialCosts,
     isOnline,
     pendingCount,
     lastSyncAt,
@@ -224,6 +225,33 @@ React.useEffect(() => {
   const totalM3 = deliveries.reduce((s, d) => s + d.loadedVolumeM3, 0);
   const todayStr = new Date().toISOString().slice(0, 10);
   const todayCount = deliveries.filter((d) => (d.scheduledAt || d.createdAt).slice(0, 10) === todayStr).length;
+
+  // Finance harian khusus MANAGEMENT — biar 3-3
+  const isFinanceRole = profile.role === 'MANAGEMENT';
+  const todayFinance = (() => {
+    if (!isFinanceRole) return null;
+    const todayDelivered = deliveries.filter((d) => d.status === 'DELIVERED' && (d.scheduledAt || d.createdAt).slice(0, 10) === todayStr);
+    let rev = 0, mat = 0, fr = 0, vol = 0;
+    for (const d of todayDelivered) {
+      const c = contracts.find((x) => x.id === d.contractId);
+      const v = d.approvedVolumeM3 ?? d.receivedVolumeM3 ?? d.loadedVolumeM3 ?? 0;
+      vol += v;
+      if (!c) continue;
+      rev += v * 175000;
+      const qmc = quarryMaterialCosts.find((x) => x.productId === d.productId && x.quarryId === d.quarryId);
+      const cost = qmc?.costPerM3 ?? 95000;
+      mat += v * cost;
+      const rate = freightRates.find((r) => r.quarryId === d.quarryId && r.projectId === c.projectId);
+      if (rate) {
+        if (rate.pricingModel === 'PER_M3') fr += v * rate.ratePerUnit;
+        else if (rate.pricingModel === 'PER_TRIP') fr += rate.ratePerUnit;
+        else if (rate.pricingModel === 'PER_TON') fr += v * (qmc?.density ?? 1.6) * rate.ratePerUnit;
+      }
+    }
+    const hpp = mat + fr;
+    const gross = rev - hpp;
+    return { rev, hpp, gross, vol };
+  })();
 
   const set = <K extends keyof NewRitaseInput>(key: K, value: NewRitaseInput[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -392,7 +420,15 @@ React.useEffect(() => {
             <KpiCard label="Terjadwal" value={String(scheduled)} accent="#2563EB" />
           </View>
           <View style={styles.kpiRow}>
-            <KpiCard label="Volume Muat" value={`${totalM3.toFixed(1)} m³`} sub="Total semua ritase" accent="#B45309" />
+            {isFinanceRole && todayFinance ? (
+              <>
+                <KpiCard label="Pendapatan Hari Ini" value={`Rp ${(todayFinance.rev / 1e6).toFixed(1)}jt`} sub={`${todayFinance.vol.toFixed(1)} m³`} accent="#0EA5E9" />
+                <KpiCard label="HPP Hari Ini" value={`Rp ${(todayFinance.hpp / 1e6).toFixed(1)}jt`} sub="material+freight" accent="#8B5CF6" />
+                <KpiCard label="Laba Hari Ini" value={`Rp ${(todayFinance.gross / 1e6).toFixed(1)}jt`} sub={`${todayFinance.rev > 0 ? ((todayFinance.gross / todayFinance.rev) * 100).toFixed(1) : '0'}% margin · ${todayFinance.vol.toFixed(1)} m³`} accent="#10B981" />
+              </>
+            ) : (
+              <KpiCard label="Volume Muat" value={`${totalM3.toFixed(1)} m³`} sub="Total semua ritase" accent="#B45309" />
+            )}
           </View>
 
           {showForm ? (
