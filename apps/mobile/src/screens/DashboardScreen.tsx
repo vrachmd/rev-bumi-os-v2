@@ -6,6 +6,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -80,9 +81,18 @@ export const DashboardScreen: React.FC = () => {
     editRitase,
     deleteRitase,
   } = useAppStore();
+  const [refreshing, setRefreshing] = useState(false);
+  const setOnline = useAppStore((s) => s.setOnline);
   useEffect(() => {
     void refreshQueueStatus();
   }, [refreshQueueStatus]);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refreshQueueStatus();
+    if (isOnline) setOnline(true);
+    // beri waktu replay
+    setTimeout(() => setRefreshing(false), 800);
+  };
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<NewRitaseInput>(emptyForm);
@@ -363,6 +373,7 @@ React.useEffect(() => {
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#003C16']} />}
         >
           <Text style={styles.sectionTitle}>Ringkasan Operasional</Text>
           <View style={styles.kpiRow}>
