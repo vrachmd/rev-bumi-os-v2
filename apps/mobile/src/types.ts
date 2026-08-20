@@ -141,6 +141,7 @@ export type RootTabParamList = {
   Quarry: undefined;
   Site: undefined;
   Rekonsil: undefined;
+  Finance: undefined;
 };
 
 export interface QuarryMaterialCost {

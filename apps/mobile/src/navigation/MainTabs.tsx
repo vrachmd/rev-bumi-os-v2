@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAppStore } from '../store/useAppStore';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { RekonsilScreen } from '../screens/RekonsilScreen';
+import { FinanceScreen } from '../screens/FinanceScreen';
 import { SiteStack } from './SiteStack';
 import { QuarryStack } from './QuarryStack';
 import type { MobileRole, RootTabParamList } from '../types';
@@ -15,6 +16,7 @@ const ICONS: Record<keyof RootTabParamList, string> = {
   Quarry: '⛏️',
   Site: '🏗️',
   Rekonsil: '🧾',
+  Finance: '💰',
 };
 
 const COMPONENTS: Record<keyof RootTabParamList, React.ComponentType> = {
@@ -22,12 +24,13 @@ const COMPONENTS: Record<keyof RootTabParamList, React.ComponentType> = {
   Quarry: QuarryStack,
   Site: SiteStack,
   Rekonsil: RekonsilScreen,
+  Finance: FinanceScreen,
 };
 
 const TAB_ACCESS: Record<MobileRole, (keyof RootTabParamList)[]> = {
   QUARRY_CHECKER: ['Dashboard', 'Quarry'],
   SITE_CHECKER: ['Dashboard', 'Site'],
-  MANAGEMENT: ['Dashboard', 'Quarry', 'Site', 'Rekonsil'],
+  MANAGEMENT: ['Dashboard', 'Quarry', 'Site', 'Rekonsil', 'Finance'],
 };
 
 export const MainTabs: React.FC = () => {
