@@ -66,5 +66,28 @@ export async function generateStandardPerRitPdf({ invoice: inv, customers, proje
   doc.setDrawColor(0,60,22); doc.setLineWidth(0.22); doc.line(sigCenterX-29,footerY+16.5,sigCenterX+29,footerY+16.5);
   doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(0,60,22); doc.text('( Hendra Gunawan, S.E. )',sigCenterX,footerY+20,{align:'center'});
   doc.setFontSize(6); doc.setFont('helvetica','normal'); doc.setTextColor(100,116,139); doc.text('Direktur Keuangan & Akuntansi',sigCenterX,footerY+23.8,{align:'center'});
+  const kwitUrl = (inv as any).kwitansiPhotoUrl as string | undefined;
+  if (kwitUrl) {
+    try {
+      const resp = await fetch(kwitUrl);
+      if (resp.ok) {
+        const blob = await resp.blob();
+        const base64: string = await new Promise((res, rej) => { const r = new FileReader(); (r as any).onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(blob); });
+        doc.addPage();
+        doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(0,60,22);
+        doc.text('Lampiran: Foto Kwitansi Bermaterai (Asli)', 14, 14);
+        doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+        doc.text(`Faktur ${inv.invoiceNumber} — ${cust?.name || ''} — ${proj?.name || ''}`, 14, 19);
+        doc.setDrawColor(167,243,208); doc.setLineWidth(0.15); doc.line(14,21,196,21);
+        const imgType = base64.includes('data:image/png') ? 'PNG' : 'JPEG';
+        let w = 182, h = 220;
+        try { const p = (doc as any).getImageProperties(base64); w = 182; h = (p.height * w) / p.width; if (h > 220) { h = 220; w = (p.width * h) / p.height; } } catch {}
+        const x = (210 - w) / 2; const y = 26;
+        doc.addImage(base64, imgType, x, y, w, Math.min(h, 220));
+        doc.setFontSize(6); doc.setFont('helvetica','italic'); doc.setTextColor(100,116,139);
+        doc.text('Dokumen asli bermaterai Rp 10.000 disimpan terpisah — foto sebagai bukti lampiran', 105, 280, { align: 'center' });
+      }
+    } catch (e) { console.warn('kwitansi pdf hal 2 failed', e); }
+  }
   return doc;
 }

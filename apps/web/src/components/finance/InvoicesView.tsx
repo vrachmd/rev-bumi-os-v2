@@ -34,8 +34,8 @@ async function compressKwitansi(file: File): Promise<{ blob: Blob; ext: string }
     const c = document.createElement('canvas'); c.width = width; c.height = height;
     const ctx = c.getContext('2d')!; ctx.drawImage(img, 0, 0, width, height);
     URL.revokeObjectURL(img.src);
-    const blob: Blob | null = await new Promise((res) => c.toBlob((b) => res(b), 'image/webp', 0.7));
-    if (blob && blob.size < file.size) return { blob, ext: 'webp' };
+    const blob: Blob | null = await new Promise((res) => c.toBlob((b) => res(b), 'image/jpeg', 0.72));
+    if (blob && blob.size < file.size) return { blob, ext: 'jpg' };
   } catch {}
   return { blob: file, ext: file.name.split('.').pop() || 'jpg' };
 }
