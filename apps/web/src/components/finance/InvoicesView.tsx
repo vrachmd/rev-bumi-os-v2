@@ -20,6 +20,26 @@ import { Invoice, InvoiceStatus } from '../../types';
 import { formatDate, formatIDR, formatVolumeM3 } from '../../lib/formatters';
 import { supabase } from '../../lib/supabase';
 
+async function compressKwitansi(file: File): Promise<{ blob: Blob; ext: string }> {
+  try {
+    const img = await new Promise<HTMLImageElement>((res, rej) => {
+      const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file);
+    });
+    const max = 1280;
+    let { width, height } = img;
+    if (width > max || height > max) {
+      const r = Math.min(max / width, max / height);
+      width = Math.round(width * r); height = Math.round(height * r);
+    }
+    const c = document.createElement('canvas'); c.width = width; c.height = height;
+    const ctx = c.getContext('2d')!; ctx.drawImage(img, 0, 0, width, height);
+    URL.revokeObjectURL(img.src);
+    const blob: Blob | null = await new Promise((res) => c.toBlob((b) => res(b), 'image/webp', 0.7));
+    if (blob && blob.size < file.size) return { blob, ext: 'webp' };
+  } catch {}
+  return { blob: file, ext: file.name.split('.').pop() || 'jpg' };
+}
+
 export const InvoicesView: React.FC = () => {
   const {
     invoices,
@@ -232,12 +252,15 @@ export const InvoicesView: React.FC = () => {
                               const file = (e.target as HTMLInputElement).files?.[0];
                               if (!file) return;
                               if (file.size > 5 * 1024 * 1024) { alert('Maks 5MB'); return; }
-                              const fileName = `${inv.id}-${Date.now()}-${file.name.replace(/[^A-Za-z0-9._-]/g,'_')}`;
-                              const { error: upErr } = await supabase.storage.from('kwitansi').upload(fileName, file, { upsert: true, contentType: file.type });
-                              if (upErr) { alert('Upload gagal: ' + upErr.message + '\nBuat bucket kwitansi di Storage jika belum ada.'); return; }
+                              const { blob, ext } = await compressKwitansi(file);
+                              const base = file.name.replace(/\.[^.]+$/, '').replace(/[^A-Za-z0-9._-]/g,'_');
+                              const fileName = `${inv.id}-${Date.now()}-${base}.${ext}`;
+                              const contentType = ext === 'webp' ? 'image/webp' : file.type;
+                              const { error: upErr } = await supabase.storage.from('kwitansi').upload(fileName, blob, { upsert: true, contentType });
+                              if (upErr) { alert('Upload gagal: ' + upErr.message); return; }
                               const { data } = supabase.storage.from('kwitansi').getPublicUrl(fileName);
                               const url = data?.publicUrl || '';
-                              if (url) { (updateInvoiceKwitansi as any)(inv.id, url); alert('Foto kwitansi tersimpan'); }
+                              if (url) { (updateInvoiceKwitansi as any)(inv.id, url); alert(`Foto kwitansi tersimpan (${(blob.size/1024).toFixed(0)}KB, asli ${(file.size/1024).toFixed(0)}KB)`); }
                               (e.target as HTMLInputElement).value='';
                             }}
                           />
