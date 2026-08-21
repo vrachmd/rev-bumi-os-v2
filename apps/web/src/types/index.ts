@@ -403,6 +403,7 @@ export interface InvoiceItem {
   deliveryNumber: string;
   deliveryDate?: string;
   sjImci?: string;
+  plateNumber?: string;
   productName: string;
   approvedVolumeM3: number;
   unitPricePerM3: number;

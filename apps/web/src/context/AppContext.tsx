@@ -1116,6 +1116,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       subtotalIdr += total;
       totalApprovedVolumeM3 += vol;
 
+      const veh = vehicles.find((v) => v.id === del.vehicleId);
       return {
         id: `item-${del.id}`,
         invoiceId: '',
@@ -1123,6 +1124,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deliveryNumber: del.deliveryNumber,
         deliveryDate: del.scheduledDate,
         sjImci: del.quarryLoadingInfo?.notes?.includes('SJ IMCI') ? del.quarryLoadingInfo.notes.replace('SJ IMCI ', '') : undefined,
+        plateNumber: veh?.plateNumber || del.driverName || undefined,
         productName: product?.name || 'Agregat',
         approvedVolumeM3: vol,
         unitPricePerM3: price,

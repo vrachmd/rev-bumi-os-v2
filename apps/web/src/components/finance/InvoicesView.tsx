@@ -405,7 +405,7 @@ export const InvoicesView: React.FC = () => {
                     doc.text(`Proyek: ${proj?.name || ''}`, 14, 37);
                     const body = (inv.items || []).map((it: any, idx: number) => [
                       String(idx + 1),
-                      `${it.productName}\nSJ RBN: ${it.deliveryNumber}${it.sjImci ? `\nSJ IMCI: ${it.sjImci}` : ''}${it.deliveryDate ? `\nTgl: ${formatDate(it.deliveryDate)}` : ''}`,
+                      `${it.productName}\nSJ RBN: ${it.deliveryNumber}${it.sjImci ? `\nSJ IMCI: ${it.sjImci}` : ''}\nPlat: ${it.plateNumber || '-'}${it.deliveryDate ? `\nTgl: ${formatDate(it.deliveryDate)}` : ''}`,
                       `${it.approvedVolumeM3.toFixed(2)} m³`,
                       formatIDR(it.unitPricePerM3),
                       formatIDR(it.itemTotalIdr),
@@ -517,6 +517,7 @@ export const InvoicesView: React.FC = () => {
                           <p className="font-semibold text-slate-900">{item.productName}</p>
                           <p className="text-[10px] text-slate-500 font-mono">SJ RBN: {item.deliveryNumber}</p>
                           {item.sjImci && <p className="text-[10px] text-slate-500 font-mono">SJ IMCI: {item.sjImci}</p>}
+                          {item.plateNumber && <p className="text-[10px] text-slate-500 font-mono">Plat: {item.plateNumber}</p>}
                           {item.deliveryDate && <p className="text-[10px] text-slate-500">Tgl Kirim: {formatDate(item.deliveryDate)}</p>}
                         </td>
                         <td className="py-2.5 px-3 border border-slate-300 text-right font-mono font-bold">
