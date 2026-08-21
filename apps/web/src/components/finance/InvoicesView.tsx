@@ -410,16 +410,18 @@ export const InvoicesView: React.FC = () => {
                       formatIDR(it.unitPricePerM3),
                       formatIDR(it.itemTotalIdr),
                     ]);
+                    const fontSize = body.length > 20 ? 7 : body.length > 10 ? 8 : 9;
+                    const pad = body.length > 20 ? 2 : 3;
                     // @ts-ignore
                     autoTable(doc, {
                       startY: 42,
                       head: [['No', 'Deskripsi', 'Approved', 'Harga Satuan', 'Total DPP']],
                       body,
                       theme: 'grid',
-                      headStyles: { fillColor: [0, 60, 22], fontSize: 7, halign: 'center' },
-                      bodyStyles: { fontSize: 7 },
+                      headStyles: { fillColor: [0, 60, 22], fontSize: fontSize, halign: 'center' },
+                      bodyStyles: { fontSize: fontSize },
                       columnStyles: { 0: { halign: 'center', cellWidth: 10 }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
-                      styles: { cellPadding: 2, lineWidth: 0.1 },
+                      styles: { cellPadding: pad, lineWidth: 0.1, fontSize: fontSize },
                     });
                     const finalY = (doc as any).lastAutoTable.finalY || 42;
                     doc.setFontSize(8);
