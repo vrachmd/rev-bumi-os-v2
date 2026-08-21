@@ -387,22 +387,53 @@ export const InvoicesView: React.FC = () => {
                     const inv = selectedInvoiceForPrint!;
                     const cust = customers.find((c) => c.id === inv.customerId);
                     const proj = projects.find((p) => p.id === inv.projectId);
+                    // Header — RBN box + company
+                    doc.setFillColor(0, 60, 22);
+                    doc.rect(14, 8, 12, 12, 'F');
+                    doc.setTextColor(255, 255, 255);
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(14);
-                    doc.text('PT REV BUMI NUSANTARA PERKASA', 14, 12);
-                    doc.setFontSize(8);
+                    doc.setFontSize(7);
+                    doc.text('RBN', 20, 15, { align: 'center' });
+                    doc.setTextColor(0, 60, 22);
+                    doc.setFontSize(13);
+                    doc.text('PT REV BUMI NUSANTARA PERKASA', 28, 12);
+                    doc.setFontSize(7);
                     doc.setFont('helvetica', 'normal');
-                    doc.text(company.address || '', 14, 17);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text(company.address || 'Graha Nusantara Lt. 8, Jl. TB Simatupang Kav. 15, Jakarta Selatan 12530', 28, 16);
+                    doc.text(`NPWP: ${company.npwp || '-'} | Telp: ${company.phone || '-'}`, 28, 19);
+                    doc.setTextColor(0, 0, 0);
                     doc.setFont('helvetica', 'bold');
-                    doc.text('FAKTUR PENAGIHAN', 190, 12, { align: 'right' });
-                    doc.setFontSize(9);
-                    doc.text(inv.invoiceNumber, 190, 17, { align: 'right' });
+                    doc.setFontSize(10);
+                    doc.setFillColor(0, 60, 22);
+                    doc.setTextColor(255, 255, 255);
+                    doc.rect(130, 8, 66, 7, 'F');
+                    doc.text('FAKTUR PENAGIHAN', 163, 13, { align: 'center' });
+                    doc.setTextColor(0, 0, 0);
                     doc.setFontSize(8);
-                    doc.text(`Tanggal: ${formatDate(inv.invoiceDate)}`, 190, 22, { align: 'right' });
-                    doc.text(`Jatuh Tempo: ${formatDate(inv.dueDate)}`, 190, 26, { align: 'right' });
+                    doc.text(inv.invoiceNumber, 196, 22, { align: 'right' });
+                    doc.setFontSize(7);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`Tanggal: ${formatDate(inv.invoiceDate)}`, 196, 26, { align: 'right' });
+                    doc.setTextColor(180, 0, 0);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(`Jatuh Tempo: ${formatDate(inv.dueDate)}`, 196, 30, { align: 'right' });
+                    doc.setTextColor(0, 0, 0);
+                    // Bill To
+                    doc.setFillColor(248, 250, 252);
+                    doc.rect(14, 34, 182, 14, 'F');
+                    doc.setDrawColor(226, 232, 240);
+                    doc.rect(14, 34, 182, 14, 'S');
+                    doc.setFontSize(7);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(100, 100, 100);
+                    doc.text('DITAGIHKAN KEPADA:', 16, 38);
+                    doc.setTextColor(0, 0, 0);
                     doc.setFontSize(9);
-                    doc.text(`Ditagihkan Kepada: ${cust?.name || ''}`, 14, 32);
-                    doc.text(`Proyek: ${proj?.name || ''}`, 14, 37);
+                    doc.text(cust?.name || '-', 16, 42);
+                    doc.setFontSize(7);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`Proyek: ${proj?.name || '-'} | Alamat: ${proj?.location || '-'}`, 16, 46);
                     const body = (inv.items || []).map((it: any, idx: number) => [
                       String(idx + 1),
                       `${it.productName}\nSJ RBN: ${it.deliveryNumber}${it.sjImci ? `\nSJ IMCI: ${it.sjImci}` : ''}\nPlat: ${it.plateNumber || '-'}${it.deliveryDate ? `\nTgl: ${formatDate(it.deliveryDate)}` : ''}`,
