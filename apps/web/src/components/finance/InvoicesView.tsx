@@ -467,9 +467,9 @@ export const InvoicesView: React.FC = () => {
                     const isDense = (inv.items || []).length > 12;
                     const isVeryDense = (inv.items || []).length > 18;
                     const body = (inv.items || []).map((it: any, idx: number) => {
-                      // Mode padat: 2 baris (hemat 60% tinggi) vs mode normal 5 baris
+                      // Mode padat: 2 baris tetap tampilkan semua info penting (SJ RBN, SJ IMCI, Plat, Tgl)
                       const descDense = isDense
-                        ? `${it.productName}\n${it.deliveryNumber}${it.sjImci ? ' / ' + it.sjImci : ''} • ${it.plateNumber || '-'} • ${it.deliveryDate ? formatDate(it.deliveryDate) : '-'}`
+                        ? `${it.productName}\nSJ RBN: ${it.deliveryNumber} • SJ IMCI: ${it.sjImci || '-'} • Plat: ${it.plateNumber || '-'} • Tgl: ${it.deliveryDate ? formatDate(it.deliveryDate) : '-'}`
                         : `${it.productName}\nSJ RBN: ${it.deliveryNumber}${it.sjImci ? `\nSJ IMCI: ${it.sjImci}` : ''}\nPlat: ${it.plateNumber || '-'}${it.deliveryDate ? `\nTgl Kirim: ${formatDate(it.deliveryDate)}` : ''}`;
                       return [
                         String(idx + 1),
