@@ -1176,9 +1176,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteInvoice = (invoiceId: string) => {
     const inv = invoices.find((i) => i.id === invoiceId);
     if (!inv) return { success: false, error: 'Faktur tidak ditemukan' };
-    if (inv.status === 'PAID') return { success: false, error: 'Faktur lunas tidak bisa dihapus' };
+    if (inv.status === 'PAID' && currentProfile.role !== 'SUPER_ADMIN') return { success: false, error: 'Faktur lunas hanya SUPER_ADMIN yang bisa hapus' };
     setInvoices((prev) => prev.filter((i) => i.id !== invoiceId));
-    logAudit('invoices', inv.id, inv.invoiceNumber, 'DELETE', inv, null, 'Hapus faktur');
+    logAudit('invoices', inv.id, inv.invoiceNumber, 'DELETE', inv, null, inv.status === 'PAID' ? 'Hapus faktur PAID (SUPER_ADMIN override)' : 'Hapus faktur');
     if (isSupabaseAuthed) {
       deleteInvoiceFromSupabase(invoiceId).catch((e) => console.warn('Supabase deleteInvoice error', e));
     }
