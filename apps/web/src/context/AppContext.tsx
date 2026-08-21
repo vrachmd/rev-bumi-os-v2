@@ -172,6 +172,7 @@ interface AppContextType {
   ) => { success: boolean; invoiceId?: string; error?: string };
   deleteInvoice: (invoiceId: string) => { success: boolean; error?: string };
   updateInvoiceNotes: (invoiceId: string, notes: string) => { success: boolean; error?: string };
+  updateInvoiceKwitansi: (invoiceId: string, kwitansiPhotoUrl: string | null) => { success: boolean; error?: string };
   recordPayment: (invoiceId: string, amount: number, bankRef: string, method: string, notes?: string) => { success: boolean; error?: string };
   
   // Master Data CRUD
@@ -1192,6 +1193,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { success: true };
   };
 
+  const updateInvoiceKwitansi = (invoiceId: string, kwitansiPhotoUrl: string | null) => {
+    const inv = invoices.find((i) => i.id === invoiceId);
+    if (!inv) return { success: false, error: 'Faktur tidak ditemukan' };
+    const updated = { ...inv, kwitansiPhotoUrl: kwitansiPhotoUrl ?? undefined } as any;
+    setInvoices((prev) => prev.map((i) => (i.id === invoiceId ? updated : i)));
+    logAudit('invoices', inv.id, inv.invoiceNumber, 'UPDATE', { kwitansiPhotoUrl: (inv as any).kwitansiPhotoUrl }, { kwitansiPhotoUrl }, 'Upload foto kwitansi bermaterai');
+    syncInvoiceToCloud(updated);
+    return { success: true };
+  };
+
   // Record Payment
   const recordPayment = (invoiceId: string, amount: number, bankRef: string, method: string, notes?: string) => {
     const invoice = invoices.find((inv) => inv.id === invoiceId);
@@ -1609,6 +1620,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         createInvoice,
         deleteInvoice,
         updateInvoiceNotes,
+        updateInvoiceKwitansi,
         recordPayment,
         saveProduct,
         saveQuarry,

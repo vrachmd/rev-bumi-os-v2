@@ -30,6 +30,7 @@ export const CustomersProjectsView: React.FC = () => {
   const [cPhone, setCPhone] = useState('');
   const [cEmail, setCEmail] = useState('');
   const [cTerms, setCTerms] = useState(30);
+  const [cTemplate, setCTemplate] = useState<'IMCI-AGREGAT' | 'STANDARD-PER-RIT' | ''>('');
 
   // ---- Tambah Proyek ----
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -51,6 +52,7 @@ export const CustomersProjectsView: React.FC = () => {
     setCPhone('');
     setCEmail('');
     setCTerms(30);
+    setCTemplate('');
     setShowCustomerModal(true);
   };
 
@@ -95,7 +97,8 @@ export const CustomersProjectsView: React.FC = () => {
       email: cEmail.trim(),
       paymentTermsDays: Number(cTerms) || 30,
       isActive: true,
-    });
+      invoiceTemplateId: cTemplate || undefined,
+    } as any);
     setShowCustomerModal(false);
   };
 
@@ -347,6 +350,15 @@ export const CustomersProjectsView: React.FC = () => {
                   onChange={(e) => setCTerms(Number(e.target.value))}
                   className={inputCls}
                 />
+              </div>
+              <div>
+                <label className={labelCls}>Template Faktur</label>
+                <select value={cTemplate} onChange={(e)=>setCTemplate(e.target.value as any)} className={inputCls}>
+                  <option value="">Auto (IMCI → Agregat)</option>
+                  <option value="IMCI-AGREGAT">IMCI Agregat (tgl plat IMCI vol KBS)</option>
+                  <option value="STANDARD-PER-RIT">Standard Per-Rit (No|SJ|Approved)</option>
+                </select>
+                <p className="text-[10px] text-slate-500 mt-1">Kosong = auto: IMCI → agregat, lainnya → standar</p>
               </div>
 
               <div className="flex gap-2 pt-1">
