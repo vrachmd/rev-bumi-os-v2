@@ -380,10 +380,58 @@ export const InvoicesView: React.FC = () => {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => window.print()}
+                  onClick={async () => {
+                    const { default: jsPDF } = await import('jspdf');
+                    const { default: autoTable } = await import('jspdf-autotable');
+                    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                    const inv = selectedInvoiceForPrint!;
+                    const cust = customers.find((c) => c.id === inv.customerId);
+                    const proj = projects.find((p) => p.id === inv.projectId);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(14);
+                    doc.text('PT REV BUMI NUSANTARA PERKASA', 14, 12);
+                    doc.setFontSize(8);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(company.address || '', 14, 17);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('FAKTUR PENAGIHAN', 190, 12, { align: 'right' });
+                    doc.setFontSize(9);
+                    doc.text(inv.invoiceNumber, 190, 17, { align: 'right' });
+                    doc.setFontSize(8);
+                    doc.text(`Tanggal: ${formatDate(inv.invoiceDate)}`, 190, 22, { align: 'right' });
+                    doc.text(`Jatuh Tempo: ${formatDate(inv.dueDate)}`, 190, 26, { align: 'right' });
+                    doc.setFontSize(9);
+                    doc.text(`Ditagihkan Kepada: ${cust?.name || ''}`, 14, 32);
+                    doc.text(`Proyek: ${proj?.name || ''}`, 14, 37);
+                    const body = (inv.items || []).map((it: any, idx: number) => [
+                      String(idx + 1),
+                      `${it.productName}\nSJ RBN: ${it.deliveryNumber}${it.sjImci ? `\nSJ IMCI: ${it.sjImci}` : ''}${it.deliveryDate ? `\nTgl: ${formatDate(it.deliveryDate)}` : ''}`,
+                      `${it.approvedVolumeM3.toFixed(2)} m³`,
+                      formatIDR(it.unitPricePerM3),
+                      formatIDR(it.itemTotalIdr),
+                    ]);
+                    // @ts-ignore
+                    autoTable(doc, {
+                      startY: 42,
+                      head: [['No', 'Deskripsi', 'Approved', 'Harga Satuan', 'Total DPP']],
+                      body,
+                      theme: 'grid',
+                      headStyles: { fillColor: [0, 60, 22], fontSize: 7, halign: 'center' },
+                      bodyStyles: { fontSize: 7 },
+                      columnStyles: { 0: { halign: 'center', cellWidth: 10 }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
+                      styles: { cellPadding: 2, lineWidth: 0.1 },
+                    });
+                    const finalY = (doc as any).lastAutoTable.finalY || 42;
+                    doc.setFontSize(8);
+                    doc.text(`Subtotal DPP: ${formatIDR(inv.subtotalIdr)}`, 190, finalY + 8, { align: 'right' });
+                    doc.text(`PPN 11%: ${formatIDR(inv.taxAmountIdr)}`, 190, finalY + 13, { align: 'right' });
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(`Total Faktur Tagihan: ${formatIDR(inv.totalInvoiceIdr)}`, 190, finalY + 18, { align: 'right' });
+                    doc.save(`${inv.invoiceNumber}.pdf`);
+                  }}
                   className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
                 >
-                  <Printer className="w-3.5 h-3.5" /> Cetak / Simpan PDF (A4)
+                  <Printer className="w-3.5 h-3.5" /> Cetak / Simpan PDF (A4) — Vector
                 </button>
                 <button
                   onClick={() => setSelectedInvoiceForPrint(null)}
