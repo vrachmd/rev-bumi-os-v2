@@ -182,6 +182,8 @@ interface AppContextType {
   saveProject: (project: Project) => void;
   addCustomer: (data: Omit<Customer, 'id' | 'code'> & { code?: string }) => Customer;
   addProject: (data: Omit<Project, 'id' | 'projectNumber'> & { projectNumber?: string }) => Project;
+  deleteCustomer: (customerId: string) => { success: boolean; error?: string };
+  deleteProject: (projectId: string) => { success: boolean; error?: string };
   saveVendor: (vendor: TransportVendor) => void;
   saveVehicle: (vehicle: Vehicle) => void;
   saveDriver: (driver: Driver) => void;
@@ -1404,6 +1406,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     syncMasterDelete('contracts', contractId);
   };
 
+  const deleteCustomer = (customerId: string) => {
+    const hasProjects = projects.some((p) => p.customerId === customerId);
+    const hasContracts = contracts.some((c) => c.customerId === customerId);
+    if (hasProjects || hasContracts) return { success: false, error: 'Pelanggan masih dipakai proyek/kontrak — hapus proyek/kontrak dulu' };
+    const existing = customers.find((c) => c.id === customerId);
+    setCustomers((prev) => prev.filter((c) => c.id !== customerId));
+    if (existing) logAudit('customers', customerId, existing.code, 'DELETE', existing, null, 'Hapus pelanggan');
+    syncMasterDelete('customers', customerId);
+    return { success: true };
+  };
+
+  const deleteProject = (projectId: string) => {
+    const hasContracts = contracts.some((c) => c.projectId === projectId);
+    const hasDeliveries = deliveries.some((d) => {
+      const cont = contracts.find((c) => c.id === d.contractId);
+      return cont?.projectId === projectId;
+    });
+    if (hasContracts || hasDeliveries) return { success: false, error: 'Proyek masih dipakai kontrak/pengiriman — hapus kontrak/pengiriman dulu' };
+    const existing = projects.find((p) => p.id === projectId);
+    setProjects((prev) => prev.filter((p) => p.id !== projectId));
+    if (existing) logAudit('projects', projectId, existing.projectNumber, 'DELETE', existing, null, 'Hapus proyek');
+    syncMasterDelete('projects', projectId);
+    return { success: true };
+  };
+
   // Correction Workflow
   const submitCorrectionRequest = (
     targetType: 'DELIVERY' | 'INVOICE' | 'RECONCILIATION',
@@ -1628,6 +1655,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         saveProject,
         addCustomer,
         addProject,
+        deleteCustomer,
+        deleteProject,
         saveVendor,
         saveVehicle,
         saveDriver,
