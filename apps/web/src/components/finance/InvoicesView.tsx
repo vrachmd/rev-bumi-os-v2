@@ -394,8 +394,10 @@ export const InvoicesView: React.FC = () => {
               </div>
             </div>
 
+            {/* Print CSS — 1 halaman A4 untuk 30 ritase */}
+            <style>{`@media print { @page { size: A4; margin: 10mm; } #invoice-a4 { padding: 12px !important; } #invoice-a4 table { font-size: 7px !important; } #invoice-a4 td, #invoice-a4 th { padding: 3px 6px !important; } .no-print { display: none !important; } }`}</style>
             {/* Printable A4 Sheet */}
-            <div className="flex-1 overflow-y-auto p-8 bg-white text-slate-900 font-sans" id="invoice-a4">
+            <div className="flex-1 overflow-y-auto p-6 bg-white text-slate-900 font-sans print:p-3" id="invoice-a4">
               {/* Header */}
               <div className="flex items-start justify-between border-b-2 border-slate-900 pb-4">
                 <div className="flex items-center gap-3">
