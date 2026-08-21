@@ -538,8 +538,8 @@ export const InvoicesView: React.FC = () => {
                       columnStyles: {
                         0: { halign: 'left', cellWidth: 102, fontStyle: 'bold' },
                         1: { halign: 'center', cellWidth: 22, fontStyle: 'bold' },
-                        2: { halign: 'right', cellWidth: 28, fontStyle: 'bold' },
-                        3: { halign: 'right', cellWidth: 30, fontStyle: 'bold' },
+                        2: { halign: 'center', cellWidth: 28, fontStyle: 'bold' },
+                        3: { halign: 'center', cellWidth: 30, fontStyle: 'bold' },
                       },
                       styles: { cellPadding: pad, lineWidth: 0.12, fontSize: fontSize, overflow: 'linebreak', minCellHeight: 7, fontStyle: 'bold' },
                       margin: { left: 14, right: 14 },
@@ -773,8 +773,8 @@ export const InvoicesView: React.FC = () => {
                               </div>
                             </td>
                             <td className="py-2.5 px-3 border border-slate-300 text-center font-mono font-bold align-middle">{totalVol.toFixed(2)}</td>
-                            <td className="py-2.5 px-3 border border-slate-300 text-right font-mono font-bold align-middle">{formatIDR(g.unitPricePerM3)}</td>
-                            <td className="py-2.5 px-3 border border-slate-300 text-right font-mono font-bold align-middle">{formatIDR(totalIdr)}</td>
+                            <td className="py-2.5 px-3 border border-slate-300 text-center font-mono font-bold align-middle">{formatIDR(g.unitPricePerM3)}</td>
+                            <td className="py-2.5 px-3 border border-slate-300 text-center font-mono font-bold align-middle">{formatIDR(totalIdr)}</td>
                           </tr>
                         );
                       });
