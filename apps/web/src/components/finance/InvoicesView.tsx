@@ -481,14 +481,14 @@ export const InvoicesView: React.FC = () => {
                       body,
                       theme: 'grid',
                       headStyles: {
-                        fillColor: [30, 41, 59],
+                        fillColor: [0, 60, 22],
                         textColor: [255, 255, 255],
                         fontSize: fontSize,
                         halign: 'center',
                         valign: 'middle',
                         fontStyle: 'bold',
                         lineWidth: 0.15,
-                        lineColor: [203, 213, 225],
+                        lineColor: [16, 78, 36],
                       },
                       bodyStyles: { fontSize: fontSize, valign: 'middle', lineColor: [203, 213, 225] },
                       columnStyles: {
@@ -519,89 +519,113 @@ export const InvoicesView: React.FC = () => {
                       doc.addPage();
                       totalsY = 18;
                     }
-                    doc.setFillColor(248, 250, 252);
+                    // Box totals — tema hijau brand (bukan abu monoton)
+                    doc.setFillColor(240, 253, 244);
                     doc.roundedRect(boxX, totalsY, boxW, boxH, 2, 2, 'F');
-                    doc.setDrawColor(226, 232, 240);
-                    doc.setLineWidth(0.2);
+                    doc.setDrawColor(167, 243, 208);
+                    doc.setLineWidth(0.25);
                     doc.roundedRect(boxX, totalsY, boxW, boxH, 2, 2, 'S');
+                    // aksen kiri hijau tebal 1.2mm
+                    doc.setFillColor(0, 60, 22);
+                    doc.roundedRect(boxX, totalsY, 1.2, boxH, 0.6, 0.6, 'F');
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(7);
                     doc.setTextColor(71, 85, 105);
-                    doc.text('Subtotal DPP:', boxX + 3, totalsY + 6);
+                    doc.text('Subtotal DPP:', boxX + 4.5, totalsY + 6);
                     doc.setTextColor(15, 23, 42);
                     doc.setFont('helvetica', 'bold');
                     doc.text(formatIDR(inv.subtotalIdr), boxX + boxW - 3, totalsY + 6, { align: 'right' });
                     doc.setFont('helvetica', 'normal');
                     doc.setTextColor(71, 85, 105);
-                    doc.text('PPN (11%):', boxX + 3, totalsY + 10.5);
+                    doc.text('PPN (11%):', boxX + 4.5, totalsY + 10.5);
                     doc.setTextColor(15, 23, 42);
                     doc.setFont('helvetica', 'bold');
                     doc.text(formatIDR(inv.taxAmountIdr), boxX + boxW - 3, totalsY + 10.5, { align: 'right' });
-                    // garis pemisah tebal
-                    doc.setDrawColor(15, 23, 42);
-                    doc.setLineWidth(0.5);
-                    doc.line(boxX + 3, totalsY + 13.2, boxX + boxW - 3, totalsY + 13.2);
+                    // garis pemisah hijau brand
+                    doc.setDrawColor(0, 60, 22);
+                    doc.setLineWidth(0.45);
+                    doc.line(boxX + 4, totalsY + 13.2, boxX + boxW - 3, totalsY + 13.2);
                     doc.setFontSize(7.5);
                     doc.setTextColor(0, 60, 22);
-                    doc.text('Total Faktur Tagihan:', boxX + 3, totalsY + 17);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Total Faktur Tagihan:', boxX + 4.5, totalsY + 17);
                     doc.text(formatIDR(inv.totalInvoiceIdr), boxX + boxW - 3, totalsY + 17, { align: 'right' });
 
-                    // ===== Footer fixed bawah — mirror preview grid 2 kolom =====
-                    const footerY = 270;
-                    // garis atas footer (border-t)
-                    doc.setDrawColor(203, 213, 225);
-                    doc.setLineWidth(0.2);
-                    doc.line(14, 268, 196, 268);
-                    // Kiri: Instruksi pembayaran
-                    doc.setFontSize(6.5);
-                    doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(15, 23, 42);
-                    doc.text('Instruksi Pembayaran Transfer Bank:', 14, footerY);
-                    doc.setFillColor(248, 250, 252);
-                    doc.roundedRect(14, footerY + 2, 92, 18, 2, 2, 'F');
-                    doc.setDrawColor(226, 232, 240);
+                    // ===== Footer mengalir — tidak mentok bawah, tema hijau =====
+                    const gapAfterTotals = 14;
+                    let footerY = totalsY + boxH + gapAfterTotals;
+                    // jaga agar tidak mepet tepi bawah (butuh 28mm untuk footer, margin bawah 12mm = 285)
+                    if (footerY + 26 > 283) {
+                      doc.addPage();
+                      footerY = 18;
+                    }
+                    // garis hijau tipis di atas footer (ornamen brand)
+                    doc.setDrawColor(0, 60, 22);
+                    doc.setLineWidth(0.35);
+                    doc.line(14, footerY - 5, 196, footerY - 5);
+                    doc.setDrawColor(167, 243, 208);
                     doc.setLineWidth(0.15);
-                    doc.roundedRect(14, footerY + 2, 92, 18, 2, 2, 'S');
+                    doc.line(14, footerY - 4.2, 196, footerY - 4.2);
+                    // Kiri: Instruksi pembayaran — box hijau muda
                     doc.setFontSize(6.5);
                     doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(15, 23, 42);
-                    doc.text('Bank Mandiri (Cabang Cirebon)', 16, footerY + 7);
+                    doc.setTextColor(0, 60, 22);
+                    doc.text('INSTRUKSI PEMBAYARAN TRANSFER BANK', 14, footerY);
+                    doc.setFontSize(5);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(100, 116, 139);
+                    doc.text('Harap transfer tepat waktu sesuai jatuh tempo', 14, footerY + 3.2);
+                    doc.setFillColor(240, 253, 244);
+                    doc.roundedRect(14, footerY + 5, 92, 19, 2, 2, 'F');
+                    doc.setDrawColor(167, 243, 208);
+                    doc.setLineWidth(0.2);
+                    doc.roundedRect(14, footerY + 5, 92, 19, 2, 2, 'S');
+                    // aksen kiri
+                    doc.setFillColor(0, 60, 22);
+                    doc.roundedRect(14, footerY + 5, 1.2, 19, 0.6, 0.6, 'F');
+                    doc.setFontSize(6.5);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(0, 60, 22);
+                    doc.text('Bank Mandiri  —  Cabang Cirebon', 17, footerY + 10);
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(6);
                     doc.setTextColor(51, 65, 85);
-                    doc.text('No. Rekening: 134-00-9876543-2', 16, footerY + 11);
-                    doc.text('Atas Nama: PT REV BUMI NUSANTARA PERKASA', 16, footerY + 15);
-                    // Kanan: Hormat Kami (center kolom kanan 106-196 => center 151)
-                    const sigCenterX = 151;
-                    doc.setFontSize(7);
-                    doc.setFont('helvetica', 'normal');
-                    doc.setTextColor(71, 85, 105);
-                    doc.text('Hormat Kami,', sigCenterX, footerY, { align: 'center' });
-                    // badge DIVERIFIKASI
-                    const badgeW = 44;
-                    const badgeX = sigCenterX - badgeW / 2;
-                    const badgeY = footerY + 4;
-                    doc.setFillColor(236, 253, 245);
-                    doc.roundedRect(badgeX, badgeY, badgeW, 5, 1, 1, 'F');
-                    doc.setDrawColor(167, 243, 208);
-                    doc.setLineWidth(0.15);
-                    doc.roundedRect(badgeX, badgeY, badgeW, 5, 1, 1, 'S');
-                    doc.setFontSize(5);
-                    doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(6, 95, 70);
-                    doc.text('DIVERIFIKASI & DITANDATANGANI', sigCenterX, badgeY + 3.3, { align: 'center' });
-                    // garis tanda tangan
-                    doc.setDrawColor(148, 163, 184);
-                    doc.setLineWidth(0.2);
-                    doc.line(sigCenterX - 28, footerY + 16, sigCenterX + 28, footerY + 16);
-                    doc.setFontSize(7);
+                    doc.text('No. Rekening:  134-00-9876543-2', 17, footerY + 14);
                     doc.setFont('helvetica', 'bold');
                     doc.setTextColor(15, 23, 42);
-                    doc.text('( Hendra Gunawan, S.E. )', sigCenterX, footerY + 19.5, { align: 'center' });
+                    doc.text('a.n. PT REV BUMI NUSANTARA PERKASA', 17, footerY + 17.8);
+                    doc.setFont('helvetica', 'normal');
+                    // Kanan: Hormat Kami — center kolom kanan 108-196 => center 152
+                    const sigCenterX = 152;
+                    doc.setFontSize(7);
+                    doc.setFont('helvetica', 'italic');
+                    doc.setTextColor(0, 60, 22);
+                    doc.text('Hormat Kami,', sigCenterX, footerY, { align: 'center' });
+                    // badge DIVERIFIKASI — hijau
+                    const badgeW = 46;
+                    const badgeX = sigCenterX - badgeW / 2;
+                    const badgeY = footerY + 4.2;
+                    doc.setFillColor(236, 253, 245);
+                    doc.roundedRect(badgeX, badgeY, badgeW, 5.2, 1, 1, 'F');
+                    doc.setDrawColor(16, 122, 78);
+                    doc.setLineWidth(0.18);
+                    doc.roundedRect(badgeX, badgeY, badgeW, 5.2, 1, 1, 'S');
+                    doc.setFontSize(4.8);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(6, 95, 70);
+                    doc.text('DIVERIFIKASI  •  DITANDATANGANI', sigCenterX, badgeY + 3.4, { align: 'center' });
+                    // garis tanda tangan hijau
+                    doc.setDrawColor(0, 60, 22);
+                    doc.setLineWidth(0.22);
+                    doc.line(sigCenterX - 29, footerY + 16.5, sigCenterX + 29, footerY + 16.5);
+                    doc.setFontSize(7);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(0, 60, 22);
+                    doc.text('( Hendra Gunawan, S.E. )', sigCenterX, footerY + 20, { align: 'center' });
                     doc.setFontSize(6);
                     doc.setFont('helvetica', 'normal');
                     doc.setTextColor(100, 116, 139);
-                    doc.text('Direktur Keuangan & Akuntansi', sigCenterX, footerY + 23, { align: 'center' });
+                    doc.text('Direktur Keuangan & Akuntansi', sigCenterX, footerY + 23.8, { align: 'center' });
                     doc.save(`${inv.invoiceNumber}.pdf`);
                   }}
                   className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
@@ -621,8 +645,8 @@ export const InvoicesView: React.FC = () => {
             <style>{`@media print { @page { size: A4; margin: 10mm; } body * { visibility: hidden !important; } #invoice-a4, #invoice-a4 * { visibility: visible !important; } #invoice-a4 { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; padding: 12px !important; background: white !important; } #invoice-a4 table { font-size: 7px !important; } #invoice-a4 td, #invoice-a4 th { padding: 3px 6px !important; } .no-print { display: none !important; } }`}</style>
             {/* Printable A4 Sheet */}
             <div className="flex-1 overflow-y-auto p-6 bg-white text-slate-900 font-sans print:p-3" id="invoice-a4">
-              {/* Header */}
-              <div className="flex items-start justify-between border-b-2 border-slate-900 pb-4">
+              {/* Header — hijau brand */}
+              <div className="flex items-start justify-between border-b-2 border-[#003C16] pb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-lg bg-[#003C16] flex items-center justify-center text-white font-black text-xl shadow-xs">
                     RBN
@@ -656,9 +680,9 @@ export const InvoicesView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Bill To */}
-              <div className="my-4 p-4 rounded-lg bg-slate-50 border border-slate-200 text-xs">
-                <span className="font-bold text-slate-900 uppercase tracking-wider text-[10px] block border-b border-slate-200 pb-1 mb-2">
+              {/* Bill To — aksen hijau */}
+              <div className="my-4 p-4 rounded-lg bg-green-50/60 border border-emerald-200 text-xs">
+                <span className="font-bold text-[#003C16] uppercase tracking-wider text-[10px] block border-b border-emerald-200 pb-1 mb-2">
                   Ditagihkan Kepada:
                 </span>
                 <p className="font-bold text-slate-900 text-sm">
@@ -672,10 +696,10 @@ export const InvoicesView: React.FC = () => {
                 </p>
               </div>
 
-              {/* Items Table */}
+              {/* Items Table — head hijau brand */}
               <div className="my-4">
                 <table className="w-full text-left text-xs border border-slate-300">
-                  <thead className="bg-slate-800 text-white font-bold">
+                  <thead className="bg-[#003C16] text-white font-bold">
                     <tr>
                       <th className="py-2 px-3 border border-slate-300">No</th>
                       <th className="py-2 px-3 border border-slate-300">Deskripsi Pengiriman & Material</th>
@@ -710,9 +734,9 @@ export const InvoicesView: React.FC = () => {
                 </table>
               </div>
 
-              {/* Financial Calculation Total Box */}
+              {/* Financial Calculation Total Box — aksen hijau */}
               <div className="flex justify-end my-4">
-                <div className="w-80 space-y-1.5 text-xs bg-slate-50 p-4 rounded-lg border border-slate-200 font-mono">
+                <div className="w-80 space-y-1.5 text-xs bg-green-50 border border-emerald-200 p-4 rounded-lg font-mono border-l-4 border-l-[#003C16]">
                   <div className="flex justify-between">
                     <span className="text-slate-600">Subtotal DPP:</span>
                     <span className="font-bold text-slate-900">{formatIDR(selectedInvoiceForPrint.subtotalIdr)}</span>
@@ -721,34 +745,35 @@ export const InvoicesView: React.FC = () => {
                     <span className="text-slate-600">PPN (11%):</span>
                     <span className="font-bold text-slate-900">{formatIDR(selectedInvoiceForPrint.taxAmountIdr)}</span>
                   </div>
-                  <div className="flex justify-between pt-2 border-t-2 border-slate-900 text-sm font-extrabold text-[#003C16]">
+                  <div className="flex justify-between pt-2 border-t-2 border-[#003C16] text-sm font-extrabold text-[#003C16]">
                     <span>Total Faktur Tagihan:</span>
                     <span>{formatIDR(selectedInvoiceForPrint.totalInvoiceIdr)}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Bank Account Info & Signatures */}
-              <div className="grid grid-cols-2 gap-6 mt-6 pt-4 border-t border-slate-300 text-xs">
+              {/* Bank Account Info & Signatures — hijau brand, jarak lega */}
+              <div className="grid grid-cols-2 gap-6 mt-8 pt-4 border-t-2 border-[#003C16]/20 text-xs">
                 <div>
-                  <span className="font-bold text-slate-900 uppercase tracking-wider text-[10px] block mb-1.5">
+                  <span className="font-bold text-[#003C16] uppercase tracking-wider text-[10px] block mb-1.5">
                     Instruksi Pembayaran Transfer Bank:
                   </span>
-                  <div className="p-3 bg-slate-50 rounded border border-slate-200 space-y-1 font-mono text-[11px]">
-                    <p className="font-bold text-slate-900">Bank Mandiri (Cabang Cirebon)</p>
+                  <p className="text-[10px] text-slate-500 mb-2 italic">Harap transfer tepat waktu sesuai jatuh tempo</p>
+                  <div className="p-3 bg-green-50 rounded border border-emerald-200 border-l-4 border-l-[#003C16] space-y-1 font-mono text-[11px]">
+                    <p className="font-bold text-[#003C16]">Bank Mandiri — Cabang Cirebon</p>
                     <p className="text-slate-700">No. Rekening: <strong>134-00-9876543-2</strong></p>
                     <p className="text-slate-700">Atas Nama: <strong>PT REV BUMI NUSANTARA PERKASA</strong></p>
                   </div>
                 </div>
 
                 <div className="text-center flex flex-col justify-between items-center h-32">
-                  <span className="font-semibold text-slate-700">Hormat Kami,</span>
+                  <span className="font-semibold text-[#003C16] italic">Hormat Kami,</span>
                   <div className="h-12 flex items-center justify-center">
-                    <span className="text-[10px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300">
-                      DIVERIFIKASI & DITANDATANGANI
+                    <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-300 tracking-wide">
+                      DIVERIFIKASI • DITANDATANGANI
                     </span>
                   </div>
-                  <span className="font-bold text-slate-900 border-t border-slate-400 w-3/4 pt-1">
+                  <span className="font-bold text-[#003C16] border-t-2 border-[#003C16] w-3/4 pt-1">
                     ( Hendra Gunawan, S.E. )<br />
                     <span className="text-[10px] text-slate-500 font-normal">Direktur Keuangan & Akuntansi</span>
                   </span>
