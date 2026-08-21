@@ -534,14 +534,14 @@ export const InvoicesView: React.FC = () => {
                         lineColor: [16, 78, 36],
                         cellPadding: pad,
                       },
-                      bodyStyles: { fontSize: fontSize, valign: 'middle', lineColor: [203, 213, 225], textColor: [15,23,42] },
+                      bodyStyles: { fontSize: fontSize, valign: 'middle', lineColor: [203, 213, 225], textColor: [15,23,42], fontStyle: 'bold' },
                       columnStyles: {
-                        0: { halign: 'left', cellWidth: 102 },
-                        1: { halign: 'center', cellWidth: 22 },
-                        2: { halign: 'right', cellWidth: 28 },
-                        3: { halign: 'right', cellWidth: 30 },
+                        0: { halign: 'left', cellWidth: 102, fontStyle: 'bold' },
+                        1: { halign: 'center', cellWidth: 22, fontStyle: 'bold' },
+                        2: { halign: 'right', cellWidth: 28, fontStyle: 'bold' },
+                        3: { halign: 'right', cellWidth: 30, fontStyle: 'bold' },
                       },
-                      styles: { cellPadding: pad, lineWidth: 0.12, fontSize: fontSize, overflow: 'linebreak', minCellHeight: 7 },
+                      styles: { cellPadding: pad, lineWidth: 0.12, fontSize: fontSize, overflow: 'linebreak', minCellHeight: 7, fontStyle: 'bold' },
                       margin: { left: 14, right: 14 },
                       rowPageBreak: 'avoid',
                     });
@@ -773,7 +773,7 @@ export const InvoicesView: React.FC = () => {
                               </div>
                             </td>
                             <td className="py-2.5 px-3 border border-slate-300 text-center font-mono font-bold align-middle">{totalVol.toFixed(2)}</td>
-                            <td className="py-2.5 px-3 border border-slate-300 text-right font-mono align-middle">{formatIDR(g.unitPricePerM3)}</td>
+                            <td className="py-2.5 px-3 border border-slate-300 text-right font-mono font-bold align-middle">{formatIDR(g.unitPricePerM3)}</td>
                             <td className="py-2.5 px-3 border border-slate-300 text-right font-mono font-bold align-middle">{formatIDR(totalIdr)}</td>
                           </tr>
                         );
