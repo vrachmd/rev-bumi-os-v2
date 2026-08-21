@@ -522,24 +522,26 @@ export const InvoicesView: React.FC = () => {
                       finalY = 14;
                     }
 
-                    // ===== Financial box kanan (mirror preview w-80 bg-slate-50) =====
+                    // ===== Financial box + Footer FIX di bawah (tidak mentok) =====
+                    // Footer di-anchor bawah: title Y=255 → bottom ≈278.8, sisa 18.2mm margin (tidak mentok)
+                    const footerY = 255;
                     const boxW = 78;
                     const boxX = 196 - boxW;
-                    const boxY = finalY + 6;
                     const boxH = 20;
-                    // overflow check: jika box+footer tabrakan, addPage
-                    let totalsY = boxY;
-                    if (boxY + boxH + 28 > 265) {
+                    let totalsY = finalY + 6;
+                    // Jika tabel+box akan menabrak footer fix (butuh gap 10mm), pindah totals ke halaman baru
+                    // totalsY+boxH+10 > footerY-5  =>  butuh halaman baru
+                    if (totalsY + boxH + 10 > footerY - 5) {
                       doc.addPage();
-                      totalsY = 18;
+                      totalsY = 22;
+                      // footer tetap di bawah halaman baru
                     }
-                    // Box totals — tema hijau brand (bukan abu monoton)
+                    // Box totals — tema hijau brand
                     doc.setFillColor(240, 253, 244);
                     doc.roundedRect(boxX, totalsY, boxW, boxH, 2, 2, 'F');
                     doc.setDrawColor(167, 243, 208);
                     doc.setLineWidth(0.25);
                     doc.roundedRect(boxX, totalsY, boxW, boxH, 2, 2, 'S');
-                    // aksen kiri hijau tebal 1.2mm
                     doc.setFillColor(0, 60, 22);
                     doc.roundedRect(boxX, totalsY, 1.2, boxH, 0.6, 0.6, 'F');
                     doc.setFont('helvetica', 'normal');
@@ -555,7 +557,6 @@ export const InvoicesView: React.FC = () => {
                     doc.setTextColor(15, 23, 42);
                     doc.setFont('helvetica', 'bold');
                     doc.text(formatIDR(inv.taxAmountIdr), boxX + boxW - 3, totalsY + 10.5, { align: 'right' });
-                    // garis pemisah hijau brand
                     doc.setDrawColor(0, 60, 22);
                     doc.setLineWidth(0.45);
                     doc.line(boxX + 4, totalsY + 13.2, boxX + boxW - 3, totalsY + 13.2);
@@ -564,15 +565,6 @@ export const InvoicesView: React.FC = () => {
                     doc.setFont('helvetica', 'bold');
                     doc.text('Total Faktur Tagihan:', boxX + 4.5, totalsY + 17);
                     doc.text(formatIDR(inv.totalInvoiceIdr), boxX + boxW - 3, totalsY + 17, { align: 'right' });
-
-                    // ===== Footer mengalir — tidak mentok bawah, tema hijau =====
-                    const gapAfterTotals = 14;
-                    let footerY = totalsY + boxH + gapAfterTotals;
-                    // jaga agar tidak mepet tepi bawah (butuh 28mm untuk footer, margin bawah 12mm = 285)
-                    if (footerY + 26 > 283) {
-                      doc.addPage();
-                      footerY = 18;
-                    }
                     // garis hijau tipis di atas footer (ornamen brand)
                     doc.setDrawColor(0, 60, 22);
                     doc.setLineWidth(0.35);
