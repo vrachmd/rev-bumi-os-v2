@@ -253,8 +253,7 @@ export const InvoicesView: React.FC = () => {
                               if (!file) return;
                               if (file.size > 5 * 1024 * 1024) { alert('Maks 5MB'); return; }
                               const { blob, ext } = await compressKwitansi(file);
-                              const base = file.name.replace(/\.[^.]+$/, '').replace(/[^A-Za-z0-9._-]/g,'_');
-                              const fileName = `${inv.id}-${Date.now()}-${base}.${ext}`;
+                              const fileName = `${inv.id}.${ext}`;
                               const contentType = ext === 'webp' ? 'image/webp' : file.type;
                               const { error: upErr } = await supabase.storage.from('kwitansi').upload(fileName, blob, { upsert: true, contentType });
                               if (upErr) { alert('Upload gagal: ' + upErr.message); return; }
@@ -580,14 +579,6 @@ export const InvoicesView: React.FC = () => {
                 </div>
               </div>
 
-              {(selectedInvoiceForPrint as any).kwitansiPhotoUrl && (
-                <div className="my-4 p-3 border border-emerald-200 rounded-lg bg-white print:break-inside-avoid">
-                  <p className="text-[10px] font-bold text-[#003C16] mb-2 uppercase tracking-wide">Foto Kwitansi Bermaterai (Asli) — Terlampir</p>
-                  <img src={(selectedInvoiceForPrint as any).kwitansiPhotoUrl} alt="Kwitansi Bermaterai" className="max-h-80 w-auto mx-auto rounded border shadow-sm" />
-                  <p className="text-[10px] text-slate-500 text-center mt-1">Dokumen asli bermaterai disimpan terpisah — foto sebagai bukti lampiran faktur</p>
-                </div>
-              )}
-
               {/* Bank Account Info & Signatures — hijau brand, jarak lega */}
               <div className="grid grid-cols-2 gap-6 mt-8 pt-4 border-t-2 border-[#003C16]/20 text-xs">
                 <div>
@@ -615,6 +606,14 @@ export const InvoicesView: React.FC = () => {
                   </span>
                 </div>
               </div>
+              {(selectedInvoiceForPrint as any).kwitansiPhotoUrl && (
+                <div className="mt-12 pt-8 border-t-4 border-[#003C16] break-before-page" id="kwitansi-a4">
+                  <p className="text-sm font-bold text-[#003C16] uppercase tracking-wide text-center">Lampiran: Foto Kwitansi Bermaterai (Asli) — Halaman 2</p>
+                  <p className="text-[11px] text-slate-500 text-center mb-3">Faktur {selectedInvoiceForPrint.invoiceNumber} — {customers.find(c=>c.id===selectedInvoiceForPrint.customerId)?.name}</p>
+                  <img src={(selectedInvoiceForPrint as any).kwitansiPhotoUrl} alt="Kwitansi Bermaterai" className="max-h-[650px] w-auto mx-auto rounded border shadow-sm" />
+                  <p className="text-[10px] text-slate-500 text-center mt-2 italic">Dokumen asli bermaterai Rp 10.000 disimpan terpisah — foto sebagai bukti lampiran</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
