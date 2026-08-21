@@ -152,3 +152,4 @@ graph TD
    - Hindari fitur eksklusif provider agar tetap portabel ke GCP/Alibaba; semua konfigurasi **env-driven**.
 5. **Verifikasi Build & Lint**: Selalu jalankan `lint_applet` dan `compile_applet` setelah melakukan perubahan kode untuk memastikan tidak ada pemutusan tipe TypeScript.
 6. **UI/UX Iconography**: Selalu gunakan **react-icon** (`lucide-react` web, `lucide-react-native` mobile) — **jangan pakai emoji** (`📊⛏️🏗️🧾💰⚠️📈🚚` dkk). Emoji tidak konsisten warna/size dan tidak scalable; icon vektor via props `size`/`color`.
+7. **Auto-Push ke Git (Produksi)**: Setiap perubahan kode yang lolos `check-types` + `lint` **wajib langsung commit & push ke `origin/main`** tanpa menunggu instruksi manual. Vercel `rev-bumi-os-v2-web` auto-deploy dari `main`. Jangan menumpuk perubahan lokal. Pesan commit: `fix|feat|chore(scope): deskripsi singkat`.
