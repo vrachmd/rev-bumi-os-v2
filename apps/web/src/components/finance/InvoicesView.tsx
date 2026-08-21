@@ -429,6 +429,22 @@ export const InvoicesView: React.FC = () => {
                     doc.text(`PPN 11%: ${formatIDR(inv.taxAmountIdr)}`, 190, finalY + 13, { align: 'right' });
                     doc.setFont('helvetica', 'bold');
                     doc.text(`Total Faktur Tagihan: ${formatIDR(inv.totalInvoiceIdr)}`, 190, finalY + 18, { align: 'right' });
+                    // Footer fixed di bawah A4 (tidak ikut kolom) — Instruksi pembayaran & Hormat Kami selalu di bawah
+                    const footerY = 270;
+                    doc.setFontSize(7);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Instruksi Pembayaran Transfer Bank:', 14, footerY);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text('Bank Mandiri (Cabang Cirebon)  No. Rekening: 134-00-9876543-2  Atas Nama: PT REV BUMI NUSANTARA PERKASA', 14, footerY + 5);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text('Hormat Kami,', 150, footerY);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('( Hendra Gunawan, S.E. )', 150, footerY + 14);
+                    doc.setFontSize(6);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text('Direktur Keuangan & Akuntansi', 150, footerY + 18);
+                    doc.setFontSize(7);
+                    doc.text('DIVERIFIKASI & DITANDATANGANI', 150, footerY + 10);
                     doc.save(`${inv.invoiceNumber}.pdf`);
                   }}
                   className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
