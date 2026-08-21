@@ -477,15 +477,20 @@ export const InvoicesView: React.FC = () => {
                       try { const d = new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; } catch { return formatDate(iso); }
                     };
                     const body = groupList.map((g) => {
+                      // sort per grup by SJ IMCI ascending (seperti referensi: 101197→102561)
+                      g.items.sort((a: any,b: any)=>{
+                        const na = parseInt((a.sjImci||a.deliveryNumber||'').replace(/\D/g,'')||'999999',10);
+                        const nb = parseInt((b.sjImci||b.deliveryNumber||'').replace(/\D/g,'')||'999999',10);
+                        return na-nb;
+                      });
                       const lines: string[] = [g.productName];
                       g.items.forEach((it: any) => {
                         const tgl = fmtShortDate(it.deliveryDate);
-                        const sj = it.deliveryNumber || '-';
-                        const imci = it.sjImci ? ` ${it.sjImci}` : '';
+                        const imci = it.sjImci || '-';
                         const plat = it.plateNumber || '-';
                         const vol = `${it.approvedVolumeM3.toFixed(2)}m³`;
-                        // format mirip referensi: TGL  PLAT  SJ  vol
-                        lines.push(`${tgl}  ${plat}  ${sj}${imci}  ${vol}`);
+                        // format persis referensi: 20/08/2026  B 9057 UIS  101197  24.25m³
+                        lines.push(`${tgl}  ${plat}  ${imci}  ${vol}`);
                       });
                       const totalVol = g.items.reduce((s: number, it: any) => s + (it.approvedVolumeM3||0), 0);
                       const totalIdr = g.items.reduce((s: number, it: any) => s + (it.itemTotalIdr||0), 0);
@@ -735,7 +740,9 @@ export const InvoicesView: React.FC = () => {
                         if (!m.has(k)) m.set(k, { productName: it.productName, unitPricePerM3: it.unitPricePerM3, items: [] });
                         m.get(k)!.items.push(it);
                       });
+                      const fmtShort = (iso?: string)=>{ if(!iso) return '-'; try{const d=new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;}catch{return formatDate(iso);} };
                       return Array.from(m.values()).map((g: any, gi: number) => {
+                        g.items.sort((a:any,b:any)=>{ const na=parseInt((a.sjImci||a.deliveryNumber||'').replace(/\D/g,'')||'999999',10); const nb=parseInt((b.sjImci||b.deliveryNumber||'').replace(/\D/g,'')||'999999',10); return na-nb; });
                         const totalVol = g.items.reduce((s: number, it: any) => s + (it.approvedVolumeM3||0), 0);
                         const totalIdr = g.items.reduce((s: number, it: any) => s + (it.itemTotalIdr||0), 0);
                         return (
@@ -745,7 +752,7 @@ export const InvoicesView: React.FC = () => {
                               <div className="mt-1 space-y-0.5">
                                 {g.items.map((it: any) => (
                                   <p key={it.id || it.deliveryNumber} className="text-[10px] text-slate-600 font-mono">
-                                    {it.deliveryDate ? formatDate(it.deliveryDate) : '-'} &nbsp;{it.plateNumber || '-'} &nbsp;{it.deliveryNumber}{it.sjImci ? ` ${it.sjImci}` : ''} &nbsp;{formatVolumeM3(it.approvedVolumeM3,false)}m³
+                                    {fmtShort(it.deliveryDate)} &nbsp;{it.plateNumber || '-'} &nbsp;{it.sjImci || '-'} &nbsp;{formatVolumeM3(it.approvedVolumeM3,false)}m³
                                   </p>
                                 ))}
                               </div>
