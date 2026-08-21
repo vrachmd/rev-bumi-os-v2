@@ -547,27 +547,26 @@ export const InvoicesView: React.FC = () => {
                       styles: { cellPadding: pad, lineWidth: 0.12, fontSize: fontSize, overflow: 'linebreak', minCellHeight: 7 },
                       margin: { left: 14, right: 14 },
                       rowPageBreak: 'avoid',
+                      willDrawCell: function(data: any){
+                        if(data.column.index===0 && data.row.section==='body'){
+                          // simpan lines dan kosongkan agar autoTable tidak gambar default (hindari duplikat & kotak)
+                          (data.cell as any)._customLines = [...(data.cell.text as string[])];
+                          data.cell.text = [];
+                        }
+                      },
                       didDrawCell: function(data: any){
-                        if(data.column.index===0 && data.row.section==='body' && data.cell.text && data.cell.text.length>0){
+                        if(data.column.index===0 && data.row.section==='body'){
                           const doc = data.doc;
                           const cell: any = data.cell;
+                          const lines: string[] = (cell as any)._customLines || [];
+                          if(!lines.length) return;
                           const padL = cell.padding('left'); const padT = cell.padding('top');
                           const x = cell.x + padL;
-                          const baseY = cell.y + padT + 3;
-                          // tutup tulisan default dengan rect putih (agar rata)
-                          doc.setFillColor(255,255,255);
-                          // hanya tutup area teks agar grid tetap, tapi overdraw tipis
-                          // gambar ulang: baris 0 bold helvetica, baris 1+ courier normal agar rata kebawah
-                          const lines: string[] = cell.text as string[];
-                          // hapus dulu dengan rect
-                          doc.rect(cell.x+0.3, cell.y+0.3, cell.width-0.6, cell.height-0.6, 'F');
-                          // gambar border grid kembali tipis (agar tidak hilang)
-                          doc.setDrawColor(203,213,225); doc.setLineWidth(0.12);
-                          doc.rect(cell.x, cell.y, cell.width, cell.height, 'S');
+                          const baseY = cell.y + padT + 3.2;
                           // baris 0 — Batu Split bold helvetica
                           doc.setFont('helvetica','bold'); doc.setFontSize(fontSize); doc.setTextColor(15,23,42);
                           doc.text(lines[0], x, baseY);
-                          // sisa baris — courier normal, posisi rata kebawah
+                          // sisa baris — courier normal, rata presisi
                           doc.setFont('courier','normal'); doc.setFontSize(fontSize-0.2); doc.setTextColor(55,65,81);
                           for(let i=1;i<lines.length;i++){
                             const ly = baseY + i*3.4;
