@@ -137,6 +137,8 @@ export interface Quarry {
   materialCostOverrides?: QuarryMaterialCost[];
 }
 
+export type InvoiceTemplateId = 'IMCI-AGREGAT' | 'STANDARD-PER-RIT';
+
 export interface Customer {
   id: string;
   code: string;
@@ -149,6 +151,7 @@ export interface Customer {
   email: string;
   paymentTermsDays: number;
   isActive: boolean;
+  invoiceTemplateId?: InvoiceTemplateId;
 }
 
 export interface Project {
@@ -183,6 +186,7 @@ export interface Contract {
   endDate: string;
   status: 'ACTIVE' | 'COMPLETED' | 'EXPIRED' | 'SUSPENDED';
   notes?: string;
+  templateId?: InvoiceTemplateId;
 }
 
 export interface TransportVendor {
@@ -429,6 +433,7 @@ export interface Invoice {
   status: InvoiceStatus;
   notes?: string;
   createdAt: string;
+  kwitansiPhotoUrl?: string;
 }
 
 export interface Payment {

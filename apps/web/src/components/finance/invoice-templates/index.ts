@@ -1,8 +1,6 @@
-import { Invoice, Customer, Contract } from '../../../types';
+import { Invoice, Customer, Contract, InvoiceTemplateId } from '../../../types';
 import { generateImciAgregatPdf } from './ImciAgregatTemplate';
 import { generateStandardPerRitPdf } from './StandardPerRitTemplate';
-
-export type InvoiceTemplateId = 'IMCI-AGREGAT' | 'STANDARD-PER-RIT';
 
 export function resolveTemplate(invoice: Invoice, customers: Customer[], contracts: Contract[]): InvoiceTemplateId {
   const cust = customers.find((c) => c.id === invoice.customerId);

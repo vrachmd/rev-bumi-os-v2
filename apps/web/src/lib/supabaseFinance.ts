@@ -30,6 +30,7 @@ interface InvoiceDbRow {
   status: Invoice['status'];
   notes: string | null;
   created_at: string;
+  kwitansi_photo_url: string | null;
 }
 
 interface InvoiceItemDbRow {
@@ -79,6 +80,7 @@ const mapInvoice = (r: InvoiceDbRow, items: InvoiceItem[]): Invoice => ({
   status: r.status,
   notes: r.notes ?? undefined,
   createdAt: r.created_at,
+  kwitansiPhotoUrl: (r as any).kwitansi_photo_url ?? undefined,
 });
 
 const mapInvoiceItem = (r: InvoiceItemDbRow): InvoiceItem => ({
@@ -157,6 +159,7 @@ const toInvoiceDbRow = (inv: Invoice): InvoiceDbRow => ({
   status: inv.status,
   notes: inv.notes ?? null,
   created_at: inv.createdAt,
+  kwitansi_photo_url: (inv as any).kwitansiPhotoUrl ?? null,
 });
 
 /**

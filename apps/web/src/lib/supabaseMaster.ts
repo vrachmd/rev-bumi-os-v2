@@ -86,6 +86,7 @@ const mapCustomer = (r: any): Customer => ({
   email: r.email ?? '',
   paymentTermsDays: num(r.payment_terms_days),
   isActive: r.is_active ?? true,
+  invoiceTemplateId: r.invoice_template_id ?? undefined,
 });
 
 const mapProject = (r: any): Project => ({
@@ -117,6 +118,7 @@ const mapContract = (r: any): Contract => ({
   endDate: r.end_date ?? '',
   status: (r.status as Contract['status']) ?? 'ACTIVE',
   notes: r.notes ?? undefined,
+  templateId: r.template_id ?? undefined,
 });
 
 const mapVendor = (r: any): TransportVendor => ({
@@ -295,6 +297,7 @@ export async function upsertMasterToSupabase(bundle: MasterDataBundle): Promise<
       email: c.email ?? null,
       payment_terms_days: c.paymentTermsDays ?? 30,
       is_active: c.isActive ?? true,
+      invoice_template_id: (c as any).invoiceTemplateId ?? null,
     }))
   ));
 
@@ -332,6 +335,7 @@ export async function upsertMasterToSupabase(bundle: MasterDataBundle): Promise<
       end_date: c.endDate ?? null,
       status: c.status ?? 'ACTIVE',
       notes: c.notes ?? null,
+      template_id: (c as any).templateId ?? null,
     }))
   ));
 
