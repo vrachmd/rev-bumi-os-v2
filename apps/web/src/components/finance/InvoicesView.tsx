@@ -463,33 +463,48 @@ export const InvoicesView: React.FC = () => {
                     doc.setTextColor(100, 116, 139);
                     doc.text(alamatLines[0] || '', 16, billY + 16);
 
-                    // ===== Items table — padat otomatis agar 20 item tetap 1 halaman =====
-                    const isDense = (inv.items || []).length > 12;
-                    const isVeryDense = (inv.items || []).length > 18;
-                    const body = (inv.items || []).map((it: any, idx: number) => {
-                      // Mode padat: 2 baris tetap tampilkan semua info penting (SJ RBN, SJ IMCI, Plat, Tgl)
-                      const descDense = isDense
-                        ? `${it.productName}\nSJ RBN: ${it.deliveryNumber} • SJ IMCI: ${it.sjImci || '-'} • Plat: ${it.plateNumber || '-'} • Tgl: ${it.deliveryDate ? formatDate(it.deliveryDate) : '-'}`
-                        : `${it.productName}\nSJ RBN: ${it.deliveryNumber}${it.sjImci ? `\nSJ IMCI: ${it.sjImci}` : ''}\nPlat: ${it.plateNumber || '-'}${it.deliveryDate ? `\nTgl Kirim: ${formatDate(it.deliveryDate)}` : ''}`;
+                    // ===== Items table — AGREGAT per material+price (model referensi: 1 baris grup) =====
+                    // Group by productName|unitPrice agar 20 rit se-material jadi 1 baris → hemat halaman, tetap rinci
+                    const groups = new Map<string, { productName: string; unitPricePerM3: number; items: any[] }>();
+                    (inv.items || []).forEach((it: any) => {
+                      const k = `${it.productName}||${it.unitPricePerM3}`;
+                      if (!groups.has(k)) groups.set(k, { productName: it.productName, unitPricePerM3: it.unitPricePerM3, items: [] });
+                      groups.get(k)!.items.push(it);
+                    });
+                    const groupList = Array.from(groups.values());
+                    const fmtShortDate = (iso?: string) => {
+                      if (!iso) return '-';
+                      try { const d = new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; } catch { return formatDate(iso); }
+                    };
+                    const body = groupList.map((g) => {
+                      const lines: string[] = [g.productName];
+                      g.items.forEach((it: any) => {
+                        const tgl = fmtShortDate(it.deliveryDate);
+                        const sj = it.deliveryNumber || '-';
+                        const imci = it.sjImci ? ` ${it.sjImci}` : '';
+                        const plat = it.plateNumber || '-';
+                        const vol = `${it.approvedVolumeM3.toFixed(2)}m³`;
+                        // format mirip referensi: TGL  PLAT  SJ  vol
+                        lines.push(`${tgl}  ${plat}  ${sj}${imci}  ${vol}`);
+                      });
+                      const totalVol = g.items.reduce((s: number, it: any) => s + (it.approvedVolumeM3||0), 0);
+                      const totalIdr = g.items.reduce((s: number, it: any) => s + (it.itemTotalIdr||0), 0);
                       return [
-                        String(idx + 1),
-                        descDense,
-                        `${it.approvedVolumeM3.toFixed(2)} m\u00B3`,
-                        formatIDR(it.unitPricePerM3),
-                        formatIDR(it.itemTotalIdr),
+                        lines.join('\n'),
+                        `${totalVol.toFixed(2)}`,
+                        formatIDR(g.unitPricePerM3),
+                        formatIDR(totalIdr),
                       ];
                     });
-                    // Skala font/padding agar 20 baris ≈ 140mm (muat 1 hal A4)
-                    let fontSize: number, pad: number, headFontSize: number;
-                    if (isVeryDense) { fontSize = 5.4; pad = 1.0; headFontSize = 5.6; }
-                    else if (isDense) { fontSize = 6; pad = 1.3; headFontSize = 6.2; }
-                    else if (body.length > 8) { fontSize = 6.8; pad = 1.6; headFontSize = 7; }
-                    else { fontSize = 7.5; pad = 2.2; headFontSize = 7.5; }
+                    // Font tetap readable (tidak skala ekstrim) — agregat bantu 20 item tetap 1 baris grup
+                    const fontSize = 7;
+                    const pad = 2;
+                    const headFontSize = 7;
                     const tableStartY = billY + billH + 4;
                     // @ts-ignore
                     autoTable(doc, {
                       startY: tableStartY,
-                      head: [['No', 'Deskripsi Pengiriman & Material', 'Approved (m\u00B3)', 'Harga Satuan', 'Total DPP (IDR)']],
+                      head: [['Deskripsi', 'Kuantitas', 'Harga', 'Jumlah']],
                       body,
                       theme: 'grid',
                       headStyles: {
@@ -503,15 +518,14 @@ export const InvoicesView: React.FC = () => {
                         lineColor: [16, 78, 36],
                         cellPadding: pad,
                       },
-                      bodyStyles: { fontSize: fontSize, valign: 'middle', lineColor: [203, 213, 225] },
+                      bodyStyles: { fontSize: fontSize, valign: 'middle', lineColor: [203, 213, 225], textColor: [15,23,42] },
                       columnStyles: {
-                        0: { halign: 'center', cellWidth: 10 },
-                        1: { halign: 'left', cellWidth: 82 },
-                        2: { halign: 'right', cellWidth: 24 },
-                        3: { halign: 'right', cellWidth: 32 },
-                        4: { halign: 'right', cellWidth: 34 },
+                        0: { halign: 'left', cellWidth: 102 },
+                        1: { halign: 'center', cellWidth: 22 },
+                        2: { halign: 'right', cellWidth: 28 },
+                        3: { halign: 'right', cellWidth: 30 },
                       },
-                      styles: { cellPadding: pad, lineWidth: 0.12, fontSize: fontSize, overflow: 'linebreak', minCellHeight: isDense ? 6 : 8 },
+                      styles: { cellPadding: pad, lineWidth: 0.12, fontSize: fontSize, overflow: 'linebreak', minCellHeight: 7 },
                       margin: { left: 14, right: 14 },
                       rowPageBreak: 'avoid',
                     });
@@ -702,40 +716,47 @@ export const InvoicesView: React.FC = () => {
                 </p>
               </div>
 
-              {/* Items Table — head hijau brand */}
+              {/* Items Table — agregat per material+price (group) — hijau brand */}
               <div className="my-4">
                 <table className="w-full text-left text-xs border border-slate-300">
                   <thead className="bg-[#003C16] text-white font-bold">
                     <tr>
-                      <th className="py-2 px-3 border border-slate-300">No</th>
-                      <th className="py-2 px-3 border border-slate-300">Deskripsi Pengiriman & Material</th>
-                      <th className="py-2 px-3 border border-slate-300 text-right">Approved (m³)</th>
-                      <th className="py-2 px-3 border border-slate-300 text-right">Harga Satuan (m³)</th>
-                      <th className="py-2 px-3 border border-slate-300 text-right">Total DPP (IDR)</th>
+                      <th className="py-2 px-3 border border-slate-300">Deskripsi</th>
+                      <th className="py-2 px-3 border border-slate-300 text-center">Kuantitas</th>
+                      <th className="py-2 px-3 border border-slate-300 text-right">Harga</th>
+                      <th className="py-2 px-3 border border-slate-300 text-right">Jumlah</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(selectedInvoiceForPrint.items || []).map((item, idx) => (
-                      <tr key={item.id || idx}>
-                        <td className="py-2.5 px-3 border border-slate-300 text-center font-mono">{idx + 1}</td>
-                        <td className="py-2.5 px-3 border border-slate-300">
-                          <p className="font-semibold text-slate-900">{item.productName}</p>
-                          <p className="text-[10px] text-slate-500 font-mono">SJ RBN: {item.deliveryNumber}</p>
-                          {item.sjImci && <p className="text-[10px] text-slate-500 font-mono">SJ IMCI: {item.sjImci}</p>}
-                          {item.plateNumber && <p className="text-[10px] text-slate-500 font-mono">Plat: {item.plateNumber}</p>}
-                          {item.deliveryDate && <p className="text-[10px] text-slate-500">Tgl Kirim: {formatDate(item.deliveryDate)}</p>}
-                        </td>
-                        <td className="py-2.5 px-3 border border-slate-300 text-right font-mono font-bold">
-                          {formatVolumeM3(item.approvedVolumeM3, false)} m³
-                        </td>
-                        <td className="py-2.5 px-3 border border-slate-300 text-right font-mono">
-                          {formatIDR(item.unitPricePerM3)}
-                        </td>
-                        <td className="py-2.5 px-3 border border-slate-300 text-right font-mono font-bold">
-                          {formatIDR(item.itemTotalIdr)}
-                        </td>
-                      </tr>
-                    ))}
+                    {(() => {
+                      const m = new Map<string, any>();
+                      (selectedInvoiceForPrint.items || []).forEach((it: any) => {
+                        const k = `${it.productName}||${it.unitPricePerM3}`;
+                        if (!m.has(k)) m.set(k, { productName: it.productName, unitPricePerM3: it.unitPricePerM3, items: [] });
+                        m.get(k)!.items.push(it);
+                      });
+                      return Array.from(m.values()).map((g: any, gi: number) => {
+                        const totalVol = g.items.reduce((s: number, it: any) => s + (it.approvedVolumeM3||0), 0);
+                        const totalIdr = g.items.reduce((s: number, it: any) => s + (it.itemTotalIdr||0), 0);
+                        return (
+                          <tr key={gi}>
+                            <td className="py-2.5 px-3 border border-slate-300">
+                              <p className="font-bold text-slate-900">{g.productName}</p>
+                              <div className="mt-1 space-y-0.5">
+                                {g.items.map((it: any) => (
+                                  <p key={it.id || it.deliveryNumber} className="text-[10px] text-slate-600 font-mono">
+                                    {it.deliveryDate ? formatDate(it.deliveryDate) : '-'} &nbsp;{it.plateNumber || '-'} &nbsp;{it.deliveryNumber}{it.sjImci ? ` ${it.sjImci}` : ''} &nbsp;{formatVolumeM3(it.approvedVolumeM3,false)}m³
+                                  </p>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3 border border-slate-300 text-center font-mono font-bold align-middle">{totalVol.toFixed(2)}</td>
+                            <td className="py-2.5 px-3 border border-slate-300 text-right font-mono align-middle">{formatIDR(g.unitPricePerM3)}</td>
+                            <td className="py-2.5 px-3 border border-slate-300 text-right font-mono font-bold align-middle">{formatIDR(totalIdr)}</td>
+                          </tr>
+                        );
+                      });
+                    })()}
                   </tbody>
                 </table>
               </div>
