@@ -463,16 +463,28 @@ export const InvoicesView: React.FC = () => {
                     doc.setTextColor(100, 116, 139);
                     doc.text(alamatLines[0] || '', 16, billY + 16);
 
-                    // ===== Items table =====
-                    const body = (inv.items || []).map((it: any, idx: number) => [
-                      String(idx + 1),
-                      `${it.productName}\nSJ RBN: ${it.deliveryNumber}${it.sjImci ? `\nSJ IMCI: ${it.sjImci}` : ''}\nPlat: ${it.plateNumber || '-'}${it.deliveryDate ? `\nTgl Kirim: ${formatDate(it.deliveryDate)}` : ''}`,
-                      `${it.approvedVolumeM3.toFixed(2)} m\u00B3`,
-                      formatIDR(it.unitPricePerM3),
-                      formatIDR(it.itemTotalIdr),
-                    ]);
-                    const fontSize = body.length > 20 ? 6.5 : body.length > 10 ? 7 : 7.5;
-                    const pad = body.length > 20 ? 1.8 : 2.2;
+                    // ===== Items table — padat otomatis agar 20 item tetap 1 halaman =====
+                    const isDense = (inv.items || []).length > 12;
+                    const isVeryDense = (inv.items || []).length > 18;
+                    const body = (inv.items || []).map((it: any, idx: number) => {
+                      // Mode padat: 2 baris (hemat 60% tinggi) vs mode normal 5 baris
+                      const descDense = isDense
+                        ? `${it.productName}\n${it.deliveryNumber}${it.sjImci ? ' / ' + it.sjImci : ''} • ${it.plateNumber || '-'} • ${it.deliveryDate ? formatDate(it.deliveryDate) : '-'}`
+                        : `${it.productName}\nSJ RBN: ${it.deliveryNumber}${it.sjImci ? `\nSJ IMCI: ${it.sjImci}` : ''}\nPlat: ${it.plateNumber || '-'}${it.deliveryDate ? `\nTgl Kirim: ${formatDate(it.deliveryDate)}` : ''}`;
+                      return [
+                        String(idx + 1),
+                        descDense,
+                        `${it.approvedVolumeM3.toFixed(2)} m\u00B3`,
+                        formatIDR(it.unitPricePerM3),
+                        formatIDR(it.itemTotalIdr),
+                      ];
+                    });
+                    // Skala font/padding agar 20 baris ≈ 140mm (muat 1 hal A4)
+                    let fontSize: number, pad: number, headFontSize: number;
+                    if (isVeryDense) { fontSize = 5.4; pad = 1.0; headFontSize = 5.6; }
+                    else if (isDense) { fontSize = 6; pad = 1.3; headFontSize = 6.2; }
+                    else if (body.length > 8) { fontSize = 6.8; pad = 1.6; headFontSize = 7; }
+                    else { fontSize = 7.5; pad = 2.2; headFontSize = 7.5; }
                     const tableStartY = billY + billH + 4;
                     // @ts-ignore
                     autoTable(doc, {
@@ -483,12 +495,13 @@ export const InvoicesView: React.FC = () => {
                       headStyles: {
                         fillColor: [0, 60, 22],
                         textColor: [255, 255, 255],
-                        fontSize: fontSize,
+                        fontSize: headFontSize,
                         halign: 'center',
                         valign: 'middle',
                         fontStyle: 'bold',
-                        lineWidth: 0.15,
+                        lineWidth: 0.12,
                         lineColor: [16, 78, 36],
+                        cellPadding: pad,
                       },
                       bodyStyles: { fontSize: fontSize, valign: 'middle', lineColor: [203, 213, 225] },
                       columnStyles: {
@@ -498,8 +511,9 @@ export const InvoicesView: React.FC = () => {
                         3: { halign: 'right', cellWidth: 32 },
                         4: { halign: 'right', cellWidth: 34 },
                       },
-                      styles: { cellPadding: pad, lineWidth: 0.15, fontSize: fontSize, overflow: 'linebreak' },
+                      styles: { cellPadding: pad, lineWidth: 0.12, fontSize: fontSize, overflow: 'linebreak', minCellHeight: isDense ? 6 : 8 },
                       margin: { left: 14, right: 14 },
+                      rowPageBreak: 'avoid',
                     });
                     let finalY = (doc as any).lastAutoTable.finalY || tableStartY;
                     // Jika tabel mepet footer (multi-page), pindah halaman untuk totals+footer
