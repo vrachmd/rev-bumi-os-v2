@@ -830,7 +830,9 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
                   <>
                     <div className="grid grid-cols-2 gap-3">
                       <div><span className="text-slate-500">No. SJ RBN:</span> <span className="font-mono font-bold">{d.deliveryNumber}</span></div>
-                      <div><span className="text-slate-500">No. SJ IMCI:</span> <span className="font-mono">{d.quarryLoadingInfo?.notes?.includes('SJ IMCI') ? d.quarryLoadingInfo.notes.replace('SJ IMCI ', '') : '-'}</span></div>
+                      {cust?.name?.toLowerCase().includes('imci') && (
+                        <div><span className="text-slate-500">No. SJ IMCI:</span> <span className="font-mono">{d.quarryLoadingInfo?.notes?.includes('SJ IMCI') ? d.quarryLoadingInfo.notes.replace('SJ IMCI ', '') : '-'}</span></div>
+                      )}
                       <div><span className="text-slate-500">Status:</span> <span className="font-bold">{d.status}</span></div>
                       <div><span className="text-slate-500">Tanggal:</span> <span className="font-mono">{formatDate(d.scheduledDate)}</span></div>
                       <div><span className="text-slate-500">Pelanggan:</span> <span className="font-semibold">{cust?.name || '-'}</span></div>
