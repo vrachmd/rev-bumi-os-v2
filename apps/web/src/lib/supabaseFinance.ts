@@ -37,6 +37,9 @@ interface InvoiceItemDbRow {
   invoice_id: string;
   delivery_id: string;
   delivery_number: string;
+  delivery_date: string | null;
+  sj_imci: string | null;
+  plate_number: string | null;
   product_name: string;
   approved_volume_m3: number;
   unit_price_per_m3: number;
@@ -83,6 +86,9 @@ const mapInvoiceItem = (r: InvoiceItemDbRow): InvoiceItem => ({
   invoiceId: r.invoice_id,
   deliveryId: r.delivery_id,
   deliveryNumber: r.delivery_number,
+  deliveryDate: r.delivery_date ?? undefined,
+  sjImci: r.sj_imci ?? undefined,
+  plateNumber: r.plate_number ?? undefined,
   productName: r.product_name,
   approvedVolumeM3: Number(r.approved_volume_m3),
   unitPricePerM3: Number(r.unit_price_per_m3),
@@ -174,6 +180,9 @@ export async function upsertInvoiceToSupabase(invoice: Invoice): Promise<Finance
     invoice_id: invoice.id,
     delivery_id: it.deliveryId,
     delivery_number: it.deliveryNumber,
+    delivery_date: it.deliveryDate ?? null,
+    sj_imci: it.sjImci ?? null,
+    plate_number: it.plateNumber ?? null,
     product_name: it.productName,
     approved_volume_m3: it.approvedVolumeM3,
     unit_price_per_m3: it.unitPricePerM3,
