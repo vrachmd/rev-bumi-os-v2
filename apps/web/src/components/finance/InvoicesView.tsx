@@ -67,9 +67,10 @@ export const InvoicesView: React.FC = () => {
   const [ppnIncluded, setPpnIncluded] = useState(true);
   const [notes, setNotes] = useState('Penagihan suplai material agregat proyek konstruksi.');
 
-  // Unbilled deliveries candidate
+  // Unbilled deliveries candidate — hanya yang belum masuk invoice
+  const invoicedDeliveryIds = new Set((invoices as any[]).flatMap((inv: any) => (inv.items || []).map((it: any) => it.deliveryId)));
   const candidateDeliveries = deliveries.filter(
-    (d) => d.contractId === selectedContractId && (d.approvedVolumeM3 > 0 || d.loadedVolumeM3 > 0)
+    (d) => d.contractId === selectedContractId && d.approvedVolumeM3 > 0 && !invoicedDeliveryIds.has(d.id)
   );
 
   const handleCreateSubmit = (e: React.FormEvent) => {
