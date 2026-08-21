@@ -849,14 +849,23 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
                       <div className="bg-slate-50 p-2 rounded text-center"><div className="text-[10px] text-slate-500">Received</div><div className="font-mono font-bold">{d.receivedVolumeM3 ? formatVolumeM3(d.receivedVolumeM3, false) : '-'}</div></div>
                       <div className="bg-emerald-50 p-2 rounded text-center"><div className="text-[10px] text-slate-500">Approved</div><div className="font-mono font-bold text-emerald-800">{d.approvedVolumeM3 ? formatVolumeM3(d.approvedVolumeM3, false) : '-'}</div></div>
                     </div>
-                    {cust?.name?.toLowerCase().includes('imci') && d.status === 'DELIVERED' && !d.quarryLoadingInfo?.notes?.includes('SJ IMCI') && (
+                    {cust?.name?.toLowerCase().includes('imci') && d.status === 'DELIVERED' && (
                       <div className="bg-amber-50 p-3 rounded border border-amber-200">
-                        <p className="text-[11px] font-bold text-amber-900">Tambah No. SJ IMCI untuk penagihan:</p>
+                        <p className="text-[11px] font-bold text-amber-900">
+                          {d.quarryLoadingInfo?.notes?.includes('SJ IMCI') ? 'Edit No. SJ IMCI (revisi):' : 'Tambah No. SJ IMCI untuk penagihan:'}
+                        </p>
                         <div className="flex gap-2 mt-2">
-                          <input type="text" value={imciInput} onChange={(e) => setImciInput(e.target.value)} placeholder="100818" className="flex-1 px-2 py-1.5 text-xs border border-amber-300 rounded font-mono focus:ring-2 focus:ring-amber-500 outline-none" />
+                          <input
+                            type="text"
+                            value={imciInput || (d.quarryLoadingInfo?.notes?.includes('SJ IMCI') ? d.quarryLoadingInfo.notes.replace('SJ IMCI ', '') : '')}
+                            onChange={(e) => setImciInput(e.target.value)}
+                            placeholder="100818"
+                            className="flex-1 px-2 py-1.5 text-xs border border-amber-300 rounded font-mono focus:ring-2 focus:ring-amber-500 outline-none"
+                          />
                           <button
                             onClick={() => {
-                              const v = imciInput.trim();
+                              const cur = d.quarryLoadingInfo?.notes?.includes('SJ IMCI') ? d.quarryLoadingInfo.notes.replace('SJ IMCI ', '') : '';
+                              const v = (imciInput || cur).trim();
                               if (!v) return;
                               const updated: Delivery = {
                                 ...d,
@@ -869,7 +878,7 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
                             }}
                             className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-bold"
                           >
-                            Simpan
+                            {d.quarryLoadingInfo?.notes?.includes('SJ IMCI') ? 'Update' : 'Simpan'}
                           </button>
                         </div>
                       </div>

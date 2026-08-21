@@ -259,27 +259,45 @@ export const InvoicesView: React.FC = () => {
                   </p>
                 ) : (
                   <div className="max-h-44 overflow-y-auto space-y-1.5 border border-slate-200 rounded p-2 bg-slate-50">
-                    {candidateDeliveries.map((d) => (
-                      <label
-                        key={d.id}
-                        className="flex items-center justify-between p-2 rounded bg-white border border-slate-200 hover:bg-slate-100 cursor-pointer text-xs"
-                      >
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedDeliveryIds.includes(d.id)}
-                            onChange={() => toggleDeliverySelection(d.id)}
-                            className="rounded text-[#003C16] focus:ring-[#003C16]"
-                          />
-                          <span className="font-mono font-bold">{d.deliveryNumber}</span>
-                          <span className="text-slate-500 font-medium">({formatDate(d.scheduledDate)})</span>
-                        </div>
-                        <span className="font-mono font-bold text-emerald-800">
-                          {formatVolumeM3(d.approvedVolumeM3 > 0 ? d.approvedVolumeM3 : d.loadedVolumeM3, false)} m³
-                        </span>
-                      </label>
-                    ))}
+                    {candidateDeliveries.map((d) => {
+                      const isIMCI = customers.find((c) => c.id === contracts.find((co) => co.id === d.contractId)?.customerId)?.name?.toLowerCase().includes('imci');
+                      const hasIMCI = d.quarryLoadingInfo?.notes?.includes('SJ IMCI');
+                      const imciNo = hasIMCI ? d.quarryLoadingInfo!.notes!.replace('SJ IMCI ', '') : null;
+                      return (
+                        <label
+                          key={d.id}
+                          className={`flex items-center justify-between p-2 rounded bg-white border hover:bg-slate-100 cursor-pointer text-xs ${isIMCI && !hasIMCI ? 'border-amber-300 bg-amber-50' : 'border-slate-200'}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedDeliveryIds.includes(d.id)}
+                              onChange={() => toggleDeliverySelection(d.id)}
+                              className="rounded text-[#003C16] focus:ring-[#003C16]"
+                            />
+                            <span className="font-mono font-bold">{d.deliveryNumber}</span>
+                            {isIMCI && (
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${hasIMCI ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                                {hasIMCI ? `IMCI:${imciNo}` : 'IMCI: -'}
+                              </span>
+                            )}
+                            <span className="text-slate-500 font-medium">({formatDate(d.scheduledDate)})</span>
+                          </div>
+                          <span className="font-mono font-bold text-emerald-800">
+                            {formatVolumeM3(d.approvedVolumeM3 > 0 ? d.approvedVolumeM3 : d.loadedVolumeM3, false)} m³
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
+                )}
+                {candidateDeliveries.some((d) => {
+                  const isIMCI = customers.find((c) => c.id === contracts.find((co) => co.id === d.contractId)?.customerId)?.name?.toLowerCase().includes('imci');
+                  return isIMCI && !d.quarryLoadingInfo?.notes?.includes('SJ IMCI');
+                }) && (
+                  <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-2">
+                    Ada SJ IMCI yang belum diisi (kuning) — isi di `Pengiriman & Surat Jalan` detail `DELIVERED` sebelum tagih.
+                  </p>
                 )}
               </div>
 
