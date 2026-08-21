@@ -387,97 +387,221 @@ export const InvoicesView: React.FC = () => {
                     const inv = selectedInvoiceForPrint!;
                     const cust = customers.find((c) => c.id === inv.customerId);
                     const proj = projects.find((p) => p.id === inv.projectId);
-                    // Header — persis preview: RBN 12×12 hijau + PT REV BUMI
+
+                    // ===== Header: mirror preview HTML (pb-4 border-b-2) =====
+                    // RBN 12x12 hijau
                     doc.setFillColor(0, 60, 22);
                     doc.roundedRect(14, 8, 12, 12, 2, 2, 'F');
                     doc.setTextColor(255, 255, 255);
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(8);
-                    doc.text('RBN', 20, 15, { align: 'center' });
+                    doc.text('RBN', 20, 15.2, { align: 'center' });
+                    // Nama perusahaan
                     doc.setTextColor(0, 60, 22);
                     doc.setFontSize(11);
+                    doc.setFont('helvetica', 'bold');
                     doc.text('PT REV BUMI NUSANTARA PERKASA', 28, 12);
-                    doc.setFontSize(7);
+                    // Alamat — wrap max 90mm agar tidak overflow
+                    doc.setFontSize(6.5);
                     doc.setFont('helvetica', 'normal');
                     doc.setTextColor(90, 90, 90);
-                    doc.text(company.address || 'Graha Nusantara Lt. 8, Jl. TB Simatupang Kav. 15, Jakarta Selatan 12530', 28, 16);
-                    doc.text(`NPWP: ${company.npwp || '-'} | Telp: ${company.phone || '-'}`, 28, 19.5);
-                    doc.setTextColor(0, 0, 0);
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(8);
+                    const addrLines = doc.splitTextToSize(
+                      company.address || 'Graha Nusantara Lt. 8, Jl. TB Simatupang Kav. 15, Jakarta Selatan 12530',
+                      90
+                    );
+                    doc.text(addrLines, 28, 15.5);
+                    const addrH = Array.isArray(addrLines) ? addrLines.length * 3 : 3;
+                    doc.text(`NPWP: ${company.npwp || '-'} | Telp: ${company.phone || '-'}`, 28, 15.5 + addrH + 1.5);
+                    // Badge FAKTUR kanan
                     doc.setFillColor(0, 60, 22);
                     doc.roundedRect(130, 8, 66, 7, 1, 1, 'F');
                     doc.setTextColor(255, 255, 255);
-                    doc.text('FAKTUR PENAGIHAN', 163, 12.5, { align: 'center' });
-                    doc.setTextColor(0, 0, 0);
-                    doc.setFontSize(7.5);
                     doc.setFont('helvetica', 'bold');
-                    doc.text(inv.invoiceNumber, 196, 21, { align: 'right' });
+                    doc.setFontSize(7.5);
+                    doc.text('FAKTUR PENAGIHAN', 163, 12.6, { align: 'center' });
+                    doc.setTextColor(15, 23, 42);
+                    doc.setFontSize(8.5);
+                    doc.text(inv.invoiceNumber, 196, 20.5, { align: 'right' });
                     doc.setFontSize(6.5);
                     doc.setFont('helvetica', 'normal');
-                    doc.setTextColor(80, 80, 80);
-                    doc.text(`Tanggal: ${formatDate(inv.invoiceDate)}`, 196, 25, { align: 'right' });
+                    doc.setTextColor(100, 116, 139);
+                    doc.text(`Tanggal: ${formatDate(inv.invoiceDate)}`, 196, 24, { align: 'right' });
                     doc.setTextColor(180, 0, 0);
                     doc.setFont('helvetica', 'bold');
-                    doc.text(`Jatuh Tempo: ${formatDate(inv.dueDate)}`, 196, 29, { align: 'right' });
-                    doc.setTextColor(0, 0, 0);
-                    // Bill To — persis preview: DITAGIHKAN KEPADA box
+                    doc.text(`Jatuh Tempo: ${formatDate(inv.dueDate)}`, 196, 27.5, { align: 'right' });
+                    // Divider header — tebal 0.6 ~ border-b-2
+                    doc.setDrawColor(15, 23, 42);
+                    doc.setLineWidth(0.6);
+                    doc.line(14, 31, 196, 31);
+
+                    // ===== Bill-to box: mirror preview (Dit… + Proyek + Alamat terpisah) =====
+                    const billY = 33;
+                    const billH = 18;
                     doc.setFillColor(248, 250, 252);
-                    doc.roundedRect(14, 33, 182, 15, 2, 2, 'F');
+                    doc.roundedRect(14, billY, 182, billH, 2, 2, 'F');
                     doc.setDrawColor(226, 232, 240);
-                    doc.rect(14, 34, 182, 14, 'S');
-                    doc.setFontSize(7);
+                    doc.setLineWidth(0.2);
+                    doc.roundedRect(14, billY, 182, billH, 2, 2, 'S');
+                    doc.setFontSize(6);
                     doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(100, 100, 100);
-                    doc.text('DITAGIHKAN KEPADA:', 16, 38);
-                    doc.setTextColor(0, 0, 0);
+                    doc.setTextColor(100, 116, 139);
+                    doc.text('DITAGIHKAN KEPADA:', 16, billY + 4);
+                    // garis bawah label (border-b)
+                    doc.setDrawColor(226, 232, 240);
+                    doc.setLineWidth(0.15);
+                    doc.line(16, billY + 5.5, 194, billY + 5.5);
+                    doc.setTextColor(15, 23, 42);
                     doc.setFontSize(9);
-                    doc.text(cust?.name || '-', 16, 42);
-                    doc.setFontSize(7);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(cust?.name || '-', 16, billY + 9.5);
                     doc.setFont('helvetica', 'normal');
-                    doc.text(`Proyek: ${proj?.name || '-'} | Alamat: ${proj?.location || '-'}`, 16, 46);
+                    doc.setFontSize(6.5);
+                    doc.setTextColor(71, 85, 105);
+                    doc.text(`Proyek: ${proj?.name || '-'}`, 16, billY + 13);
+                    const alamatLines = doc.splitTextToSize(`Alamat: ${proj?.location || '-'}`, 178);
+                    doc.setFontSize(6);
+                    doc.setTextColor(100, 116, 139);
+                    doc.text(alamatLines[0] || '', 16, billY + 16);
+
+                    // ===== Items table =====
                     const body = (inv.items || []).map((it: any, idx: number) => [
                       String(idx + 1),
-                      `${it.productName}\nSJ RBN: ${it.deliveryNumber}${it.sjImci ? `\nSJ IMCI: ${it.sjImci}` : ''}\nPlat: ${it.plateNumber || '-'}${it.deliveryDate ? `\nTgl: ${formatDate(it.deliveryDate)}` : ''}`,
-                      `${it.approvedVolumeM3.toFixed(2)} m³`,
+                      `${it.productName}\nSJ RBN: ${it.deliveryNumber}${it.sjImci ? `\nSJ IMCI: ${it.sjImci}` : ''}\nPlat: ${it.plateNumber || '-'}${it.deliveryDate ? `\nTgl Kirim: ${formatDate(it.deliveryDate)}` : ''}`,
+                      `${it.approvedVolumeM3.toFixed(2)} m\u00B3`,
                       formatIDR(it.unitPricePerM3),
                       formatIDR(it.itemTotalIdr),
                     ]);
-                    const fontSize = body.length > 20 ? 7 : body.length > 10 ? 8 : 9;
-                    const pad = body.length > 20 ? 2 : 3;
+                    const fontSize = body.length > 20 ? 6.5 : body.length > 10 ? 7 : 7.5;
+                    const pad = body.length > 20 ? 1.8 : 2.2;
+                    const tableStartY = billY + billH + 4;
                     // @ts-ignore
                     autoTable(doc, {
-                      startY: 42,
-                      head: [['No', 'Deskripsi', 'Approved', 'Harga Satuan', 'Total DPP']],
+                      startY: tableStartY,
+                      head: [['No', 'Deskripsi Pengiriman & Material', 'Approved (m\u00B3)', 'Harga Satuan', 'Total DPP (IDR)']],
                       body,
                       theme: 'grid',
-                      headStyles: { fillColor: [0, 60, 22], fontSize: fontSize, halign: 'center' },
-                      bodyStyles: { fontSize: fontSize },
-                      columnStyles: { 0: { halign: 'center', cellWidth: 10 }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
-                      styles: { cellPadding: pad, lineWidth: 0.1, fontSize: fontSize },
+                      headStyles: {
+                        fillColor: [30, 41, 59],
+                        textColor: [255, 255, 255],
+                        fontSize: fontSize,
+                        halign: 'center',
+                        valign: 'middle',
+                        fontStyle: 'bold',
+                        lineWidth: 0.15,
+                        lineColor: [203, 213, 225],
+                      },
+                      bodyStyles: { fontSize: fontSize, valign: 'middle', lineColor: [203, 213, 225] },
+                      columnStyles: {
+                        0: { halign: 'center', cellWidth: 10 },
+                        1: { halign: 'left', cellWidth: 82 },
+                        2: { halign: 'right', cellWidth: 24 },
+                        3: { halign: 'right', cellWidth: 32 },
+                        4: { halign: 'right', cellWidth: 34 },
+                      },
+                      styles: { cellPadding: pad, lineWidth: 0.15, fontSize: fontSize, overflow: 'linebreak' },
+                      margin: { left: 14, right: 14 },
                     });
-                    const finalY = (doc as any).lastAutoTable.finalY || 42;
-                    doc.setFontSize(8);
-                    doc.text(`Subtotal DPP: ${formatIDR(inv.subtotalIdr)}`, 190, finalY + 8, { align: 'right' });
-                    doc.text(`PPN 11%: ${formatIDR(inv.taxAmountIdr)}`, 190, finalY + 13, { align: 'right' });
+                    let finalY = (doc as any).lastAutoTable.finalY || tableStartY;
+                    // Jika tabel mepet footer (multi-page), pindah halaman untuk totals+footer
+                    if (finalY > 235) {
+                      doc.addPage();
+                      finalY = 14;
+                    }
+
+                    // ===== Financial box kanan (mirror preview w-80 bg-slate-50) =====
+                    const boxW = 78;
+                    const boxX = 196 - boxW;
+                    const boxY = finalY + 6;
+                    const boxH = 20;
+                    // overflow check: jika box+footer tabrakan, addPage
+                    let totalsY = boxY;
+                    if (boxY + boxH + 28 > 265) {
+                      doc.addPage();
+                      totalsY = 18;
+                    }
+                    doc.setFillColor(248, 250, 252);
+                    doc.roundedRect(boxX, totalsY, boxW, boxH, 2, 2, 'F');
+                    doc.setDrawColor(226, 232, 240);
+                    doc.setLineWidth(0.2);
+                    doc.roundedRect(boxX, totalsY, boxW, boxH, 2, 2, 'S');
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7);
+                    doc.setTextColor(71, 85, 105);
+                    doc.text('Subtotal DPP:', boxX + 3, totalsY + 6);
+                    doc.setTextColor(15, 23, 42);
                     doc.setFont('helvetica', 'bold');
-                    doc.text(`Total Faktur Tagihan: ${formatIDR(inv.totalInvoiceIdr)}`, 190, finalY + 18, { align: 'right' });
-                    // Footer fixed di bawah A4 (tidak ikut kolom) — Instruksi pembayaran & Hormat Kami selalu di bawah
+                    doc.text(formatIDR(inv.subtotalIdr), boxX + boxW - 3, totalsY + 6, { align: 'right' });
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(71, 85, 105);
+                    doc.text('PPN (11%):', boxX + 3, totalsY + 10.5);
+                    doc.setTextColor(15, 23, 42);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(formatIDR(inv.taxAmountIdr), boxX + boxW - 3, totalsY + 10.5, { align: 'right' });
+                    // garis pemisah tebal
+                    doc.setDrawColor(15, 23, 42);
+                    doc.setLineWidth(0.5);
+                    doc.line(boxX + 3, totalsY + 13.2, boxX + boxW - 3, totalsY + 13.2);
+                    doc.setFontSize(7.5);
+                    doc.setTextColor(0, 60, 22);
+                    doc.text('Total Faktur Tagihan:', boxX + 3, totalsY + 17);
+                    doc.text(formatIDR(inv.totalInvoiceIdr), boxX + boxW - 3, totalsY + 17, { align: 'right' });
+
+                    // ===== Footer fixed bawah — mirror preview grid 2 kolom =====
                     const footerY = 270;
+                    // garis atas footer (border-t)
+                    doc.setDrawColor(203, 213, 225);
+                    doc.setLineWidth(0.2);
+                    doc.line(14, 268, 196, 268);
+                    // Kiri: Instruksi pembayaran
+                    doc.setFontSize(6.5);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(15, 23, 42);
+                    doc.text('Instruksi Pembayaran Transfer Bank:', 14, footerY);
+                    doc.setFillColor(248, 250, 252);
+                    doc.roundedRect(14, footerY + 2, 92, 18, 2, 2, 'F');
+                    doc.setDrawColor(226, 232, 240);
+                    doc.setLineWidth(0.15);
+                    doc.roundedRect(14, footerY + 2, 92, 18, 2, 2, 'S');
+                    doc.setFontSize(6.5);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(15, 23, 42);
+                    doc.text('Bank Mandiri (Cabang Cirebon)', 16, footerY + 7);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(6);
+                    doc.setTextColor(51, 65, 85);
+                    doc.text('No. Rekening: 134-00-9876543-2', 16, footerY + 11);
+                    doc.text('Atas Nama: PT REV BUMI NUSANTARA PERKASA', 16, footerY + 15);
+                    // Kanan: Hormat Kami (center kolom kanan 106-196 => center 151)
+                    const sigCenterX = 151;
+                    doc.setFontSize(7);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(71, 85, 105);
+                    doc.text('Hormat Kami,', sigCenterX, footerY, { align: 'center' });
+                    // badge DIVERIFIKASI
+                    const badgeW = 44;
+                    const badgeX = sigCenterX - badgeW / 2;
+                    const badgeY = footerY + 4;
+                    doc.setFillColor(236, 253, 245);
+                    doc.roundedRect(badgeX, badgeY, badgeW, 5, 1, 1, 'F');
+                    doc.setDrawColor(167, 243, 208);
+                    doc.setLineWidth(0.15);
+                    doc.roundedRect(badgeX, badgeY, badgeW, 5, 1, 1, 'S');
+                    doc.setFontSize(5);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(6, 95, 70);
+                    doc.text('DIVERIFIKASI & DITANDATANGANI', sigCenterX, badgeY + 3.3, { align: 'center' });
+                    // garis tanda tangan
+                    doc.setDrawColor(148, 163, 184);
+                    doc.setLineWidth(0.2);
+                    doc.line(sigCenterX - 28, footerY + 16, sigCenterX + 28, footerY + 16);
                     doc.setFontSize(7);
                     doc.setFont('helvetica', 'bold');
-                    doc.text('Instruksi Pembayaran Transfer Bank:', 14, footerY);
-                    doc.setFont('helvetica', 'normal');
-                    doc.text('Bank Mandiri (Cabang Cirebon)  No. Rekening: 134-00-9876543-2  Atas Nama: PT REV BUMI NUSANTARA PERKASA', 14, footerY + 5);
-                    doc.setFont('helvetica', 'normal');
-                    doc.text('Hormat Kami,', 150, footerY);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text('( Hendra Gunawan, S.E. )', 150, footerY + 14);
+                    doc.setTextColor(15, 23, 42);
+                    doc.text('( Hendra Gunawan, S.E. )', sigCenterX, footerY + 19.5, { align: 'center' });
                     doc.setFontSize(6);
                     doc.setFont('helvetica', 'normal');
-                    doc.text('Direktur Keuangan & Akuntansi', 150, footerY + 18);
-                    doc.setFontSize(7);
-                    doc.text('DIVERIFIKASI & DITANDATANGANI', 150, footerY + 10);
+                    doc.setTextColor(100, 116, 139);
+                    doc.text('Direktur Keuangan & Akuntansi', sigCenterX, footerY + 23, { align: 'center' });
                     doc.save(`${inv.invoiceNumber}.pdf`);
                   }}
                   className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
