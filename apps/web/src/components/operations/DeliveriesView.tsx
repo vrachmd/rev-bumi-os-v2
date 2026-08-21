@@ -40,6 +40,7 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
     drivers,
     freightRates,
     addDelivery,
+    updateDelivery,
     updateDeliveryStatus,
     verifyPod,
     saveVendor,
@@ -52,6 +53,7 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
   const [selectedDeliveryForWb, setSelectedDeliveryForWb] = useState<Delivery | null>(null);
   const [selectedDeliveryForPod, setSelectedDeliveryForPod] = useState<Delivery | null>(null);
   const [selectedDetailDelivery, setSelectedDetailDelivery] = useState<Delivery | null>(null);
+  const [imciInput, setImciInput] = useState('');
 
   // New Delivery Modal state
   const [isCreatingDelivery, setIsCreatingDelivery] = useState(false);
@@ -847,6 +849,31 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
                       <div className="bg-slate-50 p-2 rounded text-center"><div className="text-[10px] text-slate-500">Received</div><div className="font-mono font-bold">{d.receivedVolumeM3 ? formatVolumeM3(d.receivedVolumeM3, false) : '-'}</div></div>
                       <div className="bg-emerald-50 p-2 rounded text-center"><div className="text-[10px] text-slate-500">Approved</div><div className="font-mono font-bold text-emerald-800">{d.approvedVolumeM3 ? formatVolumeM3(d.approvedVolumeM3, false) : '-'}</div></div>
                     </div>
+                    {cust?.name?.toLowerCase().includes('imci') && d.status === 'DELIVERED' && !d.quarryLoadingInfo?.notes?.includes('SJ IMCI') && (
+                      <div className="bg-amber-50 p-3 rounded border border-amber-200">
+                        <p className="text-[11px] font-bold text-amber-900">Tambah No. SJ IMCI untuk penagihan:</p>
+                        <div className="flex gap-2 mt-2">
+                          <input type="text" value={imciInput} onChange={(e) => setImciInput(e.target.value)} placeholder="100818" className="flex-1 px-2 py-1.5 text-xs border border-amber-300 rounded font-mono focus:ring-2 focus:ring-amber-500 outline-none" />
+                          <button
+                            onClick={() => {
+                              const v = imciInput.trim();
+                              if (!v) return;
+                              const updated: Delivery = {
+                                ...d,
+                                quarryLoadingInfo: { ...(d.quarryLoadingInfo as any), notes: `SJ IMCI ${v}` },
+                              };
+                              // @ts-ignore — updateDelivery expects Partial<Delivery>
+                              updateDelivery(d.id, { quarryLoadingInfo: updated.quarryLoadingInfo } as any);
+                              setImciInput('');
+                              setSelectedDetailDelivery(updated);
+                            }}
+                            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-bold"
+                          >
+                            Simpan
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <div className="bg-slate-50 p-3 rounded border text-[11px]">
                       <p><span className="text-slate-500">Timbangan Net:</span> {d.weighbridge ? formatWeightKg(d.weighbridge.netWeightKg) : '-'}</p>
                       {d.quarryLoadingInfo && <p className="mt-1"><span className="text-slate-500">Petugas Quarry:</span> {d.quarryLoadingInfo.checkerName || '-'}</p>}
