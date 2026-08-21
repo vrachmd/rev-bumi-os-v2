@@ -500,8 +500,11 @@ export const InvoicesView: React.FC = () => {
                         const imci = it.sjImci || '-';
                         const plat = it.plateNumber || '-';
                         const vol = `${it.approvedVolumeM3.toFixed(2)}m³`;
-                        // format persis referensi + alias KBS: 20/08/2026  B 9057 UIS  101197  24.25m³  (KBS Bogor)
-                        lines.push(`${tgl}  ${plat}  ${imci}  ${vol}${kbsAlias}`);
+                        // rata kebawah: kolom fixed width + courier agar sejajar (tgl 10 + plat 12 + imci 8 + vol)
+                        const tglW = tgl.padEnd(12,' ');
+                        const platW = plat.padEnd(12,' ');
+                        const imciW = imci.padEnd(10,' ');
+                        lines.push(`${tglW}${platW}${imciW}${vol}${kbsAlias}`);
                       });
                       const totalVol = g.items.reduce((s: number, it: any) => s + (it.approvedVolumeM3||0), 0);
                       const totalIdr = g.items.reduce((s: number, it: any) => s + (it.itemTotalIdr||0), 0);
@@ -534,16 +537,45 @@ export const InvoicesView: React.FC = () => {
                         lineColor: [16, 78, 36],
                         cellPadding: pad,
                       },
-                      bodyStyles: { fontSize: fontSize, valign: 'middle', lineColor: [203, 213, 225], textColor: [15,23,42], fontStyle: 'bold' },
+                      bodyStyles: { fontSize: fontSize, valign: 'middle', lineColor: [203, 213, 225], textColor: [15,23,42], font: 'helvetica', fontStyle: 'normal' },
                       columnStyles: {
-                        0: { halign: 'left', cellWidth: 102, fontStyle: 'bold' },
-                        1: { halign: 'center', cellWidth: 22, fontStyle: 'bold' },
-                        2: { halign: 'center', cellWidth: 28, fontStyle: 'bold' },
-                        3: { halign: 'center', cellWidth: 30, fontStyle: 'bold' },
+                        0: { halign: 'left', cellWidth: 102, font: 'courier', fontStyle: 'normal' },
+                        1: { halign: 'center', cellWidth: 22, font: 'helvetica', fontStyle: 'bold' },
+                        2: { halign: 'center', cellWidth: 28, font: 'helvetica', fontStyle: 'bold' },
+                        3: { halign: 'center', cellWidth: 30, font: 'helvetica', fontStyle: 'bold' },
                       },
-                      styles: { cellPadding: pad, lineWidth: 0.12, fontSize: fontSize, overflow: 'linebreak', minCellHeight: 7, fontStyle: 'bold' },
+                      styles: { cellPadding: pad, lineWidth: 0.12, fontSize: fontSize, overflow: 'linebreak', minCellHeight: 7 },
                       margin: { left: 14, right: 14 },
                       rowPageBreak: 'avoid',
+                      didDrawCell: function(data: any){
+                        if(data.column.index===0 && data.row.section==='body' && data.cell.text && data.cell.text.length>0){
+                          const doc = data.doc;
+                          const cell: any = data.cell;
+                          const padL = cell.padding('left'); const padT = cell.padding('top');
+                          const x = cell.x + padL;
+                          const baseY = cell.y + padT + 3;
+                          // tutup tulisan default dengan rect putih (agar rata)
+                          doc.setFillColor(255,255,255);
+                          // hanya tutup area teks agar grid tetap, tapi overdraw tipis
+                          // gambar ulang: baris 0 bold helvetica, baris 1+ courier normal agar rata kebawah
+                          const lines: string[] = cell.text as string[];
+                          // hapus dulu dengan rect
+                          doc.rect(cell.x+0.3, cell.y+0.3, cell.width-0.6, cell.height-0.6, 'F');
+                          // gambar border grid kembali tipis (agar tidak hilang)
+                          doc.setDrawColor(203,213,225); doc.setLineWidth(0.12);
+                          doc.rect(cell.x, cell.y, cell.width, cell.height, 'S');
+                          // baris 0 — Batu Split bold helvetica
+                          doc.setFont('helvetica','bold'); doc.setFontSize(fontSize); doc.setTextColor(15,23,42);
+                          doc.text(lines[0], x, baseY);
+                          // sisa baris — courier normal, posisi rata kebawah
+                          doc.setFont('courier','normal'); doc.setFontSize(fontSize-0.2); doc.setTextColor(55,65,81);
+                          for(let i=1;i<lines.length;i++){
+                            const ly = baseY + i*3.4;
+                            doc.text(lines[i], x, ly);
+                          }
+                          // center kolom lain sudah bold via columnStyles, tidak perlu overdraw
+                        }
+                      },
                     });
                     let finalY = (doc as any).lastAutoTable.finalY || tableStartY;
                     // Jika tabel mepet footer (multi-page), pindah halaman untuk totals+footer
@@ -764,12 +796,13 @@ export const InvoicesView: React.FC = () => {
                           <tr key={gi}>
                             <td className="py-2.5 px-3 border border-slate-300">
                               <p className="font-bold text-slate-900">{g.productName}</p>
-                              <div className="mt-1 space-y-1">
-                                {g.items.map((it: any) => (
-                                  <p key={it.id || it.deliveryNumber} className="text-[11px] leading-[13px] text-slate-700 font-mono">
-                                    {fmtShort(it.deliveryDate)} &nbsp;{it.plateNumber || '-'} &nbsp;{it.sjImci || '-'} &nbsp;{formatVolumeM3(it.approvedVolumeM3,false)}m³{kbsAliasPr}
-                                  </p>
-                                ))}
+                              <div className="mt-1 space-y-1 font-mono">
+                                {g.items.map((it: any) => {
+                                  const tgl = fmtShort(it.deliveryDate); const plat = it.plateNumber||'-'; const imci = it.sjImci||'-';
+                                  const vol = `${formatVolumeM3(it.approvedVolumeM3,false)}m³`;
+                                  const line = `${tgl.padEnd(12,' ')}${plat.padEnd(12,' ')}${imci.padEnd(10,' ')}${vol}${kbsAliasPr}`;
+                                  return (<p key={it.id || it.deliveryNumber} className="text-[11px] leading-[13px] text-slate-700 whitespace-pre">{line}</p>);
+                                })}
                               </div>
                             </td>
                             <td className="py-2.5 px-3 border border-slate-300 text-center font-mono font-bold align-middle">{totalVol.toFixed(2)}</td>
