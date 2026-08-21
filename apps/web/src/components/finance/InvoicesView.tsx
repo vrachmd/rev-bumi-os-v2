@@ -458,10 +458,6 @@ export const InvoicesView: React.FC = () => {
                     doc.setFontSize(6.5);
                     doc.setTextColor(71, 85, 105);
                     doc.text(`Proyek: ${proj?.name || '-'}`, 16, billY + 13);
-                    const alamatLines = doc.splitTextToSize(`Alamat: ${proj?.location || '-'}`, 178);
-                    doc.setFontSize(6);
-                    doc.setTextColor(100, 116, 139);
-                    doc.text(alamatLines[0] || '', 16, billY + 16);
 
                     // ===== Items table — AGREGAT per material+price (model referensi: 1 baris grup) =====
                     // Group by productName|unitPrice agar 20 rit se-material jadi 1 baris → hemat halaman, tetap rinci
@@ -767,9 +763,6 @@ export const InvoicesView: React.FC = () => {
                 </p>
                 <p className="text-slate-600 mt-0.5">
                   Proyek: {projects.find((p) => p.id === selectedInvoiceForPrint.projectId)?.name}
-                </p>
-                <p className="text-slate-500 text-[11px]">
-                  Alamat: {projects.find((p) => p.id === selectedInvoiceForPrint.projectId)?.location}
                 </p>
               </div>
 
