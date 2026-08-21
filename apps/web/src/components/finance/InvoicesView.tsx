@@ -500,10 +500,10 @@ export const InvoicesView: React.FC = () => {
                         const imci = it.sjImci || '-';
                         const plat = it.plateNumber || '-';
                         const vol = `${it.approvedVolumeM3.toFixed(2)}m³`;
-                        // rata kebawah: kolom fixed width + courier agar sejajar (tgl 10 + plat 12 + imci 8 + vol)
-                        const tglW = tgl.padEnd(12,' ');
-                        const platW = plat.padEnd(12,' ');
-                        const imciW = imci.padEnd(10,' ');
+                        // presisi: courier + pad fixed agar sejajar sesuai screenshot 21/08/2026  B 9948 TYT  102279    26.64m³
+                        const tglW = tgl.padEnd(11,' ');
+                        const platW = plat.padEnd(11,' ');
+                        const imciW = imci.padEnd(8,' ');
                         lines.push(`${tglW}${platW}${imciW}${vol}${kbsAlias}`);
                       });
                       const totalVol = g.items.reduce((s: number, it: any) => s + (it.approvedVolumeM3||0), 0);
@@ -796,12 +796,15 @@ export const InvoicesView: React.FC = () => {
                           <tr key={gi}>
                             <td className="py-2.5 px-3 border border-slate-300">
                               <p className="font-bold text-slate-900">{g.productName}</p>
-                              <div className="mt-1 space-y-1 font-mono">
+                              <div className="mt-1 space-y-0.5">
                                 {g.items.map((it: any) => {
                                   const tgl = fmtShort(it.deliveryDate); const plat = it.plateNumber||'-'; const imci = it.sjImci||'-';
                                   const vol = `${formatVolumeM3(it.approvedVolumeM3,false)}m³`;
-                                  const line = `${tgl.padEnd(12,' ')}${plat.padEnd(12,' ')}${imci.padEnd(10,' ')}${vol}${kbsAliasPr}`;
-                                  return (<p key={it.id || it.deliveryNumber} className="text-[11px] leading-[13px] text-slate-700 whitespace-pre">{line}</p>);
+                                  return (
+                                    <div key={it.id || it.deliveryNumber} className="grid text-[11px] leading-[13px] font-mono text-slate-700" style={{gridTemplateColumns:'88px 100px 70px 82px 1fr'}}>
+                                      <span>{tgl}</span><span>{plat}</span><span>{imci}</span><span>{vol}</span><span>{kbsAliasPr.trim()}</span>
+                                    </div>
+                                  );
                                 })}
                               </div>
                             </td>
