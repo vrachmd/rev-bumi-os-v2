@@ -6,16 +6,17 @@
 -- ------------------------------------------------------------
 -- COMPANY
 -- ------------------------------------------------------------
-insert into public.companies (id, name, brand, code, address, phone, email, primary_color)
+insert into public.companies (id, name, brand, code, address, phone, email, primary_color, npwp)
 values (
   'comp-rev-01',
-  'PT REV Bumi Nusantara Perkasa',
+  'CV REV BUMI NUSANTARA',
   'REV Bumi Nusantara',
   'RBN',
-  'Graha Nusantara Lt. 8, Jl. TB Simatupang Kav. 15, Jakarta Selatan 12530',
-  '+62 21 7884 9920',
-  'operasional@revbumi.co.id',
-  '#003C16'
+  'Kp. Lebakwangi Pasar, Desa/Kelurahan Rengasjajar, Kec. Cigudeg, Kab. Bogor, Provinsi Jawa Barat',
+  '+62 821-7689-302',
+  'kontak@revbuminusantara.biz.id',
+  '#003C16',
+  '1000000009047611'
 ) on conflict (id) do nothing;
 
 -- ------------------------------------------------------------

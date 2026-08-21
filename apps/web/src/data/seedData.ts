@@ -19,13 +19,14 @@ import {
 
 export const initialCompany: Company = {
   id: 'comp-rev-01',
-  name: 'PT REV Bumi Nusantara Perkasa',
+  name: 'CV REV BUMI NUSANTARA',
   brand: 'REV Bumi Nusantara',
   code: 'RBN',
-  address: 'Graha Nusantara Lt. 8, Jl. TB Simatupang Kav. 15, Jakarta Selatan 12530',
-  phone: '+62 21 7884 9920',
-  email: 'operasional@revbumi.co.id',
+  address: 'Kp. Lebakwangi Pasar, Desa/Kelurahan Rengasjajar, Kec. Cigudeg, Kab. Bogor, Provinsi Jawa Barat',
+  phone: '+62 821-7689-302',
+  email: 'kontak@revbuminusantara.biz.id',
   primaryColor: '#003C16',
+  npwp: '1000000009047611',
 };
 
 export const initialProfiles: UserProfile[] = [

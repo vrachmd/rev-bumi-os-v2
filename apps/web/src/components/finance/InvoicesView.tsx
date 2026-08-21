@@ -400,13 +400,13 @@ export const InvoicesView: React.FC = () => {
                     doc.setTextColor(0, 60, 22);
                     doc.setFontSize(11);
                     doc.setFont('helvetica', 'bold');
-                    doc.text('PT REV BUMI NUSANTARA PERKASA', 28, 12);
+                    doc.text('CV REV BUMI NUSANTARA', 28, 12);
                     // Alamat — wrap max 90mm agar tidak overflow
                     doc.setFontSize(6.5);
                     doc.setFont('helvetica', 'normal');
                     doc.setTextColor(90, 90, 90);
                     const addrLines = doc.splitTextToSize(
-                      company.address || 'Graha Nusantara Lt. 8, Jl. TB Simatupang Kav. 15, Jakarta Selatan 12530',
+                      company.address || 'Kp. Lebakwangi Pasar, Desa/Kelurahan Rengasjajar, Kec. Cigudeg, Kab. Bogor, Provinsi Jawa Barat',
                       90
                     );
                     doc.text(addrLines, 28, 15.5);
@@ -663,14 +663,14 @@ export const InvoicesView: React.FC = () => {
                     doc.setFontSize(6.5);
                     doc.setFont('helvetica', 'bold');
                     doc.setTextColor(0, 60, 22);
-                    doc.text('Bank Mandiri  —  Cabang Cirebon', 17, footerY + 10);
+                    doc.text('BCA  -  Cabang Alam Sutera', 17, footerY + 10);
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(6);
                     doc.setTextColor(51, 65, 85);
-                    doc.text('No. Rekening:  134-00-9876543-2', 17, footerY + 14);
+                    doc.text('No. Rekening:  6044884563', 17, footerY + 14);
                     doc.setFont('helvetica', 'bold');
                     doc.setTextColor(15, 23, 42);
-                    doc.text('a.n. PT REV BUMI NUSANTARA PERKASA', 17, footerY + 17.8);
+                    doc.text('a.n. REV BUMI NUSANTARA CV', 17, footerY + 17.8);
                     doc.setFont('helvetica', 'normal');
                     // Kanan: Hormat Kami — center kolom kanan 108-196 => center 152
                     const sigCenterX = 152;
@@ -854,9 +854,9 @@ export const InvoicesView: React.FC = () => {
                   </span>
                   <p className="text-[10px] text-slate-500 mb-2 italic">Harap transfer tepat waktu sesuai jatuh tempo</p>
                   <div className="p-3 bg-green-50 rounded border border-emerald-200 border-l-4 border-l-[#003C16] space-y-1 font-mono text-[11px]">
-                    <p className="font-bold text-[#003C16]">Bank Mandiri — Cabang Cirebon</p>
-                    <p className="text-slate-700">No. Rekening: <strong>134-00-9876543-2</strong></p>
-                    <p className="text-slate-700">Atas Nama: <strong>PT REV BUMI NUSANTARA PERKASA</strong></p>
+                    <p className="font-bold text-[#003C16]">BCA — Cabang Alam Sutera</p>
+                    <p className="text-slate-700">No. Rekening: <strong>6044884563</strong></p>
+                    <p className="text-slate-700">Atas Nama: <strong>REV BUMI NUSANTARA CV</strong></p>
                   </div>
                 </div>
 
