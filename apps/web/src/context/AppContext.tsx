@@ -169,6 +169,8 @@ interface AppContextType {
     taxRatePercent?: number,
     notes?: string
   ) => { success: boolean; invoiceId?: string; error?: string };
+  deleteInvoice: (invoiceId: string) => { success: boolean; error?: string };
+  updateInvoiceNotes: (invoiceId: string, notes: string) => { success: boolean; error?: string };
   recordPayment: (invoiceId: string, amount: number, bankRef: string, method: string, notes?: string) => { success: boolean; error?: string };
   
   // Master Data CRUD
@@ -1165,6 +1167,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { success: true, invoiceId: newInvoice.id };
   };
 
+  const deleteInvoice = (invoiceId: string) => {
+    const inv = invoices.find((i) => i.id === invoiceId);
+    if (!inv) return { success: false, error: 'Faktur tidak ditemukan' };
+    if (inv.status === 'PAID') return { success: false, error: 'Faktur lunas tidak bisa dihapus' };
+    setInvoices((prev) => prev.filter((i) => i.id !== invoiceId));
+    logAudit('invoices', inv.id, inv.invoiceNumber, 'DELETE', inv, null, 'Hapus faktur');
+    return { success: true };
+  };
+
+  const updateInvoiceNotes = (invoiceId: string, notes: string) => {
+    const inv = invoices.find((i) => i.id === invoiceId);
+    if (!inv) return { success: false, error: 'Faktur tidak ditemukan' };
+    const updated = { ...inv, notes };
+    setInvoices((prev) => prev.map((i) => (i.id === invoiceId ? updated : i)));
+    logAudit('invoices', inv.id, inv.invoiceNumber, 'UPDATE', { notes: inv.notes }, { notes }, 'Edit catatan faktur');
+    syncInvoiceToCloud(updated);
+    return { success: true };
+  };
+
   // Record Payment
   const recordPayment = (invoiceId: string, amount: number, bankRef: string, method: string, notes?: string) => {
     const invoice = invoices.find((inv) => inv.id === invoiceId);
@@ -1580,6 +1601,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateContract,
         deleteContract,
         createInvoice,
+        deleteInvoice,
+        updateInvoiceNotes,
         recordPayment,
         saveProduct,
         saveQuarry,

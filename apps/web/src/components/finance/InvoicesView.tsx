@@ -25,6 +25,8 @@ export const InvoicesView: React.FC = () => {
     deliveries,
     company,
     createInvoice,
+    deleteInvoice,
+    updateInvoiceNotes,
     exportToCsv,
   } = useApp();
 
@@ -194,13 +196,34 @@ export const InvoicesView: React.FC = () => {
                     </td>
 
                     <td className="py-3 px-3 text-center">
-                      <button
-                        onClick={() => setSelectedInvoiceForPrint(inv)}
-                        className="p-1.5 rounded border border-slate-200 hover:bg-[#003C16] hover:text-white transition-colors"
-                        title="Cetak Faktur Penagihan Proyek (A4)"
-                      >
-                        <Printer className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => setSelectedInvoiceForPrint(inv)}
+                          className="p-1.5 rounded border border-slate-200 hover:bg-[#003C16] hover:text-white transition-colors"
+                          title="Cetak Faktur"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            const n = prompt('Edit catatan faktur:', inv.notes || '');
+                            if (n !== null) updateInvoiceNotes(inv.id, n);
+                          }}
+                          className="p-1.5 rounded border border-amber-200 text-amber-700 hover:bg-amber-50"
+                          title="Edit catatan"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`Hapus faktur ${inv.invoiceNumber}?`)) deleteInvoice(inv.id);
+                          }}
+                          className="p-1.5 rounded border border-rose-200 text-rose-600 hover:bg-rose-50"
+                          title="Hapus faktur"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
