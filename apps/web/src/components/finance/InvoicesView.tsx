@@ -549,8 +549,11 @@ export const InvoicesView: React.FC = () => {
                       rowPageBreak: 'avoid',
                       willDrawCell: function(data: any){
                         if(data.column.index===0 && data.row.section==='body'){
-                          // simpan lines dan kosongkan agar autoTable tidak gambar default (hindari duplikat & kotak)
-                          (data.cell as any)._customLines = [...(data.cell.text as string[])];
+                          const lines = [...(data.cell.text as string[])];
+                          (data.cell as any)._customLines = lines;
+                          // paksa tinggi baris agar muat 1+detail lines (hindari kepotong kotak)
+                          const needed = lines.length*3.3 + pad*2 + 1;
+                          if(data.row.height < needed) data.row.height = needed;
                           data.cell.text = [];
                         }
                       },
@@ -562,14 +565,14 @@ export const InvoicesView: React.FC = () => {
                           if(!lines.length) return;
                           const padL = cell.padding('left'); const padT = cell.padding('top');
                           const x = cell.x + padL;
-                          const baseY = cell.y + padT + 3.2;
+                          const baseY = cell.y + padT + 3;
                           // baris 0 — Batu Split bold helvetica
                           doc.setFont('helvetica','bold'); doc.setFontSize(fontSize); doc.setTextColor(15,23,42);
                           doc.text(lines[0], x, baseY);
                           // sisa baris — courier normal, rata presisi
                           doc.setFont('courier','normal'); doc.setFontSize(fontSize-0.2); doc.setTextColor(55,65,81);
                           for(let i=1;i<lines.length;i++){
-                            const ly = baseY + i*3.4;
+                            const ly = baseY + i*3.3;
                             doc.text(lines[i], x, ly);
                           }
                           // center kolom lain sudah bold via columnStyles, tidak perlu overdraw
