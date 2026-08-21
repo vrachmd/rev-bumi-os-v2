@@ -264,12 +264,13 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
                 <th className="py-3 px-3.5">No. Surat Jalan</th>
                 <th className="py-3 px-3">Status</th>
                 <th className="py-3 px-3">Pelanggan / Proyek</th>
-                <th className="py-3 px-3">Material & Quarry</th>
+                <th className="py-3 px-3">Plat Nomor</th>
                 <th className="py-3 px-3 text-right">Loaded (m³)</th>
                 <th className="py-3 px-3 text-right">Received (m³)</th>
                 <th className="py-3 px-3 text-right">Approved (m³)</th>
                 <th className="py-3 px-3 text-right">Timbangan Net</th>
-                <th className="py-3 px-3 text-center">Aksi & Dokumen</th>
+                <th className="py-3 px-3">Vendor Armada</th>
+                <th className="py-3 px-3 text-center">AKSI & Dokumen</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
@@ -279,6 +280,8 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
                 const customer = customers.find((c) => c.id === contract?.customerId);
                 const project = projects.find((p) => p.id === contract?.projectId);
                 const quarry = quarries.find((q) => q.id === d.quarryId);
+                const vendor = transportVendors.find((v) => v.id === d.transportVendorId);
+                const vehicle = vehicles.find((v) => v.id === d.vehicleId);
                 const wb = d.weighbridge;
                 const rec = d.reconciliation;
 
@@ -286,12 +289,18 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
                   <tr key={d.id} className="hover:bg-slate-50/70 transition-colors">
                     {/* Delivery Number & Date */}
                     <td className="py-3 px-3.5">
-                      <p className="font-bold text-slate-900 font-mono text-[13px]">
-                        {d.deliveryNumber}
-                      </p>
-                      <span className="text-[10px] text-slate-500">
-                        {formatDate(d.scheduledDate)}
-                      </span>
+                      <button
+                        onClick={() => setSelectedDetailDelivery(d)}
+                        className="text-left hover:text-[#003C16] transition-colors group"
+                        title="Lihat detail surat jalan"
+                      >
+                        <p className="font-bold text-slate-900 font-mono text-[13px] group-hover:text-[#003C16] group-hover:underline">
+                          {d.deliveryNumber}
+                        </p>
+                        <span className="text-[10px] text-slate-500">
+                          {formatDate(d.scheduledDate)}
+                        </span>
+                      </button>
                     </td>
 
                     {/* Status Badge */}
@@ -323,12 +332,9 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
                       </p>
                     </td>
 
-                    {/* Product & Quarry */}
-                    <td className="py-3 px-3">
-                      <p className="font-medium text-slate-900 truncate max-w-[160px]">
-                        {product?.name}
-                      </p>
-                      <p className="text-[10px] text-slate-500">{quarry?.name}</p>
+                    {/* Plat Nomor */}
+                    <td className="py-3 px-3 font-mono font-semibold text-slate-900">
+                      {vehicle?.plateNumber || d.driverName || '-'}
                     </td>
 
                     {/* Loaded Volume */}
@@ -355,9 +361,23 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
                       {wb ? formatWeightKg(wb.netWeightKg) : '-'}
                     </td>
 
+                    {/* Vendor Armada */}
+                    <td className="py-3 px-3">
+                      <p className="font-medium text-slate-900 truncate max-w-[140px]">{vendor?.name || '-'}</p>
+                      <p className="text-[10px] text-slate-500">{vehicle ? `${vehicle.nominalCapacityM3} m³` : ''}</p>
+                    </td>
+
                     {/* Action buttons */}
                     <td className="py-3 px-3 text-center">
                       <div className="flex items-center justify-center gap-1">
+                        {/* Detail */}
+                        <button
+                          onClick={() => setSelectedDetailDelivery(d)}
+                          title="Lihat detail Surat Jalan"
+                          className="p-1.5 rounded text-slate-700 hover:text-white hover:bg-slate-800 transition-colors border border-slate-200"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
                         {/* Print Surat Jalan Button */}
                         <button
                           onClick={() => setSelectedDeliveryForPrint(d)}
@@ -788,6 +808,53 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
         delivery={selectedDeliveryForPod}
         onClose={() => setSelectedDeliveryForPod(null)}
       />
+
+      {/* Detail Modal */}
+      {selectedDetailDelivery && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 max-h-[85vh] flex flex-col">
+            <div className="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between shrink-0">
+              <h3 className="text-sm font-bold font-mono">Detail Surat Jalan — {selectedDetailDelivery.deliveryNumber}</h3>
+              <button onClick={() => setSelectedDetailDelivery(null)} className="text-white/80 hover:text-white">✕</button>
+            </div>
+            <div className="p-5 overflow-y-auto space-y-3 text-xs">
+              {(() => {
+                const d = selectedDetailDelivery;
+                const prod = products.find((p) => p.id === d.productId);
+                const cust = customers.find((c) => c.id === contracts.find((co) => co.id === d.contractId)?.customerId);
+                const proj = projects.find((p) => p.id === contracts.find((co) => co.id === d.contractId)?.projectId);
+                const qry = quarries.find((q) => q.id === d.quarryId);
+                const veh = vehicles.find((v) => v.id === d.vehicleId);
+                const ven = transportVendors.find((v) => v.id === d.transportVendorId);
+                return (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div><span className="text-slate-500">Status:</span> <span className="font-bold">{d.status}</span></div>
+                      <div><span className="text-slate-500">Tanggal:</span> <span className="font-mono">{formatDate(d.scheduledDate)}</span></div>
+                      <div><span className="text-slate-500">Pelanggan:</span> <span className="font-semibold">{cust?.name || '-'}</span></div>
+                      <div><span className="text-slate-500">Proyek:</span> <span className="font-semibold">{proj?.name || '-'}</span></div>
+                      <div><span className="text-slate-500">Quarry:</span> <span>{qry?.name || '-'}</span></div>
+                      <div><span className="text-slate-500">Material:</span> <span>{prod?.name || '-'}</span></div>
+                      <div><span className="text-slate-500">Armada:</span> <span className="font-mono">{veh?.plateNumber || '-'} ({d.driverName || '-'})</span></div>
+                      <div><span className="text-slate-500">Vendor:</span> <span>{ven?.name || '-'}</span></div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100">
+                      <div className="bg-slate-50 p-2 rounded text-center"><div className="text-[10px] text-slate-500">Loaded</div><div className="font-mono font-bold">{formatVolumeM3(d.loadedVolumeM3, false)}</div></div>
+                      <div className="bg-slate-50 p-2 rounded text-center"><div className="text-[10px] text-slate-500">Received</div><div className="font-mono font-bold">{d.receivedVolumeM3 ? formatVolumeM3(d.receivedVolumeM3, false) : '-'}</div></div>
+                      <div className="bg-emerald-50 p-2 rounded text-center"><div className="text-[10px] text-slate-500">Approved</div><div className="font-mono font-bold text-emerald-800">{d.approvedVolumeM3 ? formatVolumeM3(d.approvedVolumeM3, false) : '-'}</div></div>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded border text-[11px]">
+                      <p><span className="text-slate-500">Timbangan Net:</span> {d.weighbridge ? formatWeightKg(d.weighbridge.netWeightKg) : '-'}</p>
+                      {d.quarryLoadingInfo && <p className="mt-1"><span className="text-slate-500">Petugas Quarry:</span> {d.quarryLoadingInfo.checkerName || '-'}</p>}
+                      {d.pod && <p><span className="text-slate-500">Penerima POD:</span> {d.pod.recipientName || '-'}</p>}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
