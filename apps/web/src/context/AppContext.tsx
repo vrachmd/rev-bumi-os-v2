@@ -174,6 +174,8 @@ interface AppContextType {
   updateInvoiceNotes: (invoiceId: string, notes: string) => { success: boolean; error?: string };
   updateInvoiceKwitansi: (invoiceId: string, kwitansiPhotoUrl: string | null) => { success: boolean; error?: string };
   recordPayment: (invoiceId: string, amount: number, bankRef: string, method: string, notes?: string) => { success: boolean; error?: string };
+  updatePayment: (paymentId: string, updates: Partial<Payment>) => { success: boolean; error?: string };
+  deletePayment: (paymentId: string) => { success: boolean; error?: string };
   
   // Master Data CRUD
   saveProduct: (product: Product) => void;
@@ -1263,6 +1265,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { success: true };
   };
 
+  const updatePayment = (paymentId: string, updates: Partial<Payment>) => {
+    const pay = payments.find((p) => p.id === paymentId);
+    if (!pay) return { success: false, error: 'Pembayaran tidak ditemukan' };
+    const inv = invoices.find((i) => i.id === pay.invoiceId);
+    if (!inv) return { success: false, error: 'Faktur tidak ditemukan' };
+    const oldAmount = pay.amountPaidIdr;
+    const newAmount = updates.amountPaidIdr ?? oldAmount;
+    const diff = newAmount - oldAmount;
+    const newPaidTotal = Math.max(0, inv.totalPaidIdr + diff);
+    const newOutstanding = Math.max(0, inv.totalInvoiceIdr - newPaidTotal);
+    let newStatus: Invoice['status'] = newOutstanding <= 0 ? 'PAID' : newPaidTotal > 0 ? 'PARTIALLY_PAID' : 'ISSUED';
+    const updatedPay = { ...pay, ...updates, amountPaidIdr: newAmount } as Payment;
+    const updatedInv = { ...inv, totalPaidIdr: newPaidTotal, outstandingBalanceIdr: newOutstanding, status: newStatus } as Invoice;
+    setPayments((prev) => prev.map((p) => (p.id === paymentId ? updatedPay : p)));
+    setInvoices((prev) => prev.map((i) => (i.id === inv.id ? updatedInv : i)));
+    logAudit('payments', paymentId, pay.invoiceNumber, 'UPDATE', pay, updates, 'Edit pembayaran');
+    if (isSupabaseAuthed) {
+      supabase.from('payments').update({ amount_paid_idr: newAmount, bank_reference: updatedPay.bankReference, payment_method: updatedPay.paymentMethod, notes: updatedPay.notes ?? null }).eq('id', paymentId).then(({ error }) => { if (error) console.warn('updatePayment error', error); });
+      supabase.from('invoices').update({ total_paid_idr: newPaidTotal, outstanding_balance_idr: newOutstanding, status: newStatus }).eq('id', inv.id).then(({ error }) => { if (error) console.warn('update invoice after payment edit error', error); });
+    }
+    return { success: true };
+  };
+
+  const deletePayment = (paymentId: string) => {
+    const pay = payments.find((p) => p.id === paymentId);
+    if (!pay) return { success: false, error: 'Pembayaran tidak ditemukan' };
+    const inv = invoices.find((i) => i.id === pay.invoiceId);
+    if (!inv) return { success: false, error: 'Faktur tidak ditemukan' };
+    const newPaidTotal = Math.max(0, inv.totalPaidIdr - pay.amountPaidIdr);
+    const newOutstanding = Math.max(0, inv.totalInvoiceIdr - newPaidTotal);
+    let newStatus: Invoice['status'] = newOutstanding <= 0 ? 'PAID' : newPaidTotal > 0 ? 'PARTIALLY_PAID' : inv.status === 'PAID' ? 'ISSUED' : inv.status;
+    if (newPaidTotal === 0) newStatus = 'ISSUED';
+    setPayments((prev) => prev.filter((p) => p.id !== paymentId));
+    setInvoices((prev) => prev.map((i) => (i.id === inv.id ? { ...i, totalPaidIdr: newPaidTotal, outstandingBalanceIdr: newOutstanding, status: newStatus } : i)));
+    logAudit('payments', paymentId, pay.invoiceNumber, 'DELETE', pay, null, 'Hapus pembayaran');
+    if (isSupabaseAuthed) {
+      supabase.from('payments').delete().eq('id', paymentId).then(({ error }) => { if (error) console.warn('deletePayment error', error); });
+      supabase.from('invoices').update({ total_paid_idr: newPaidTotal, outstanding_balance_idr: newOutstanding, status: newStatus }).eq('id', inv.id).then(({ error }) => { if (error) console.warn('update invoice after payment delete error', error); });
+    }
+    return { success: true };
+  };
+
   // Master Data Savers
   const saveProduct = (prod: Product) => {
     setProducts((prev) => {
@@ -1649,6 +1693,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateInvoiceNotes,
         updateInvoiceKwitansi,
         recordPayment,
+        updatePayment,
+        deletePayment,
         saveProduct,
         saveQuarry,
         saveCustomer,
