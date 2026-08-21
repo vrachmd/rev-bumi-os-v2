@@ -547,13 +547,20 @@ export const InvoicesView: React.FC = () => {
                       styles: { cellPadding: pad, lineWidth: 0.12, fontSize: fontSize, overflow: 'linebreak', minCellHeight: 7 },
                       margin: { left: 14, right: 14 },
                       rowPageBreak: 'avoid',
+                      didParseCell: function(data: any){
+                        if(data.column.index===0 && data.row.section==='body'){
+                          const lines = data.cell.text as string[];
+                          const needed = lines.length*3.4 + pad*2 + 2;
+                          if(!data.row.height || data.row.height < needed) data.row.height = needed;
+                          (data.cell as any)._h = needed;
+                        }
+                      },
                       willDrawCell: function(data: any){
                         if(data.column.index===0 && data.row.section==='body'){
                           const lines = [...(data.cell.text as string[])];
                           (data.cell as any)._customLines = lines;
-                          // paksa tinggi baris agar muat 1+detail lines (hindari kepotong kotak)
-                          const needed = lines.length*3.3 + pad*2 + 1;
-                          if(data.row.height < needed) data.row.height = needed;
+                          // pastikan tinggi tetap (willDraw sudah terlambat untuk layout, tapi jaga)
+                          if((data.cell as any)._h) data.row.height = (data.cell as any)._h;
                           data.cell.text = [];
                         }
                       },
