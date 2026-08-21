@@ -476,6 +476,17 @@ export const InvoicesView: React.FC = () => {
                       if (!iso) return '-';
                       try { const d = new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; } catch { return formatDate(iso); }
                     };
+                    // alias KBS Dadap/Sunter/Bogor hanya untuk IMCI (dari nama proyek Plant Karya Beton Dadap -> KBS Dadap)
+                    const isImci = (cust?.name || '').toLowerCase().includes('imci');
+                    const kbsAlias = (() => {
+                      if (!isImci) return '';
+                      const n = (proj?.name || '').trim();
+                      if (!n) return '';
+                      // Plant Karya Beton Dadap -> Dadap -> KBS Dadap ; Plant KBS Bogor -> Bogor -> KBS Bogor
+                      const last = n.split(/\s+/).pop() || '';
+                      const clean = last.replace(/[^A-Za-z0-9]/g,'');
+                      return clean ? ` (KBS ${clean})` : '';
+                    })();
                     const body = groupList.map((g) => {
                       // sort per grup by SJ IMCI ascending (seperti referensi: 101197→102561)
                       g.items.sort((a: any,b: any)=>{
@@ -489,8 +500,8 @@ export const InvoicesView: React.FC = () => {
                         const imci = it.sjImci || '-';
                         const plat = it.plateNumber || '-';
                         const vol = `${it.approvedVolumeM3.toFixed(2)}m³`;
-                        // format persis referensi: 20/08/2026  B 9057 UIS  101197  24.25m³
-                        lines.push(`${tgl}  ${plat}  ${imci}  ${vol}`);
+                        // format persis referensi + alias KBS: 20/08/2026  B 9057 UIS  101197  24.25m³  (KBS Bogor)
+                        lines.push(`${tgl}  ${plat}  ${imci}  ${vol}${kbsAlias}`);
                       });
                       const totalVol = g.items.reduce((s: number, it: any) => s + (it.approvedVolumeM3||0), 0);
                       const totalIdr = g.items.reduce((s: number, it: any) => s + (it.itemTotalIdr||0), 0);
@@ -741,6 +752,10 @@ export const InvoicesView: React.FC = () => {
                         m.get(k)!.items.push(it);
                       });
                       const fmtShort = (iso?: string)=>{ if(!iso) return '-'; try{const d=new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;}catch{return formatDate(iso);} };
+                      const custPr = customers.find(c=>c.id===selectedInvoiceForPrint.customerId);
+                      const projPr = projects.find(p=>p.id===selectedInvoiceForPrint.projectId);
+                      const isImciPr = (custPr?.name||'').toLowerCase().includes('imci');
+                      const kbsAliasPr = isImciPr ? (()=>{ const n=(projPr?.name||'').trim(); const last=n.split(/\s+/).pop()||''; const clean=last.replace(/[^A-Za-z0-9]/g,''); return clean?` (KBS ${clean})`:''; })() : '';
                       return Array.from(m.values()).map((g: any, gi: number) => {
                         g.items.sort((a:any,b:any)=>{ const na=parseInt((a.sjImci||a.deliveryNumber||'').replace(/\D/g,'')||'999999',10); const nb=parseInt((b.sjImci||b.deliveryNumber||'').replace(/\D/g,'')||'999999',10); return na-nb; });
                         const totalVol = g.items.reduce((s: number, it: any) => s + (it.approvedVolumeM3||0), 0);
@@ -752,7 +767,7 @@ export const InvoicesView: React.FC = () => {
                               <div className="mt-1 space-y-0.5">
                                 {g.items.map((it: any) => (
                                   <p key={it.id || it.deliveryNumber} className="text-[10px] text-slate-600 font-mono">
-                                    {fmtShort(it.deliveryDate)} &nbsp;{it.plateNumber || '-'} &nbsp;{it.sjImci || '-'} &nbsp;{formatVolumeM3(it.approvedVolumeM3,false)}m³
+                                    {fmtShort(it.deliveryDate)} &nbsp;{it.plateNumber || '-'} &nbsp;{it.sjImci || '-'} &nbsp;{formatVolumeM3(it.approvedVolumeM3,false)}m³{kbsAliasPr}
                                   </p>
                                 ))}
                               </div>
