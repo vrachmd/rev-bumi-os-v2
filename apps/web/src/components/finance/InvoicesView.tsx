@@ -512,10 +512,10 @@ export const InvoicesView: React.FC = () => {
                         formatIDR(totalIdr),
                       ];
                     });
-                    // Font tetap readable (tidak skala ekstrim) — agregat bantu 20 item tetap 1 baris grup
-                    const fontSize = 7;
-                    const pad = 2;
-                    const headFontSize = 7;
+                    // Font pas kotak — agregat bantu 20 item tetap 1 grup readable
+                    const fontSize = 7.5;
+                    const pad = 2.4;
+                    const headFontSize = 7.5;
                     const tableStartY = billY + billH + 4;
                     // @ts-ignore
                     autoTable(doc, {
@@ -764,9 +764,9 @@ export const InvoicesView: React.FC = () => {
                           <tr key={gi}>
                             <td className="py-2.5 px-3 border border-slate-300">
                               <p className="font-bold text-slate-900">{g.productName}</p>
-                              <div className="mt-1 space-y-0.5">
+                              <div className="mt-1 space-y-1">
                                 {g.items.map((it: any) => (
-                                  <p key={it.id || it.deliveryNumber} className="text-[10px] text-slate-600 font-mono">
+                                  <p key={it.id || it.deliveryNumber} className="text-[11px] leading-[13px] text-slate-700 font-mono">
                                     {fmtShort(it.deliveryDate)} &nbsp;{it.plateNumber || '-'} &nbsp;{it.sjImci || '-'} &nbsp;{formatVolumeM3(it.approvedVolumeM3,false)}m³{kbsAliasPr}
                                   </p>
                                 ))}
