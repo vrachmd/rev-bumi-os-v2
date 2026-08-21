@@ -1119,6 +1119,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         invoiceId: '',
         deliveryId: del.id,
         deliveryNumber: del.deliveryNumber,
+        deliveryDate: del.scheduledDate,
+        sjImci: del.quarryLoadingInfo?.notes?.includes('SJ IMCI') ? del.quarryLoadingInfo.notes.replace('SJ IMCI ', '') : undefined,
         productName: product?.name || 'Agregat',
         approvedVolumeM3: vol,
         unitPricePerM3: price,

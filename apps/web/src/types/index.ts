@@ -401,6 +401,8 @@ export interface InvoiceItem {
   invoiceId: string;
   deliveryId: string;
   deliveryNumber: string;
+  deliveryDate?: string;
+  sjImci?: string;
   productName: string;
   approvedVolumeM3: number;
   unitPricePerM3: number;

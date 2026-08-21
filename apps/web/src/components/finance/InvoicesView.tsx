@@ -442,7 +442,9 @@ export const InvoicesView: React.FC = () => {
                         <td className="py-2.5 px-3 border border-slate-300 text-center font-mono">{idx + 1}</td>
                         <td className="py-2.5 px-3 border border-slate-300">
                           <p className="font-semibold text-slate-900">{item.productName}</p>
-                          <p className="text-[10px] text-slate-500 font-mono">Surat Jalan Ref: {item.deliveryNumber}</p>
+                          <p className="text-[10px] text-slate-500 font-mono">SJ RBN: {item.deliveryNumber}</p>
+                          {item.sjImci && <p className="text-[10px] text-slate-500 font-mono">SJ IMCI: {item.sjImci}</p>}
+                          {item.deliveryDate && <p className="text-[10px] text-slate-500">Tgl Kirim: {formatDate(item.deliveryDate)}</p>}
                         </td>
                         <td className="py-2.5 px-3 border border-slate-300 text-right font-mono font-bold">
                           {formatVolumeM3(item.approvedVolumeM3, false)} m³
