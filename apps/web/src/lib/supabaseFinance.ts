@@ -233,6 +233,14 @@ export async function upsertPaymentToSupabase(
   return { entity: payment.id, tables };
 }
 
+export async function deleteInvoiceFromSupabase(invoiceId: string): Promise<void> {
+  // invoice_items cascade via FK, tapi hapus eksplisit agar RLS jelas
+  const { error: itemErr } = await supabase.from('invoice_items').delete().eq('invoice_id', invoiceId);
+  if (itemErr) throw itemErr;
+  const { error: invErr } = await supabase.from('invoices').delete().eq('id', invoiceId);
+  if (invErr) throw invErr;
+}
+
 /**
  * Subscribe perubahan Realtime pada tabel keuangan.
  */

@@ -31,10 +31,11 @@ import {
   subscribeDeliveryChanges,
 } from '../lib/supabaseDelivery';
 import {
+  deleteInvoiceFromSupabase,
   fetchFinanceFromSupabase,
+  subscribeFinanceChanges,
   upsertInvoiceToSupabase,
   upsertPaymentToSupabase,
-  subscribeFinanceChanges,
 } from '../lib/supabaseFinance';
 import {
   fetchMasterFromSupabase,
@@ -1175,6 +1176,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (inv.status === 'PAID') return { success: false, error: 'Faktur lunas tidak bisa dihapus' };
     setInvoices((prev) => prev.filter((i) => i.id !== invoiceId));
     logAudit('invoices', inv.id, inv.invoiceNumber, 'DELETE', inv, null, 'Hapus faktur');
+    if (isSupabaseAuthed) {
+      deleteInvoiceFromSupabase(invoiceId).catch((e) => console.warn('Supabase deleteInvoice error', e));
+    }
     return { success: true };
   };
 
