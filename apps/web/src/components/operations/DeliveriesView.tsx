@@ -264,7 +264,7 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
                 <th className="py-3 px-3.5">No. Surat Jalan</th>
                 <th className="py-3 px-3">Status</th>
                 <th className="py-3 px-3">Pelanggan / Proyek</th>
-                <th className="py-3 px-3">Plat Nomor</th>
+                <th className="py-3 px-3 whitespace-nowrap min-w-[130px]">Plat Nomor</th>
                 <th className="py-3 px-3 text-right">Loaded (m³)</th>
                 <th className="py-3 px-3 text-right">Received (m³)</th>
                 <th className="py-3 px-3 text-right">Approved (m³)</th>
@@ -333,7 +333,7 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
                     </td>
 
                     {/* Plat Nomor */}
-                    <td className="py-3 px-3 font-mono font-semibold text-slate-900">
+                    <td className="py-3 px-3 font-mono font-semibold text-slate-900 whitespace-nowrap">
                       {vehicle?.plateNumber || d.driverName || '-'}
                     </td>
 
