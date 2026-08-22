@@ -91,35 +91,8 @@ export const ReportsView: React.FC = () => {
     return matchesCustomer && matchesQuarry && matchesProduct && matchesDate;
   });
 
-  // Aggregations
-  const totalApprovedVol = filteredDeliveries.reduce(
-    (sum, d) => sum + (d.approvedVolumeM3 || 0),
-    0
-  );
-  const totalLoadedVol = filteredDeliveries.reduce(
-    (sum, d) => sum + (d.loadedVolumeM3 || 0),
-    0
-  );
-  const totalNetWeightTons =
-    filteredDeliveries.reduce((sum, d) => sum + (d.approvedWeightKg || 0), 0) / 1000;
-
-  const totalRevenue = filteredDeliveries.reduce((sum, d) => {
-    const c = getDynamicCost(d);
-    return sum + (c?.recognizedRevenueIdr || 0);
-  }, 0);
-  const totalHpp = filteredDeliveries.reduce((sum, d) => {
-    const c = getDynamicCost(d);
-    return sum + (c?.totalHppIdr || 0);
-  }, 0);
-  const totalGrossProfit = totalRevenue - totalHpp;
-  const avgGrossMargin = totalRevenue > 0 ? (totalGrossProfit / totalRevenue) * 100 : 0;
-
-  const varianceExceededCount = filteredDeliveries.filter(
-    (d) => d.reconciliation?.varianceStatus === 'ABOVE_TOLERANCE'
-  ).length;
-
   // Dynamic HPP — sinkron dengan Vendor & Tarif terbaru (bukan hanya costRecord tersimpan)
-  const getDynamicCost = (d: any) => {
+  function getDynamicCost(d: any) {
     const contract = contracts.find((c: any) => c.id === d.contractId);
     const product = products.find((p: any) => p.id === d.productId);
     const vendor = transportVendors.find((v: any) => v.id === d.transportVendorId);
@@ -156,7 +129,36 @@ export const ReportsView: React.FC = () => {
     } catch {
       return d.costRecord;
     }
-  };
+  }
+
+  // Aggregations
+  const totalApprovedVol = filteredDeliveries.reduce(
+    (sum, d) => sum + (d.approvedVolumeM3 || 0),
+    0
+  );
+  const totalLoadedVol = filteredDeliveries.reduce(
+    (sum, d) => sum + (d.loadedVolumeM3 || 0),
+    0
+  );
+  const totalNetWeightTons =
+    filteredDeliveries.reduce((sum, d) => sum + (d.approvedWeightKg || 0), 0) / 1000;
+
+  const totalRevenue = filteredDeliveries.reduce((sum, d) => {
+    if (!d.approvedVolumeM3 || d.approvedVolumeM3 <= 0) return sum;
+    const c = getDynamicCost(d);
+    return sum + (c?.recognizedRevenueIdr || 0);
+  }, 0);
+  const totalHpp = filteredDeliveries.reduce((sum, d) => {
+    if (!d.approvedVolumeM3 || d.approvedVolumeM3 <= 0) return sum;
+    const c = getDynamicCost(d);
+    return sum + (c?.totalHppIdr || 0);
+  }, 0);
+  const totalGrossProfit = totalRevenue - totalHpp;
+  const avgGrossMargin = totalRevenue > 0 ? (totalGrossProfit / totalRevenue) * 100 : 0;
+
+  const varianceExceededCount = filteredDeliveries.filter(
+    (d) => d.reconciliation?.varianceStatus === 'ABOVE_TOLERANCE'
+  ).length;
 
   // Export CSV — respects current filters & satuan baku (sesuai [Image 1] kolom HPP)
   const handleExport = () => {
@@ -198,6 +200,7 @@ export const ReportsView: React.FC = () => {
         });
       } else if (selectedReportType === 'finance') {
         rows = filteredDeliveries
+          .filter((d) => d.approvedVolumeM3 > 0)
           .map((d) => ({ d, cr: getDynamicCost(d) }))
           .filter(({ cr }) => !!cr)
           .map(({ d, cr }) => {
@@ -574,6 +577,7 @@ export const ReportsView: React.FC = () => {
               </TableHeader>
               <TableBody className="divide-y divide-slate-100 font-medium text-slate-800">
                 {filteredDeliveries.map((d) => {
+                  if (!d.approvedVolumeM3 || d.approvedVolumeM3 <= 0) return null;
                   const cost = getDynamicCost(d);
                   if (!cost) return null;
                   const quarry = quarries.find((q) => q.id === d.quarryId);
