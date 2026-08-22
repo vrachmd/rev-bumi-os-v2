@@ -20,7 +20,7 @@ import { formatIDR } from '../../lib/formatters';
 export const MasterDataView: React.FC = () => {
   const { products, quarries, saveProduct, saveQuarry } = useApp();
 
-  const [activeSubTab, setActiveSubTab] = useState<'products' | 'quarries'>('products');
+  const [activeSubTab, setActiveSubTab] = useState<'products' | 'quarries'>('quarries');
   const [searchTerm, setSearchTerm] = useState('');
 
   // Product Modal State
@@ -225,6 +225,34 @@ export const MasterDataView: React.FC = () => {
                       {formatIDR(product.defaultSellingPrice)}/m³
                     </span>
                   </div>
+
+                  <div className="pt-2 border-t border-slate-200 text-[11px] space-y-1">
+                    <span className="text-slate-700 font-bold flex items-center gap-1">
+                      <Mountain className="w-3 h-3 text-emerald-700" /> Harga Beli per Quarry:
+                    </span>
+                    <div className="grid grid-cols-1 gap-1">
+                      {quarries.map((quarry) => {
+                        const override = quarry.materialCostOverrides?.find((o) => o.productId === product.id);
+                        const price = override?.costPerM3 ?? product.defaultMaterialCost;
+                        const isOverride = !!override;
+                        return (
+                          <div
+                            key={quarry.id}
+                            className={`flex items-center justify-between px-2 py-1 rounded border text-xs ${
+                              isOverride ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'
+                            }`}
+                          >
+                            <span className="font-medium">
+                              {quarry.code} — {quarry.name}
+                            </span>
+                            <span className={`font-mono font-bold ${isOverride ? 'text-emerald-800' : 'text-slate-700'}`}>
+                              {formatIDR(price)}/m³ {isOverride && <span className="text-[9px] bg-emerald-600 text-white px-1 rounded ml-1">Override</span>}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
                 <p className="text-[11px] text-slate-600 italic bg-white p-2 rounded border border-dashed border-slate-200">
@@ -307,24 +335,44 @@ export const MasterDataView: React.FC = () => {
                     </span>
                   </div>
 
-                  {quarry.materialCostOverrides && quarry.materialCostOverrides.length > 0 && (
-                    <div className="pt-1 border-t border-slate-200 text-[11px] space-y-0.5">
-                      <span className="text-slate-600">Harga Beli Material (override):</span>
-                      <div className="flex flex-wrap gap-1">
-                        {quarry.materialCostOverrides.map((o) => {
-                          const prod = products.find((p) => p.id === o.productId);
-                          return (
-                            <span
-                              key={o.productId}
-                              className="px-1.5 py-0.5 bg-emerald-50 text-emerald-800 rounded font-mono"
-                            >
-                              {prod?.code || o.productId}: {formatIDR(o.costPerM3)}
-                            </span>
-                          );
-                        })}
-                      </div>
+                  <div className="pt-2 border-t border-slate-200 text-[11px] space-y-1.5">
+                    <span className="text-slate-700 font-bold flex items-center gap-1">
+                      <DollarSign className="w-3 h-3 text-emerald-700" /> Harga Beli per Produk — {quarry.name} → Material:
+                    </span>
+                    <div className="grid grid-cols-1 gap-1">
+                      {products.map((prod) => {
+                        const override = quarry.materialCostOverrides?.find((o) => o.productId === prod.id);
+                        const price = override?.costPerM3 ?? prod.defaultMaterialCost;
+                        const isOverride = !!override;
+                        return (
+                          <div
+                            key={prod.id}
+                            className={`flex items-center justify-between px-2.5 py-1.5 rounded border text-xs ${
+                              isOverride ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-white border">
+                                {prod.code}
+                              </span>
+                              <span className="font-medium text-slate-800">{prod.name}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`font-mono font-bold ${isOverride ? 'text-emerald-800' : 'text-slate-700'}`}>
+                                {formatIDR(price)}/m³
+                              </span>
+                              {isOverride ? (
+                                <span className="px-1 py-0.5 rounded text-[9px] font-bold bg-emerald-600 text-white">Override</span>
+                              ) : (
+                                <span className="px-1 py-0.5 rounded text-[9px] bg-slate-200 text-slate-600">Default</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  )}
+                    <p className="text-[10px] text-slate-500 italic">Edit Quarry → atur Harga Beli Material per Produk (Override) — kosong = pakai Harga Dasar Material produk.</p>
+                  </div>
                 </div>
               </div>
 
