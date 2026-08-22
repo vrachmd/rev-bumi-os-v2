@@ -2,6 +2,11 @@
 import React, { useState, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Upload, Download, CheckCircle2, FileSpreadsheet, X, Loader2, Truck } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { toast } from 'sonner';
 
 const TEMPLATE_HEADERS = ['tanggal_muat','quarry','produk','plat_nomor','supir','vendor_armada','project_tujuan','metode','gross_kg','tare_kg','panjang_m','lebar_m','tinggi_m','sj_imci','status'];
 const TEMPLATE_CSV = TEMPLATE_HEADERS.join(',') + '\n' + [
@@ -45,14 +50,14 @@ export const BulkDeliveriesView: React.FC = () => {
     setResult(null);
     const text = await f.text();
     if (f.name.endsWith('.xlsx') && !text.includes('tanggal_muat')) {
-      alert('File .xlsx terdeteksi. Save As CSV dulu atau pakai template CSV.');
+      toast.error('File .xlsx terdeteksi. Save As CSV dulu atau pakai template CSV.');
       return;
     }
     setRows(parseCsv(text));
   };
 
   const handleSubmit = async () => {
-    if (rows.length === 0) { alert('Pilih file dulu'); return; }
+    if (rows.length === 0) { toast.error('Pilih file dulu'); return; }
     // fallback ID jika master belum load / nama tidak exact
     const fallback = {
       quarry: { 'rampin':'quarry-01','rumpin':'quarry-01','sudamanik':'quarry-02','bojonegara':'quarry-03','bojong':'quarry-03' },
@@ -111,13 +116,13 @@ export const BulkDeliveriesView: React.FC = () => {
         status: r.statusRaw === 'DELIVERED' ? 'DELIVERED' : 'SCHEDULED',
       });
     });
-    if (toCreate.length===0) { alert('Tidak ada baris yang bisa dipetakan ke master.\n'+errs.slice(0,3).join('\n')+'\nCek nama di CSV sesuai: Quarry Rumpin/Sudamanik/Bojonegara, Produk Batu Split 1-2, Vendor IVAN/Yudhi, Project Karya Beton Dadap/Legok/Pluit/Sunter/Bogor.'); return; }
+    if (toCreate.length===0) { toast.error('Tidak ada baris yang bisa dipetakan ke master. Cek nama di CSV sesuai: Quarry Rumpin/Sudamanik/Bojonegara, Produk Batu Split 1-2, Vendor IVAN/Yudhi, Project Karya Beton Dadap/Legok/Pluit/Sunter/Bogor.'); return; }
     setIsSubmitting(true);
     try {
       const res: any = await app.bulkCreateDeliveries(toCreate as any);
       setResult({ ok: res.ok, failed: res.failed, batchId: res.batchId });
       if (res.failed.length===0) setRows([]);
-    } catch (e:any) { alert(e.message||'Gagal bulk'); }
+    } catch (e:any) { toast.error(e.message||'Gagal bulk'); }
     finally { setIsSubmitting(false); }
   };
 
@@ -125,37 +130,53 @@ export const BulkDeliveriesView: React.FC = () => {
     <div className="p-4 md:p-6 space-y-5 max-w-6xl mx-auto">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[#003C16] flex items-center justify-center"><Truck className="w-5 h-5 text-white" /></div>
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center"><Truck className="w-5 h-5 text-primary-foreground" /></div>
           <div>
-            <h1 className="text-lg font-black text-slate-800">Tambah Ritase Massal</h1>
-            <p className="text-xs text-slate-500">Versi minimal — validasi aman, 6 metode tetap (ALL_IN/PER_TRIP primary)</p>
+            <h1 className="text-lg font-black">Tambah Ritase Massal</h1>
+            <p className="text-xs text-muted-foreground">Versi minimal — validasi aman, 6 metode tetap (ALL_IN/PER_TRIP primary)</p>
           </div>
         </div>
-        <button onClick={downloadTemplate} className="px-3 py-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold flex items-center gap-1.5"><Download className="w-4 h-4"/> Download Template CSV</button>
+        <Button variant="outline" size="sm" onClick={downloadTemplate}><Download className="w-4 h-4"/> Download Template CSV</Button>
       </div>
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
-        <div onDragOver={(e)=>e.preventDefault()} onDrop={(e)=>{ e.preventDefault(); const f=e.dataTransfer.files[0]; if(f) onFile(f); }} className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-[#003C16]/40 transition-colors">
-          <FileSpreadsheet className="w-10 h-10 mx-auto text-slate-300" />
-          <p className="mt-2 text-sm font-semibold text-slate-700">Drag & drop file CSV di sini</p>
-          <p className="text-xs text-slate-400">header wajib: {TEMPLATE_HEADERS.join(', ')}</p>
-          <input ref={inputRef} type="file" accept=".csv,.xlsx" className="hidden" onChange={(e)=>{ const f=e.target.files?.[0]; if(f) onFile(f); }} />
-          <button onClick={()=>inputRef.current?.click()} className="mt-3 px-4 py-2 rounded-md bg-[#003C16] text-white text-xs font-bold flex items-center gap-1.5 mx-auto"><Upload className="w-4 h-4"/> Pilih File</button>
-          {fileName && <p className="mt-2 text-xs text-slate-600 flex items-center justify-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600"/> {fileName} — {rows.length} baris</p>}
-        </div>
-        {rows.length>0 && (
-          <div className="space-y-3">
-            <div className="overflow-auto border rounded-lg max-h-[300px]">
-              <table className="w-full text-xs">
-                <thead className="bg-slate-50 sticky top-0"><tr className="text-[11px] uppercase text-slate-500"><th className="py-2 px-2">#</th><th className="py-2 px-2">TGL</th><th className="py-2 px-2">PLAT</th><th className="py-2 px-2">Quarry→Project</th><th className="py-2 px-2">Produk</th><th className="py-2 px-2">Vendor</th><th className="py-2 px-2">Status</th></tr></thead>
-                <tbody>{rows.slice(0,20).map((r:any,i:number)=>(<tr key={i} className="border-t"><td className="py-1.5 px-2">{r.idx}</td><td className="py-1.5 px-2">{r.tanggal||'-'}</td><td className="py-1.5 px-2 font-mono font-bold">{r.plat||'-'}</td><td className="py-1.5 px-2">{r.quarryName} → {r.projectName}</td><td className="py-1.5 px-2">{r.produkName}</td><td className="py-1.5 px-2">{r.vendorName}</td><td className="py-1.5 px-2"><span className={`px-1.5 py-0.5 rounded text-[11px] font-bold border ${r.statusRaw==='DELIVERED'?'bg-emerald-50 text-emerald-700 border-emerald-200':'bg-slate-50 text-slate-600 border-slate-200'}`}>{r.statusRaw}</span></td></tr>))}</tbody>
-              </table>
+      <Card>
+        <CardContent className="space-y-3">
+          <div onDragOver={(e)=>e.preventDefault()} onDrop={(e)=>{ e.preventDefault(); const f=e.dataTransfer.files[0]; if(f) onFile(f); toast.success(`File ${f.name} dimuat — ${rows.length} baris`); }} className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-primary/40 transition-colors">
+            <FileSpreadsheet className="w-10 h-10 mx-auto text-muted-foreground/50" />
+            <p className="mt-2 text-sm font-semibold">Drag & drop file CSV di sini</p>
+            <p className="text-xs text-muted-foreground">header wajib: {TEMPLATE_HEADERS.join(', ')}</p>
+            <input ref={inputRef} type="file" accept=".csv,.xlsx" className="hidden" onChange={(e)=>{ const f=e.target.files?.[0]; if(f) { onFile(f); toast.success(`File ${f.name} dimuat`); } }} />
+            <Button size="sm" onClick={()=>inputRef.current?.click()} className="mt-3"><Upload className="w-4 h-4"/> Pilih File</Button>
+            {fileName && <p className="mt-2 text-xs text-muted-foreground flex items-center justify-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600"/> {fileName} — {rows.length} baris</p>}
+          </div>
+          {rows.length>0 && (
+            <div className="space-y-3">
+              <div className="overflow-auto border rounded-lg max-h-[300px]">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-muted/50">
+                    <TableRow>
+                      <TableHead className="text-[11px]">#</TableHead>
+                      <TableHead className="text-[11px]">TGL</TableHead>
+                      <TableHead className="text-[11px]">PLAT</TableHead>
+                      <TableHead className="text-[11px]">Quarry→Project</TableHead>
+                      <TableHead className="text-[11px]">Produk</TableHead>
+                      <TableHead className="text-[11px]">Vendor</TableHead>
+                      <TableHead className="text-[11px]">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>{rows.slice(0,20).map((r:any,i:number)=>(<TableRow key={i}><TableCell>{r.idx}</TableCell><TableCell>{r.tanggal||'-'}</TableCell><TableCell className="font-mono font-bold">{r.plat||'-'}</TableCell><TableCell>{r.quarryName} → {r.projectName}</TableCell><TableCell>{r.produkName}</TableCell><TableCell>{r.vendorName}</TableCell><TableCell><Badge variant="outline" className={r.statusRaw==='DELIVERED'?'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30':'bg-muted text-muted-foreground'}>{r.statusRaw}</Badge></TableCell></TableRow>))}</TableBody>
+                </Table>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button size="sm" onClick={async()=>{ await handleSubmit(); if(result) toast.success(`Batch ${result.batchId}: ${result.ok} sukses`); }} disabled={isSubmitting} className="gap-1.5">{isSubmitting ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>}{isSubmitting ? 'Import...' : `Import ${rows.length} Ritase`}</Button>
+                {result && <div className="text-xs"><span className={`font-semibold ${result.failed?.length? 'text-amber-700':'text-emerald-700'}`}>Batch {result.batchId}: {result.ok} sukses {result.failed?.length? `, ${result.failed.length} gagal`:''}</span>{result.failed?.length>0 && <details className="mt-1 text-[11px] text-destructive"><summary className="cursor-pointer">Lihat 3 error pertama</summary><ul className="list-disc pl-4">{result.failed.slice(0,3).map((f:any,j:number)=><li key={j}>{f.id}: {f.error}</li>)}</ul></details>}</div>}
+              </div>
             </div>
-            <button onClick={handleSubmit} disabled={isSubmitting} className="px-4 py-2 rounded-md bg-[#003C16] text-white text-xs font-bold flex items-center gap-1.5 disabled:opacity-50">{isSubmitting ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>}{isSubmitting ? 'Import...' : `Import ${rows.length} Ritase`}</button>
-            {result && <div className="ml-3 text-xs"><span className={`font-semibold ${result.failed?.length? 'text-amber-700':'text-emerald-700'}`}>Batch {result.batchId}: {result.ok} sukses {result.failed?.length? `, ${result.failed.length} gagal`:''}</span>{result.failed?.length>0 && <details className="mt-1 text-[11px] text-rose-600"><summary className="cursor-pointer">Lihat 3 error pertama</summary><ul className="list-disc pl-4">{result.failed.slice(0,3).map((f:any,j:number)=><li key={j}>{f.id}: {f.error}</li>)}</ul></details>}</div>}
-          </div>
-        )}
-      </div>
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600">6 model tetap aktif: <b>ALL_IN</b> & <b>PER_TRIP</b> primary, <b>PER_M3/PER_TON/ROUTE_BASED/HYBRID</b> lain tetap.</div>
+          )}
+        </CardContent>
+      </Card>
+      <Card className="bg-muted/50">
+        <CardContent className="text-xs text-muted-foreground">6 model tetap aktif: <b>ALL_IN</b> & <b>PER_TRIP</b> primary, <b>PER_M3/PER_TON/ROUTE_BASED/HYBRID</b> lain tetap.</CardContent>
+      </Card>
     </div>
   );
 };
