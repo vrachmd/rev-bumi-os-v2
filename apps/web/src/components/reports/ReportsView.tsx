@@ -19,6 +19,7 @@ import { useApp } from '../../context/AppContext';
 import { formatDate, formatIDR, formatVolumeM3 } from '../../lib/formatters';
 import { calculateDeliveryFinance } from '../../engine/finance.engine';
 import { resolveFreightRate } from '../../lib/freightRate';
+import { resolveQuarryCost } from '../../lib/quarryCost';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -104,7 +105,7 @@ export const ReportsView: React.FC = () => {
       onDate: d.scheduledDate,
     });
     if (!rate) return d.costRecord;
-    const qmc = (quarryMaterialCosts as any[]).find((q: any) => q.quarryId === d.quarryId && q.productId === d.productId);
+    const qmc = resolveQuarryCost(quarryMaterialCosts as any, d.quarryId, d.productId, d.scheduledDate);
     const materialCostPerM3 = qmc?.costPerM3 ?? (product as any).defaultMaterialCost;
     const isAllIn = (rate as any).pricingModel === 'ALL_IN' || (rate as any).isAllInclusiveMaterial || (vendor as any)?.supplyType === 'MATERIAL_AND_TRANSPORT';
     try {

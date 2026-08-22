@@ -16,6 +16,12 @@ import {
 import { useApp } from '../../context/AppContext';
 import { Product, Quarry } from '../../types';
 import { formatIDR } from '../../lib/formatters';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 export const MasterDataView: React.FC = () => {
   const { products, quarries, saveQuarry } = useApp();
@@ -26,6 +32,8 @@ export const MasterDataView: React.FC = () => {
   const [editingQuarry, setEditingQuarry] = useState<Quarry | null>(null);
   const [isQuarryModalOpen, setIsQuarryModalOpen] = useState(false);
   const [quarryOverrides, setQuarryOverrides] = useState<{ productId: string; costPerM3: string }[]>([]);
+  const [editingPrice, setEditingPrice] = useState<{ quarryId: string; productId: string; costPerM3: string; effectiveDate: string } | null>(null);
+  const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
 
   const filteredQuarries = quarries.filter(
     (q) =>
@@ -33,6 +41,58 @@ export const MasterDataView: React.FC = () => {
       q.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       q.locationName.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const openPriceEdit = (quarryId: string, productId: string) => {
+    const q = quarries.find((qq) => qq.id === quarryId);
+    const override = q?.materialCostOverrides?.find((o) => o.productId === productId);
+    const prod = products.find((p) => p.id === productId);
+    setEditingPrice({
+      quarryId,
+      productId,
+      costPerM3: String(override?.costPerM3 ?? prod?.defaultMaterialCost ?? ''),
+      effectiveDate: new Date().toISOString().slice(0, 10),
+    });
+    setIsPriceModalOpen(true);
+  };
+
+  const handlePriceSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPrice) return;
+    const quarry = quarries.find((q) => q.id === editingPrice.quarryId);
+    if (!quarry) return;
+    const newCost = Number(editingPrice.costPerM3);
+    const updatedOverrides = [...(quarry.materialCostOverrides || [])];
+    const idx = updatedOverrides.findIndex((o) => o.productId === editingPrice.productId);
+    if (idx >= 0) updatedOverrides[idx] = { productId: editingPrice.productId, costPerM3: newCost };
+    else updatedOverrides.push({ productId: editingPrice.productId, costPerM3: newCost });
+    const updatedQuarry: Quarry = { ...quarry, materialCostOverrides: updatedOverrides };
+    saveQuarry(updatedQuarry);
+    // History: insert with effective_date (tidak overwrite harga lama)
+    import('../../lib/supabase').then(({ supabase }) => {
+      supabase
+        .from('quarry_material_costs')
+        .upsert(
+          {
+            quarry_id: editingPrice.quarryId,
+            product_id: editingPrice.productId,
+            cost_per_m3: newCost,
+            effective_date: editingPrice.effectiveDate,
+            is_active: true,
+          },
+          { onConflict: 'quarry_id,product_id,effective_date' }
+        )
+        .then(({ error }) => {
+          if (error) toast.error('Gagal simpan harga: ' + error.message);
+          else {
+            const prod = products.find((p) => p.id === editingPrice.productId);
+            const quarryName = quarries.find((q) => q.id === editingPrice.quarryId)?.name;
+            toast.success(`Harga ${prod?.code} di ${quarryName} → ${formatIDR(newCost)}/m³ efektif ${editingPrice.effectiveDate} (harga lama tetap untuk ritase lama)`);
+          }
+        });
+    });
+    setIsPriceModalOpen(false);
+    setEditingPrice(null);
+  };
 
   // Quarry Form Handler
   const handleQuarrySubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -185,6 +245,13 @@ export const MasterDataView: React.FC = () => {
                               ) : (
                                 <span className="px-1 py-0.5 rounded text-[9px] bg-slate-200 text-slate-600">Default</span>
                               )}
+                              <button
+                                onClick={() => openPriceEdit(quarry.id, prod.id)}
+                                className="p-1 rounded hover:bg-white border border-transparent hover:border-slate-200 text-slate-500 hover:text-emerald-700"
+                                title="Edit harga (dengan effective_date, harga lama tetap untuk ritase lama)"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                              </button>
                             </div>
                           </div>
                         );
@@ -399,6 +466,50 @@ export const MasterDataView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Dialog Edit Harga per Quarry×Produk — dengan effective_date, harga lama tetap untuk ritase lama */}
+      <Dialog open={isPriceModalOpen} onOpenChange={setIsPriceModalOpen}>
+        <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden">
+          <DialogHeader className="px-5 py-3.5 bg-[#003C16] text-white rounded-t-lg shrink-0">
+            <DialogTitle className="text-sm font-bold uppercase tracking-wider text-white">
+              Edit Harga — {quarries.find((q) => q.id === editingPrice?.quarryId)?.name} →{' '}
+              {products.find((p) => p.id === editingPrice?.productId)?.code}
+            </DialogTitle>
+          </DialogHeader>
+          {editingPrice && (
+            <form onSubmit={handlePriceSave} className="p-5 space-y-3.5">
+              <div className="space-y-1">
+                <Label className="text-xs">Harga Baru (Rp/m³) *</Label>
+                <Input
+                  type="number"
+                  required
+                  value={editingPrice.costPerM3}
+                  onChange={(e) => setEditingPrice({ ...editingPrice, costPerM3: e.target.value })}
+                  className="font-mono font-bold"
+                />
+                <p className="text-[10px] text-slate-500">Harga lama tetap untuk ritase dengan scheduledDate &lt; effective_date</p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Tanggal Efektif *</Label>
+                <Input
+                  type="date"
+                  required
+                  value={editingPrice.effectiveDate}
+                  onChange={(e) => setEditingPrice({ ...editingPrice, effectiveDate: e.target.value })}
+                />
+              </div>
+              <div className="pt-2 flex items-center justify-end gap-2 border-t">
+                <Button type="button" variant="outline" size="sm" onClick={() => setIsPriceModalOpen(false)}>
+                  Batal
+                </Button>
+                <Button type="submit" size="sm" className="gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" /> Simpan Harga Baru
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

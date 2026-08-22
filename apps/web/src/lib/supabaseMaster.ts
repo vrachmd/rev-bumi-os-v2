@@ -22,6 +22,7 @@ export interface QuarryMaterialCost {
   productId: string;
   costPerM3: number;
   density: number | null;
+  effectiveDate?: string;
 }
 
 export interface MasterDataBundle {
@@ -187,7 +188,7 @@ export async function fetchMasterFromSupabase(): Promise<MasterDataBundle> {
     supabase.from('drivers').select('*'),
     supabase.from('freight_rates').select('*'),
     supabase.from('contract_source_quarries').select('*'),
-    supabase.from('quarry_material_costs').select('quarry_id, product_id, cost_per_m3, density'),
+    supabase.from('quarry_material_costs').select('quarry_id, product_id, cost_per_m3, density, effective_date'),
   ]);
 
   if (prod.error) throw prod.error;
@@ -221,6 +222,7 @@ export async function fetchMasterFromSupabase(): Promise<MasterDataBundle> {
       productId: r.product_id,
       costPerM3: num(r.cost_per_m3),
       density: r.density != null ? num(r.density) : null,
+      effectiveDate: r.effective_date ?? undefined,
     })),
   };
 }
@@ -407,7 +409,7 @@ export async function upsertMasterToSupabase(bundle: MasterDataBundle): Promise<
     }))
   ));
 
-  // Quarry material costs — HPP material per quarry×product (override)
+  // Quarry material costs — HPP material per quarry×product (override) dengan effective_date (history, tidak overwrite harga lama)
   if (bundle.quarryMaterialCosts && bundle.quarryMaterialCosts.length > 0) {
     results.push(await genericUpsert(
       'quarry_material_costs',
@@ -416,8 +418,10 @@ export async function upsertMasterToSupabase(bundle: MasterDataBundle): Promise<
         product_id: q.productId,
         cost_per_m3: q.costPerM3,
         density: (q as any).density ?? null,
+        effective_date: (q as any).effectiveDate ?? new Date().toISOString().slice(0, 10),
+        is_active: true,
       })),
-      'quarry_id,product_id'
+      'quarry_id,product_id,effective_date'
     ));
   }
 
