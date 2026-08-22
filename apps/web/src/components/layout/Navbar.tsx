@@ -60,7 +60,7 @@ const TAB_TITLES: Record<NavTab, { title: string; subtitle: string }> = {
   },
   reports: {
     title: 'Laporan Komprehensif & Ekspor CSV',
-    subtitle: 'Unduh Rekapitulasi Pengiriman, Volume, Kontrak, dan Keuangan dengan Satuan Baku',
+    subtitle: 'Analisis HPP = Biaya Material + Ongkos Angkut + Biaya Operasional — Satuan Baku m³ & IDR',
   },
   'audit-admin': {
     title: 'Audit Trail & Workflow Koreksi',

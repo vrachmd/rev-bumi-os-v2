@@ -419,7 +419,7 @@ export const ReportsView: React.FC = () => {
           <h3 className="text-xs font-bold uppercase tracking-wider">
             {selectedReportType === 'deliveries' && 'Detail Rekapitulasi Surat Jalan & Pengiriman'}
             {selectedReportType === 'reconciliation' && 'Hasil Rekonsiliasi & Audit Selisih Volume (m³)'}
-            {selectedReportType === 'finance' && 'Struktur HPP (Biaya Material, Ongkos Angkut) & Margin Laba'}
+            {selectedReportType === 'finance' && 'Analisis HPP & Margin Laba Kotor'}
             {selectedReportType === 'contracts' && 'Status Realisasi & Sisa Alokasi Kontrak'}
           </h3>
           <span className="text-[11px] text-muted-foreground font-medium">
