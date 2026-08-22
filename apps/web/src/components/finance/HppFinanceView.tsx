@@ -201,10 +201,6 @@ export const HppFinanceView: React.FC = () => {
                     <TableCell className="py-3 px-3">{quarry?.name || '-'}</TableCell>
                     <TableCell className="py-3 px-3 font-mono">{vehicle?.plateNumber || '-'}</TableCell>
                     <TableCell className="py-3 px-3">{vendor?.name || '-'}</TableCell>
-                    <TableCell className="py-3 px-3">{product?.name}</TableCell>
-                    <TableCell className="py-3 px-3 text-right font-mono font-bold text-slate-900">
-                      {formatVolumeM3(d.approvedVolumeM3, false)}
-                    </TableCell>
                     <TableCell className="py-3 px-3 text-right font-mono font-semibold text-slate-900">
                       {formatIDR(cost.recognizedRevenueIdr)}
                     </TableCell>
