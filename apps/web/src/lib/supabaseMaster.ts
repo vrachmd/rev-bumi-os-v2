@@ -407,5 +407,19 @@ export async function upsertMasterToSupabase(bundle: MasterDataBundle): Promise<
     }))
   ));
 
+  // Quarry material costs — HPP material per quarry×product (override)
+  if (bundle.quarryMaterialCosts && bundle.quarryMaterialCosts.length > 0) {
+    results.push(await genericUpsert(
+      'quarry_material_costs',
+      bundle.quarryMaterialCosts.map((q) => ({
+        quarry_id: q.quarryId,
+        product_id: q.productId,
+        cost_per_m3: q.costPerM3,
+        density: (q as any).density ?? null,
+      })),
+      'quarry_id,product_id'
+    ));
+  }
+
   return results;
 }

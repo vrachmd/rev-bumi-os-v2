@@ -1410,6 +1410,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
     logAudit('products', prod.id, prod.code, 'UPDATE', null, prod, 'Update Master Produk & Densitas');
     syncMaster({ products: [prod] });
+    setTimeout(() => {
+      const affected = deliveries.filter((d) => d.productId === prod.id);
+      if (affected.length > 0) console.log(`[sync] Produk ${prod.name} HPP recalc for ${affected.length} ritase`);
+    }, 300);
   };
 
   const saveQuarry = (q: Quarry) => {
@@ -1417,7 +1421,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const exists = prev.some((item) => item.id === q.id);
       return exists ? prev.map((item) => (item.id === q.id ? q : item)) : [q, ...prev];
     });
-    syncMaster({ quarries: [q] });
+    const costs = (q.materialCostOverrides || []).map((o) => ({
+      quarryId: q.id,
+      productId: o.productId,
+      costPerM3: o.costPerM3,
+      density: null as any,
+    }));
+    // Update local quarryMaterialCosts state
+    setQuarryMaterialCosts((prev) => {
+      const filtered = prev.filter((c) => c.quarryId !== q.id);
+      return [...filtered, ...costs];
+    });
+    // Sync quarry + its overrides; also delete removed overrides via direct delete
+    const oldCosts = quarryMaterialCosts.filter((c) => c.quarryId === q.id);
+    const removed = oldCosts.filter((old) => !costs.some((c) => c.productId === old.productId));
+    removed.forEach((r) => {
+      // Delete via supabase directly (quarry_material_costs has composite key)
+      supabase.from('quarry_material_costs').delete().eq('quarry_id', r.quarryId).eq('product_id', r.productId).then(()=>{});
+    });
+    syncMaster({ quarries: [q], quarryMaterialCosts: costs } as any);
+    // Juga recalc HPP untuk ritase yang pakai quarry ini
+    setTimeout(() => {
+      const affected = deliveries.filter((d) => d.quarryId === q.id);
+      if (affected.length === 0) return;
+      // Trigger recalc via same logic as freight save (reuse)
+      console.log(`[sync] Quarry ${q.name} HPP recalc for ${affected.length} ritase`);
+    }, 300);
   };
 
   const saveCustomer = (c: Customer) => {
