@@ -14,6 +14,7 @@ import {
 import { useApp } from '../../context/AppContext';
 import { Delivery, VarianceReason } from '../../types';
 import { formatIDR, formatPercent, formatVolumeM3, formatDate } from '../../lib/formatters';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -72,10 +73,13 @@ export const ReconciliationView: React.FC = () => {
     );
 
     if (res.success) {
+      toast.success('Rekonsiliasi berhasil — approved m³ diperbarui');
       setSaveSuccess(true);
       setTimeout(() => {
         setSelectedDelivery(null);
       }, 1000);
+    } else {
+      toast.error(res.error || 'Gagal simpan rekonsiliasi');
     }
   };
 
