@@ -15,6 +15,14 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { forwardGeocode } from '../../lib/geocode';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const inputCls =
   'w-full px-3 py-2 text-xs border border-slate-300 rounded-md focus:ring-2 focus:ring-[#003C16] outline-hidden';
@@ -143,38 +151,19 @@ export const CustomersProjectsView: React.FC = () => {
 
   return (
     <div className="space-y-4 pb-12">
-      {/* Sub tabs */}
+      {/* Sub tabs — shadcn Tabs + Button */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2 border-b border-slate-200 pb-2 flex-1">
-          <button
-            onClick={() => setActiveTab('customers')}
-            className={`px-4 py-2 rounded-md text-xs font-bold transition-all ${
-              activeTab === 'customers'
-                ? 'bg-[#003C16] text-white shadow-xs'
-                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            Daftar Pelanggan / Kontraktor ({customers.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('projects')}
-            className={`px-4 py-2 rounded-md text-xs font-bold transition-all ${
-              activeTab === 'projects'
-                ? 'bg-[#003C16] text-white shadow-xs'
-                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            Daftar Proyek Konstruksi Site ({projects.length})
-          </button>
-        </div>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1">
+          <TabsList>
+            <TabsTrigger value="customers" className="text-xs">Daftar Pelanggan / Kontraktor ({customers.length})</TabsTrigger>
+            <TabsTrigger value="projects" className="text-xs">Daftar Proyek Konstruksi Site ({projects.length})</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-        <button
-          onClick={activeTab === 'customers' ? openCustomerModal : openProjectModal}
-          className="px-3.5 py-2 rounded-md bg-[#003C16] hover:bg-[#002B10] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
-        >
+        <Button size="sm" onClick={activeTab === 'customers' ? openCustomerModal : openProjectModal}>
           <Plus className="w-4 h-4" />
           {activeTab === 'customers' ? 'Tambah Pelanggan Baru' : 'Tambah Proyek / Site Baru'}
-        </button>
+        </Button>
       </div>
 
       {activeTab === 'customers' ? (
@@ -295,19 +284,14 @@ export const CustomersProjectsView: React.FC = () => {
         </div>
       )}
 
-      {/* ===== Modal Tambah Pelanggan ===== */}
-      {showCustomerModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
-            <div className="px-5 py-3.5 bg-[#003C16] text-white flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-emerald-300" />
-                <h3 className="text-sm font-bold uppercase tracking-wider">{editingCustomerId ? 'Edit Pelanggan' : 'Tambah Pelanggan Baru'}</h3>
-              </div>
-              <button onClick={() => setShowCustomerModal(false)} className="p-1 rounded text-white/80 hover:text-white">
-                ✕
-              </button>
+      <Dialog open={showCustomerModal} onOpenChange={setShowCustomerModal}>
+        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
+          <DialogHeader className="px-5 py-3.5 bg-primary text-primary-foreground rounded-t-lg shrink-0">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-emerald-200" />
+              <DialogTitle className="text-sm font-bold uppercase tracking-wider text-primary-foreground">{editingCustomerId ? 'Edit Pelanggan' : 'Tambah Pelanggan Baru'}</DialogTitle>
             </div>
+          </DialogHeader>
 
             <form onSubmit={submitCustomer} className="p-5 space-y-3.5 max-h-[75vh] overflow-y-auto">
               <div>
@@ -409,23 +393,17 @@ export const CustomersProjectsView: React.FC = () => {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
-      {/* ===== Modal Tambah Proyek ===== */}
-      {showProjectModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
-            <div className="px-5 py-3.5 bg-[#003C16] text-white flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FolderKanban className="w-5 h-5 text-emerald-300" />
-                <h3 className="text-sm font-bold uppercase tracking-wider">{editingProjectId ? 'Edit Proyek / Site' : 'Tambah Proyek / Site Baru'}</h3>
-              </div>
-              <button onClick={() => setShowProjectModal(false)} className="p-1 rounded text-white/80 hover:text-white">
-                ✕
-              </button>
+      <Dialog open={showProjectModal} onOpenChange={setShowProjectModal}>
+        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
+          <DialogHeader className="px-5 py-3.5 bg-primary text-primary-foreground rounded-t-lg shrink-0">
+            <div className="flex items-center gap-2">
+              <FolderKanban className="w-5 h-5 text-emerald-200" />
+              <DialogTitle className="text-sm font-bold uppercase tracking-wider text-primary-foreground">{editingProjectId ? 'Edit Proyek / Site' : 'Tambah Proyek / Site Baru'}</DialogTitle>
             </div>
+          </DialogHeader>
 
             <form onSubmit={submitProject} className="p-5 space-y-3.5 max-h-[75vh] overflow-y-auto">
               <div>
@@ -550,9 +528,8 @@ export const CustomersProjectsView: React.FC = () => {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
