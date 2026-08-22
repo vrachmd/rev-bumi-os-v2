@@ -625,7 +625,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (!contract || !product) continue;
       const count = baseCount + i + 1;
       const uniq = `${Date.now().toString(36).slice(-4).toUpperCase()}${i}`;
-      const deliveryNumber = (r as any).deliveryNumber || `SJ/BULK/${todayStr}/${String(count).padStart(3, '0')}-${uniq}`;
+      const deliveryNumber = (r as any).deliveryNumber || `SJ/RBN/${todayStr}/${String(count).padStart(3, '0')}-${uniq}`;
       const id = (r as any).id || `del-bulk-${Date.now()}-${i}-${uniq}`;
       const plate = (r as any).plateNumber || (r as Delivery).driverName || '';
       // vehicle resolve/create
@@ -638,6 +638,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           vehiclesToEnsure.push({ id: vehicleId, transport_vendor_id: (r as Delivery).transportVendorId || contract.quarryId || transportVendors[0]?.id || '', plate_number: plate, vehicle_type: 'Dump Truck', nominal_capacity_m3: (r as Delivery).loadedVolumeM3 || 24 });
         }
       }
+      const reqStatus = ((r as any).status as string)?.toUpperCase() === 'DELIVERED' ? 'DELIVERED' as const : 'SCHEDULED' as const;
+      const vol = (r as Delivery).loadedVolumeM3 || 0;
+      const wKg = (r as Delivery).loadedWeightKg || 0;
       const d: Delivery = {
         id,
         deliveryNumber,
@@ -649,13 +652,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         driverId: (r as any).driverId || null as any,
         driverName: (r as Delivery).driverName || 'Supir Vendor Armada',
         driverPhone: (r as Delivery).driverPhone || '',
-        status: ((r as Delivery).status as Delivery['status']) || 'SCHEDULED',
-        loadedVolumeM3: (r as Delivery).loadedVolumeM3 || 0,
-        receivedVolumeM3: 0,
-        approvedVolumeM3: 0,
-        loadedWeightKg: (r as Delivery).loadedWeightKg || 0,
-        receivedWeightKg: 0,
-        approvedWeightKg: 0,
+        status: reqStatus,
+        loadedVolumeM3: vol,
+        receivedVolumeM3: reqStatus === 'DELIVERED' ? vol : 0,
+        approvedVolumeM3: reqStatus === 'DELIVERED' ? vol : 0,
+        loadedWeightKg: wKg,
+        receivedWeightKg: reqStatus === 'DELIVERED' ? wKg : 0,
+        approvedWeightKg: reqStatus === 'DELIVERED' ? wKg : 0,
         densityApplied: (r as any).densityApplied || product.density || 1.6,
         measurementMode: ((r as Delivery).measurementMode as Delivery['measurementMode']) || 'ACTUAL_MEASURED',
         scheduledDate: ((r as Delivery).scheduledDate as string) || nowIso.slice(0, 10),
@@ -665,6 +668,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         siteUnloadingInfo: (r as any).siteUnloadingInfo,
         createdAt: nowIso,
         updatedAt: nowIso,
+        deliveredAt: reqStatus === 'DELIVERED' ? nowIso : undefined,
       } as Delivery;
       // attach bulk_batch_id via any for supabaseBulk
       (d as any).bulk_batch_id = batchId;

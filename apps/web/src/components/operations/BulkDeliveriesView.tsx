@@ -3,11 +3,11 @@ import React, { useState, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Upload, Download, CheckCircle2, FileSpreadsheet, X, Loader2, Truck } from 'lucide-react';
 
-const TEMPLATE_HEADERS = ['tanggal_muat','quarry','produk','plat_nomor','supir','vendor_armada','project_tujuan','metode','gross_kg','tare_kg','panjang_m','lebar_m','tinggi_m','sj_imci'];
+const TEMPLATE_HEADERS = ['tanggal_muat','quarry','produk','plat_nomor','supir','vendor_armada','project_tujuan','metode','gross_kg','tare_kg','panjang_m','lebar_m','tinggi_m','sj_imci','status'];
 const TEMPLATE_CSV = TEMPLATE_HEADERS.join(',') + '\n' + [
-  '2026-08-22,Rumpin,Batu Split 1-2,B 9553 UIU,Ujang,Yudhi,KBS Bogor,PER_TRIP,25400,14200,,,,101162',
-  '2026-08-22,Rumpin,Batu Split 1-2,B 9420 FYU,Sutejo,Yudhi,KBS Bogor,PER_TRIP,,,6.2,2.3,1.7,',
-  '2026-08-22,Bojonegara,Abu Batu,B 9001 NDC,IVAN,IVAN,Karya Beton Dadap,ALL_IN,23000,13000,,,,',
+  '2026-08-22,Rumpin,Batu Split 1-2,B 9553 UIU,Ujang,Yudhi,KBS Bogor,PER_TRIP,25400,14200,,,,101162,DELIVERED',
+  '2026-08-22,Rumpin,Batu Split 1-2,B 9420 FYU,Sutejo,Yudhi,KBS Bogor,PER_TRIP,,,6.2,2.3,1.7,,SCHEDULED',
+  '2026-08-22,Bojonegara,Abu Batu,B 9001 NDC,IVAN,IVAN,Karya Beton Dadap,ALL_IN,23000,13000,,,,,DELIVERED',
 ].join('\n');
 
 export const BulkDeliveriesView: React.FC = () => {
@@ -34,8 +34,8 @@ export const BulkDeliveriesView: React.FC = () => {
     for (let i = 1; i < lines.length; i++) {
       const cols = lines[i].split(',');
       const raw: Record<string,string> = {};
-      headers.forEach((h, idx) => raw[h] = (cols[idx] ?? '').trim());
-      out.push({ idx: i, raw, plat: raw['plat_nomor'] || raw['plat'] || '', quarryName: raw['quarry']||'', produkName: raw['produk']||'', vendorName: raw['vendor_armada']||'', projectName: raw['project_tujuan']||'', tanggal: raw['tanggal_muat']||'' });
+      headers.forEach((h, idx) => raw[h] = (cols[idx] || '').trim());
+      out.push({ idx: i, raw, plat: raw['plat_nomor'] || raw['plat'] || '', quarryName: raw['quarry']||'', produkName: raw['produk']||'', vendorName: raw['vendor_armada']||'', projectName: raw['project_tujuan']||'', tanggal: raw['tanggal_muat']||'', statusRaw: (raw['status']||'SCHEDULED').toUpperCase() });
     }
     return out;
   };
@@ -108,6 +108,7 @@ export const BulkDeliveriesView: React.FC = () => {
         driverName: r.raw?.supir || 'Supir Vendor Armada',
         plateNumber: r.plat,
         notes: r.raw?.sj_imci ? `SJ IMCI ${r.raw.sj_imci}` : '',
+        status: r.statusRaw === 'DELIVERED' ? 'DELIVERED' : 'SCHEDULED',
       });
     });
     if (toCreate.length===0) { alert('Tidak ada baris yang bisa dipetakan ke master.\n'+errs.slice(0,3).join('\n')+'\nCek nama di CSV sesuai: Quarry Rumpin/Sudamanik/Bojonegara, Produk Batu Split 1-2, Vendor IVAN/Yudhi, Project Karya Beton Dadap/Legok/Pluit/Sunter/Bogor.'); return; }
@@ -145,8 +146,8 @@ export const BulkDeliveriesView: React.FC = () => {
           <div className="space-y-3">
             <div className="overflow-auto border rounded-lg max-h-[300px]">
               <table className="w-full text-xs">
-                <thead className="bg-slate-50 sticky top-0"><tr className="text-[11px] uppercase text-slate-500"><th className="py-2 px-2">#</th><th className="py-2 px-2">Tgl</th><th className="py-2 px-2">Plat</th><th className="py-2 px-2">Quarry→Project</th><th className="py-2 px-2">Produk</th><th className="py-2 px-2">Vendor</th></tr></thead>
-                <tbody>{rows.slice(0,20).map((r:any,i:number)=>(<tr key={i} className="border-t"><td className="py-1.5 px-2">{r.idx}</td><td className="py-1.5 px-2">{r.tanggal||'-'}</td><td className="py-1.5 px-2 font-mono font-bold">{r.plat||'-'}</td><td className="py-1.5 px-2">{r.quarryName} → {r.projectName}</td><td className="py-1.5 px-2">{r.produkName}</td><td className="py-1.5 px-2">{r.vendorName}</td></tr>))}</tbody>
+                <thead className="bg-slate-50 sticky top-0"><tr className="text-[11px] uppercase text-slate-500"><th className="py-2 px-2">#</th><th className="py-2 px-2">TGL</th><th className="py-2 px-2">PLAT</th><th className="py-2 px-2">Quarry→Project</th><th className="py-2 px-2">Produk</th><th className="py-2 px-2">Vendor</th><th className="py-2 px-2">Status</th></tr></thead>
+                <tbody>{rows.slice(0,20).map((r:any,i:number)=>(<tr key={i} className="border-t"><td className="py-1.5 px-2">{r.idx}</td><td className="py-1.5 px-2">{r.tanggal||'-'}</td><td className="py-1.5 px-2 font-mono font-bold">{r.plat||'-'}</td><td className="py-1.5 px-2">{r.quarryName} → {r.projectName}</td><td className="py-1.5 px-2">{r.produkName}</td><td className="py-1.5 px-2">{r.vendorName}</td><td className="py-1.5 px-2"><span className={`px-1.5 py-0.5 rounded text-[11px] font-bold border ${r.statusRaw==='DELIVERED'?'bg-emerald-50 text-emerald-700 border-emerald-200':'bg-slate-50 text-slate-600 border-slate-200'}`}>{r.statusRaw}</span></td></tr>))}</tbody>
               </table>
             </div>
             <button onClick={handleSubmit} disabled={isSubmitting} className="px-4 py-2 rounded-md bg-[#003C16] text-white text-xs font-bold flex items-center gap-1.5 disabled:opacity-50">{isSubmitting ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>}{isSubmitting ? 'Import...' : `Import ${rows.length} Ritase`}</button>
