@@ -17,6 +17,11 @@ import {
   FileSpreadsheet,
   X,
 } from 'lucide-react';
+class BulkErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
+  state = { hasError: false, error: null as any };
+  static getDerivedStateFromError(error: any) { return { hasError: true, error }; }
+  render() { if ((this.state as any).hasError) return <div className="p-6 text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded">Bulk gagal load: {String((this.state as any).error?.message || (this.state as any).error)} — halaman Pengiriman tetap aman. Coba reload atau hubungi admin.</div>; return this.props.children; }
+}
 import { useApp } from '../../context/AppContext';
 import { Delivery, DeliveryStatus, TransportVendor, Vehicle } from '../../types';
 import { formatDate, formatDateTime, formatIDR, formatVolumeM3, formatWeightKg } from '../../lib/formatters';
@@ -24,8 +29,9 @@ import { resolveFreightRate } from '../../lib/freightRate';
 import { SuratJalanPrintModal } from './SuratJalanPrintModal';
 import { WeighbridgeModal } from './WeighbridgeModal';
 import { PodModal } from './PodModal';
+// bulk isolasi sementara — lazy + error boundary untuk cegah vendor ReferenceError jatuhkan halaman
 import dynamic from 'next/dynamic';
-const BulkDeliveriesView = dynamic(() => import('./BulkDeliveriesView').then(m => m.BulkDeliveriesView), { ssr: false, loading: () => <div className="p-8 text-center text-xs text-slate-500">Memuat bulk...</div> });
+const BulkDeliveriesView = dynamic(() => import('./BulkDeliveriesView').then(m => m.BulkDeliveriesView).catch(() => ({ default: () => null } as any)), { ssr: false, loading: () => <div className="p-8 text-center text-xs text-slate-500">Memuat bulk...</div> });
 
 interface DeliveriesViewProps {
   onNavigateToReconcile?: () => void;
@@ -916,7 +922,7 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
               <h3 className="font-bold text-sm">Ritase Massal (Bulk) — Import CSV/XLSX</h3>
               <button onClick={() => setShowBulk(false)} className="p-1.5 rounded hover:bg-slate-100"><X className="w-5 h-5" /></button>
             </div>
-            <BulkDeliveriesView />
+            <BulkErrorBoundary><BulkDeliveriesView /></BulkErrorBoundary>
           </div>
         </div>
       )}
