@@ -26,7 +26,6 @@ export type NavTab =
   | 'dashboard'
   | 'field-handover'
   | 'deliveries'
-  | 'bulk-deliveries'
   | 'reconciliation'
   | 'contracts'
   | 'customers-projects'
@@ -96,11 +95,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           icon: Truck,
           badge: pendingPodCount > 0 ? pendingPodCount : undefined,
           badgeVariant: 'info',
-        },
-        {
-          id: 'bulk-deliveries',
-          label: 'Ritase Massal (Bulk)',
-          icon: FileSpreadsheet,
         },
         {
           id: 'reconciliation',

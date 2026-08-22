@@ -63,10 +63,6 @@ const TAB_TITLES: Record<NavTab, { title: string; subtitle: string }> = {
     title: 'Audit Trail & Workflow Koreksi',
     subtitle: 'Riwayat Perubahan Tidak Terhapuskan & Pengajuan Koreksi Resmi',
   },
-  'bulk-deliveries': {
-    title: 'Ritase Massal (Bulk Import)',
-    subtitle: 'Import CSV 50–500 ritase sekaligus — chunk 50, preview valid/error, template download',
-  },
 };
 
 const ROLES: { id: Role; label: string }[] = [

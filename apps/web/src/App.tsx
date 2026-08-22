@@ -9,7 +9,6 @@ import { Sidebar, NavTab } from './components/layout/Sidebar';
 import { Navbar } from './components/layout/Navbar';
 import { CockpitDashboard } from './components/dashboard/CockpitDashboard';
 import { DeliveriesView } from './components/operations/DeliveriesView';
-import { BulkDeliveriesView } from './components/operations/BulkDeliveriesView';
 import { ReconciliationView } from './components/operations/ReconciliationView';
 import { FieldHandoverView } from './components/operations/FieldHandoverView';
 import { ContractsView } from './components/commercial/ContractsView';
@@ -56,7 +55,6 @@ const MainLayout: React.FC = () => {
           {activeTab === 'deliveries' && (
             <DeliveriesView onNavigateToReconcile={() => setActiveTab('reconciliation')} />
           )}
-          {activeTab === 'bulk-deliveries' && <BulkDeliveriesView />}
           {activeTab === 'reconciliation' && <ReconciliationView />}
           {activeTab === 'contracts' && <ContractsView />}
           {activeTab === 'customers-projects' && <CustomersProjectsView />}
