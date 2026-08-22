@@ -99,36 +99,38 @@ export const BulkDeliveriesView: React.FC = () => {
   };
 
   const validation = useMemo(() => {
+    const safe = (arr:any) => Array.isArray(arr) ? arr : [];
     return rows.map(r => {
-      const quarry = quarries.find((q:any) => q.name.toLowerCase().includes((r.quarryName||'').toLowerCase()) || q.code.toLowerCase()=== (r.quarryName||'').toLowerCase());
-      const product = products.find((p:any) => p.name.toLowerCase().includes((r.produkName||'').toLowerCase()) || p.code.toLowerCase()===(r.produkName||'').toLowerCase());
-      const vendor = transportVendors.find((v:any) => v.name.toLowerCase().includes((r.vendorName||'').toLowerCase()) || v.code?.toLowerCase()===(r.vendorName||'').toLowerCase());
-      const project = projects.find((p:any) => p.name.toLowerCase().includes((r.projectName||'').toLowerCase()));
-      const contract = (quarry && product && project) ? contracts.find((c:any) => c.quarryId===quarry.id && c.productId===product.id && c.projectId===project.id) || contracts.find((c:any)=>c.productId===product.id && c.projectId===project.id) : null;
-      // density
-      const qmc = quarryMaterialCosts?.find((q:any)=>q.quarry_id===quarry?.id && q.product_id===product?.id);
-      const density = qmc?.cost_per_m3 ? 1.6 : (product?.density || 1.6);
-      // volume
-      let vol = 0;
-      if (r.gross && r.tare) vol = Math.max(0, (r.gross - r.tare)/1000 / density);
-      else if (r.p && r.l && r.t) vol = r.p * r.l * r.t;
-      // freight preview
-      const frate = (vendor && quarry && project) ? freightRates.find((f:any)=>f.transportVendorId===vendor.id && f.quarryId===quarry.id && f.projectId===project.id && f.isActive) : null;
-      const metode = r.metode || frate?.pricingModel || vendor?.defaultPricingModel || 'PER_TRIP';
-      let ongkos = 0;
-      if (frate) {
-        try { ongkos = calculateFreightCost(frate.pricingModel, Number(frate.ratePerUnit), vol, (r.gross&&r.tare? (r.gross-r.tare)/1000: vol*density), 1); } catch { ongkos=0; }
+      try {
+        const quarry = safe(quarries).find((q:any) => (q.name||'').toLowerCase().includes((r.quarryName||'').toLowerCase()) || (q.code||'').toLowerCase()=== (r.quarryName||'').toLowerCase());
+        const product = safe(products).find((p:any) => (p.name||'').toLowerCase().includes((r.produkName||'').toLowerCase()) || (p.code||'').toLowerCase()===(r.produkName||'').toLowerCase());
+        const vendor = safe(transportVendors).find((v:any) => (v.name||'').toLowerCase().includes((r.vendorName||'').toLowerCase()) || (v.code||'').toLowerCase()===(r.vendorName||'').toLowerCase());
+        const project = safe(projects).find((p:any) => (p.name||'').toLowerCase().includes((r.projectName||'').toLowerCase()));
+        const contract = (quarry && product && project) ? safe(contracts).find((c:any) => c.quarryId===quarry.id && c.productId===product.id && c.projectId===project.id) || safe(contracts).find((c:any)=>c.productId===product.id && c.projectId===project.id) : null;
+        const qmc = safe(quarryMaterialCosts).find((q:any)=> (q.quarry_id||q.quarryId)===quarry?.id && (q.product_id||q.productId)===product?.id);
+        const density = (qmc?.density as number) || (product?.density as number) || 1.6;
+        let vol = 0;
+        if (r.gross && r.tare) vol = Math.max(0, (r.gross - r.tare)/1000 / density);
+        else if (r.p && r.l && r.t) vol = r.p * r.l * r.t;
+        const frate = (vendor && quarry && project) ? safe(freightRates).find((f:any)=>f.transportVendorId===vendor.id && f.quarryId===quarry.id && f.projectId===project.id && (f.isActive!==false)) : null;
+        const metode = r.metode || frate?.pricingModel || vendor?.defaultPricingModel || 'PER_TRIP';
+        let ongkos = 0;
+        if (frate) {
+          try { ongkos = calculateFreightCost(frate.pricingModel, Number(frate.ratePerUnit), vol, (r.gross&&r.tare? (r.gross-r.tare)/1000: vol*density), 1); } catch { ongkos=0; }
+        }
+        const errors: string[] = [];
+        if (!r.plat) errors.push('plat kosong');
+        if (!quarry) errors.push('quarry tidak ketemu');
+        if (!product) errors.push('produk tidak ketemu');
+        if (!vendor) errors.push('vendor tidak ketemu');
+        if (!project) errors.push('project tidak ketemu');
+        if (!contract) errors.push('kontrak tidak ketemu');
+        if (vol<=0) errors.push('vol 0 (gross/tare atau PxLxT)');
+        const isValid = errors.length===0;
+        return { quarry, product, vendor, project, contract, vol, ongkos, frate, metode, errors, isValid, density };
+      } catch (e:any) {
+        return { quarry: null, product: null, vendor: null, project: null, contract: null, vol: 0, ongkos: 0, frate: null, metode: 'PER_TRIP', errors: ['validasi error: '+(e?.message||'unknown')], isValid: false, density: 1.6 };
       }
-      const errors: string[] = [];
-      if (!r.plat) errors.push('plat kosong');
-      if (!quarry) errors.push('quarry tidak ketemu');
-      if (!product) errors.push('produk tidak ketemu');
-      if (!vendor) errors.push('vendor tidak ketemu');
-      if (!project) errors.push('project tidak ketemu');
-      if (!contract) errors.push('kontrak tidak ketemu');
-      if (vol<=0) errors.push('vol 0 (gross/tare atau PxLxT)');
-      const isValid = errors.length===0;
-      return { quarry, product, vendor, project, contract, vol, ongkos, frate, metode, errors, isValid, density };
     });
   }, [rows, quarries, products, transportVendors, projects, contracts, quarryMaterialCosts, freightRates]);
 
