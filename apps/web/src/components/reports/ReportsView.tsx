@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileSpreadsheet,
   Download,
@@ -45,9 +45,30 @@ export const ReportsView: React.FC = () => {
   const [selectedQuarryId, setSelectedQuarryId] = useState('ALL');
   const [selectedProductId, setSelectedProductId] = useState('ALL');
   const [dateRange, setDateRange] = useState({
-    start: '2026-03-01',
-    end: '2026-04-30',
+    start: '2026-01-01',
+    end: '2026-12-31',
   });
+
+  // Sinkronkan rentang tanggal ke data aktual (tampilkan semua saat load, bukan 03-04 saja)
+  useEffect(() => {
+    if (deliveries.length > 0) {
+      const dates = deliveries.map((d) => d.scheduledDate).filter(Boolean).sort();
+      if (dates.length > 0) {
+        const min = dates[0]!;
+        const max = dates[dates.length - 1]!;
+        // Hanya set jika masih default sempit atau kosong — jangan timpa pilihan user yang sudah diubah
+        setDateRange((prev) => {
+          if (prev.start === '2026-01-01' && prev.end === '2026-12-31') {
+            return { start: min, end: max };
+          }
+          if (prev.start === '2026-03-01' && prev.end === '2026-04-30') {
+            return { start: min, end: max };
+          }
+          return prev;
+        });
+      }
+    }
+  }, [deliveries.length]);
 
   // Filtered deliveries based on criteria
   const filteredDeliveries = deliveries.filter((d) => {
@@ -265,6 +286,24 @@ export const ReportsView: React.FC = () => {
             </div>
           </div>
         </CardContent>
+        <div className="px-4 pb-3 flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSelectedCustomerId('ALL');
+              setSelectedQuarryId('ALL');
+              setSelectedProductId('ALL');
+              const dates = deliveries.map((d) => d.scheduledDate).filter(Boolean).sort();
+              if (dates.length > 0) setDateRange({ start: dates[0]!, end: dates[dates.length - 1]! });
+              else setDateRange({ start: '2026-01-01', end: '2026-12-31' });
+              toast.info('Filter direset — menampilkan semua data');
+            }}
+            className="h-7 text-xs gap-1"
+          >
+            <Filter className="w-3 h-3" /> Tampilkan Semua (Reset Filter)
+          </Button>
+        </div>
       </Card>
 
       {/* KPI Metrics Ribbon — shadcn Card */}

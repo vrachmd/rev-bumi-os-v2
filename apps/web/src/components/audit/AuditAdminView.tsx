@@ -48,7 +48,7 @@ export const AuditAdminView: React.FC = () => {
     const role = currentProfile.role;
     if (role !== 'SUPER_ADMIN' && role !== 'MANAGEMENT') return;
     let cancelled = false;
-    fetchAuditLogsFromSupabase({ limit: 200 }).then(({ data, error }) => {
+    fetchAuditLogsFromSupabase({ limit: 1000 }).then(({ data, error }) => {
       if (cancelled) return;
       if (error) {
         // RLS forbidden untuk role lain sudah ditangani; tampilkan fallback lokal
