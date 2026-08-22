@@ -85,6 +85,7 @@ Deliverable:
   - 🔧 Bug diperbaiki selama E2E: form Record Payment `step` mismatch (min=1 + step=10000 memblokir submit nilai normal → `step="any"`); `payments.recorded_by` uuid (sebelumnya dikirim `fullName`).
    - ✅ **Checkpoint** `checkpoint-20260820-golive` di `8ee51b2` + `F3-mobile-finance-analytics` plan + `FinanceScreen` `MANAGEMENT` OTA.
    - ✅ **Finance polish 2026-08-22** `checkpoint-20260822-invoice` di `88e207e`: PDF faktur mirror preview HTML (header 12×12, bill-to `bg-green-50`, totals box, footer fixed `y=255`, agregat group IMCI 4-kolom + Standard per-rit 5-kolom), `CV REV BUMI NUSANTARA` Cigudeg + BCA 6044884563, multi-template registry Fase A+B (`0008`/`0010` + bucket `kwitansi` 5MB, kompresi 1280px, hal 2 preview/PDF), CRUD pelanggan/proyek + pembayaran/piutang sync DB, auto-push `AGENTS.md#7`.
+   - ✅ **Bulk Ritase Massal 2026-08-23** `checkpoint-20260823-bulk` di `f8bd64e`: `0011 bulk_batch_id` + `0012 vehicles/drivers RLS QUARRY_CHECKER`, web `BulkDeliveriesView` CSV 10/50 chunk valid/error 6 model + template, mobile `BulkQuarryScreen` 10 baris (max 20) + `store bulkAddRitase` + offline queue, E2E `e2e_bulk 20/20` + `e2e_mobile_full 50/50`, UAT checklist `docs/UAT-20260823-bulk.md`.
 
 ### Fase 0.5 — Persiapan Migrasi Cloud (sejalan dengan Fase 0-1)
 Deliverable:
@@ -117,7 +118,7 @@ Deliverable:
 - Skema migrasi/versioning data (pattern migrations).
 **Exit criteria:** semua engine lolos unit test; PR tidak bisa merge bila lint/test gagal; upgrade skema tidak merusak data.
 
-### Fase 3 — Go-Live & Operasional 🚀 — ✅ LIVE di `https://app.revbuminusantara.biz.id` + `https://rev-bumi-os-v2-web.vercel.app` (`119de1a→88e207e Ready`, `Vercel` `Root apps/web` `turbo`, `NEXT_PUBLIC_SUPABASE_*`, `checkpoint-20260822-invoice`)
+### Fase 3 — Go-Live & Operasional 🚀 — ✅ LIVE di `https://app.revbuminusantara.biz.id` + `https://rev-bumi-os-v2-web.vercel.app` (`119de1a→f8bd64e Ready`, `Vercel` `Root apps/web` `turbo`, `NEXT_PUBLIC_SUPABASE_*`, `checkpoint-20260823-bulk`)
 Deliverable:
 - Deploy tahap awal (gratis): **Supabase Free + Vercel** (web + PWA), domain & SSL — ✅ `web` `Ready` `33s`, `quarry@` login ok, `demo` hapus wajib RLS.
 - Seed data master riil (quarry, vendor, kontrak, densitas) + onboarding — ✅ `quarry_material_costs` 15 baris `0006`.

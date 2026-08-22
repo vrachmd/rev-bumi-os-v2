@@ -1,8 +1,8 @@
 # TASKS.md — Status Pekerjaan REV Bumi OS
 
-> Terakhir diperbarui: 2026-08-22
+> Terakhir diperbarui: 2026-08-23
 > Repo: https://github.com/vrachmd/rev-bumi-os-v2 (branch `main`)
-> Tag checkpoint: `checkpoint-20260820-golive` (@8ee51b2), `checkpoint-20260821-finance` (@67c0519), `checkpoint-20260822-invoice` (@88e207e)
+> Tag checkpoint: `checkpoint-20260820-golive` (@8ee51b2), `checkpoint-20260821-finance` (@67c0519), `checkpoint-20260822-invoice` (@88e207e), `checkpoint-20260823-bulk` (@f8bd64e)
 
 ---
 
@@ -77,6 +77,7 @@
 - [x] CRUD Pelanggan & Proyek: `CustomersProjectsView.tsx` dropdown Template Faktur + tombol Pencil/Trash, `AppContext` `saveCustomer/saveProject/deleteCustomer/deleteProject` + `syncMaster/syncMasterDelete` + guard dependensi + audit, sync Supabase.
 - [x] CRUD Pembayaran & Piutang: `PaymentsView.tsx` kolom Aksi Pencil/Trash, modal reuse edit (invoice disabled saat edit), `AppContext` `updatePayment/deletePayment` sync `payments` + `invoices` (`total_paid/outstanding/status` recalc) + audit.
 - [x] Auto-push produksi: `AGENTS.md#7` + `.git/hooks/post-commit` push `origin/main` tiap lolos check-types+lint, Vercel auto-deploy `rev-bumi-os-v2-web` (Root `apps/web`).
+- [x] **Bulk Ritase Massal (web + mobile 10)** — `docs/plan/bulk-ritase.md`, migration `0011_bulk_batch_id` + `0012_vehicles_bulk_rls` (QUARRY_CHECKER/DISPATCHER boleh upsert vehicles/drivers), `supabaseBulk.ts` chunk 50 + fallback per-row, `AppContext bulkCreateDeliveries` + audit `BULK_CREATE`, `BulkDeliveriesView.tsx` drag-drop CSV/XLSX preview 20 valid/error 6 model (ALL_IN hijau/PER_TRIP biru), template download, `BulkQuarryScreen.tsx` 10 baris (max 20) + `store bulkAddRitase` + `QuarryStack Bulk 10` offline queue reuse, E2E `e2e_bulk.js 20/20 PASS`, `e2e_mobile_full 50/50 PASS` setelah patch threshold. Deploy `81d3eb8→f8bd64e`.
 
 ---
 
@@ -84,7 +85,8 @@
 
 ### Aktif — prioritas tinggi
 - [x] **Polish faktur PDF jsPDF agar identik pratinjau HTML** — ✅ selesai 2026-08-22 (mirror HTML, tema hijau `#003C16`, footer y=255, agregat IMCI group, pagination 20 baris) — verifikasi user `INV/RBN/20260821/004.pdf` approve.
-- [ ] UAT manual 3-role (quarry→site→admin) langsung di `app.revbuminusantara.biz.id` — konfirmasi user belum masuk.
+- [x] **Bulk Ritase Massal** — ✅ selesai 2026-08-23 (web CSV 50 chunk + mobile 10 baris max 20, 6 model ALL_IN/PER_TRIP primary, RLS patch 0012, E2E 20/20 + 50/50).
+- [ ] UAT manual 3-role (quarry→site→admin) + bulk verifikasi langsung di `app.revbuminusantara.biz.id` — **siap dijalankan, checklist di `docs/UAT-20260823-bulk.md`** — konfirmasi user belum masuk.
 - [ ] Lengkapi Fase B UI kontrak `ContractsView.tsx` dropdown Template Faktur (backend `contracts.template_id` sudah siap via `0010`, pelanggan sudah dropdown, tinggal kontrak).
 - [ ] Verifikasi end-to-end multi-template: IMCI (Karya Beton Dadap/Sunter/Bogor → alias KBS, preview hijau agregat) vs Standard Per-Rit (non-IMCI) — buat faktur uji masing-masing template.
 
@@ -107,6 +109,7 @@
 |---|---|
 | `apps/web/src/components/commercial/ContractsView.tsx` | **Aktif** — tambah dropdown Template Faktur per-kontrak (backend `0010` siap) |
 | `apps/web/src/components/finance/PaymentsView.tsx` | **Selesai 88e207e** — edit/hapus pembayaran Piutang sync DB — stabil |
+| `docs/UAT-20260823-bulk.md` | **Baru** — checklist UAT web bulk 50 + mobile 10 (3-role + metode ALL_IN/PER_TRIP) |
 
 ### Sudah diubah (stabil, ter-commit)
 **Web (`apps/web/src`)**
@@ -134,21 +137,22 @@
 - `packages/shared-types/src/index.ts` — VarianceReason, APPROVED_ADJUSTMENT
 
 **Infra & Data**
-- `supabase/migrations/0005_audit_and_gps.sql`, `0006_quarry_density.sql`, `0007_timestamp_check.sql`, `0008_invoice_item_details.sql`, `0009_company_update.sql`, `0010_invoice_template.sql`
+- `supabase/migrations/0005_audit_and_gps.sql`, `0006_quarry_density.sql`, `0007_timestamp_check.sql`, `0008_invoice_item_details.sql`, `0009_company_update.sql`, `0010_invoice_template.sql`, `0011_bulk_batch_id.sql`, `0012_vehicles_bulk_rls.sql`
 - `.github/workflows/ci.yml`, root `package.json` (packageManager), `AGENTS.md` (rule icon §7.6 + auto-push §7.7), `.git/hooks/post-commit`
 - `rawdata/clean/rekap_clean.csv|truk_clean.csv|harga_clean.csv`, `backups/20260821-pre-staging/*.json`
-- `docs/DATA-CLEAN-AUDIT.md`, `docs/DATA-CLEAN-REPORT-FINAL.md`, `docs/DATA-ENGINEERING-REPORT.md`, `docs/plan/multi-template-invoice.md`
+- `docs/DATA-CLEAN-AUDIT.md`, `docs/DATA-CLEAN-REPORT-FINAL.md`, `docs/DATA-ENGINEERING-REPORT.md`, `docs/plan/multi-template-invoice.md`, `docs/plan/bulk-ritase.md`, `docs/UAT-20260823-bulk.md`
 
 ---
 
 ## 5. Langkah Selanjutnya
 
 1. ✅ **Polish faktur PDF** selesai di `88e207e` — Vercel auto-deploy → verifikasi `app.revbuminusantara.biz.id` approve `INV/RBN/20260821/004.pdf` (20 baris, footer tidak mentok).
-2. **Sisa faktur**: lengkapi dropdown Template di `ContractsView.tsx` + UAT buat 2 faktur uji (IMCI agregat hijau vs Standard Per-Rit) → verifikasi preview 1:1 & foto kwitansi hal 2.
-3. Jalankan UAT manual 3-step: login `quarry@revbumi.co.id` (buat ritase→timbang→dispatch), `site@revbumi.co.id` (arrive→unload→e-POD), akun admin (verify→invoice→cetak PDF).
-4. Setup EAS: `npm i -g eas-cli && eas login`, konfigurasi `eas.json` (buildProfile APK), `eas build -p android`, dokumentasikan proses di runbook.
-5. Buat `docs/runbook.md`: backup harian (pg_dump/JSON export), restore dari `backups/20260821-pre-staging/`, rollback checklist.
-6. Tag baru `checkpoint-20260822-invoice` (@88e207e) — selanjutnya `checkpoint-20260823-go-uat` setelah UAT lapangan.
+2. ✅ **Bulk Ritase** selesai di `f8bd64e` — `e2e_bulk 20/20 + e2e_mobile_full 50/50`, RLS 0012, web `Ritase Massal` CSV chunk 50 + mobile `Bulk 10` (max 20).
+3. **UAT bulk** (siap): jalankan `docs/UAT-20260823-bulk.md` — web bulk 10 CSV (ALL_IN vs PER_TRIP + error.csv) + mobile bulk 10 offline → `quarry@revbumi.co.id` timbang/dispatch → `site@revbumi.co.id` arrive/unload/POD → admin `DELIVERED` → faktur 2 template.
+4. **Sisa faktur**: lengkapi dropdown Template di `ContractsView.tsx` + UAT faktur 2 template (IMCI agregat hijau vs Standard Per-Rit).
+5. Setup EAS: `npm i -g eas-cli && eas login`, konfigurasi `eas.json` (buildProfile APK), `eas build -p android`, dokumentasikan proses di runbook.
+6. Buat `docs/runbook.md`: backup harian (pg_dump/JSON export), restore dari `backups/20260821-pre-staging/`, rollback checklist.
+7. Tag baru `checkpoint-20260823-bulk` (@f8bd64e) — selanjutnya `checkpoint-20260824-go-uat` setelah UAT lapangan bulk lulus.
 
 ---
 
