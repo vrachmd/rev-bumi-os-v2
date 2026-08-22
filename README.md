@@ -1,159 +1,53 @@
-# Turborepo starter
+# REV Bumi OS — Material Supply & Quantity Reconciliation Operating System
 
-This Turborepo starter is maintained by the Turborepo core team.
+Sistem Operasi Rantai Pasok Material Agregat Konstruksi, Rekonsiliasi Kubikasi, Logistik & Keuangan untuk **PT REV Bumi Nusantara Perkasa**.
 
-## Using this example
+---
 
-Run the following command:
+## 🚀 Fitur Utama
 
-```sh
-npx create-turbo@latest
+- **Dual-Platform Architecture**:
+  - **Desktop Web Cockpit**: Modul lengkap untuk Direksi, Operasional, Komersial, dan Keuangan.
+  - **Mobile Lapangan (PWA)**: Aplikasi mobile layar sentuh untuk **Petugas Quarry** (Loading, Jembatan Timbang, Dimensi Bak, Dispatch Truk) dan **Petugas Site Proyek** (Konfirmasi Kedatangan GPS, Verifikasi Kubikasi Unloading, e-POD).
+- **Mobile Live Dashboard**:
+  - Ringkasan ritase dan kubikasi material hari ini.
+  - Kartu status interaktif (*Terjadwal*, *Loading*, *In-Transit*, *Tiba di Site*, *Selesai e-POD*).
+  - Aksi cepat penugasan armada vendor dan input timbangan.
+- **Quantity & Variance Engine**:
+  - Konversi otomatis timbangan jembatan (Gross & Tare) ke $m^3$ berbasis densitas material.
+  - Evaluasi toleransi susut kontrak ($\le 2\%$) dan Berita Acara Rekonsiliasi.
+- **Logistics & Freight Engine**:
+  - Manajemen vendor angkutan, penugasan armada, pencatatan supir vendor, dan settlement ongkos angkut.
+- **Commercial & Finance**:
+  - Kontrak B2B / BUMN, penagihan invoice otomatis, PPN 11%, dan laporan margin kotor.
+- **Immutable Audit Trail**:
+  - Pencatatan seluruh perubahan data dan mekanisme koreksi resmi.
+
+---
+
+## 🏗️ Arsitektur & Backend
+- **Backend**: **Supabase** (PostgreSQL terkelola + Auth + Row Level Security + Realtime + Storage + Edge Functions) — **free tier** untuk development & operasional awal.
+- **Target akhir**: deployment penuh di **cloud GCP / Alibaba Cloud** (migrasi bertahap, bukan tulis ulang — lihat `ROADMAP.md`).
+- **Web & PWA**: Vercel (free) sekarang → GCP Cloud Run / Alibaba saat produksi penuh.
+- **Portabilitas**: skema & RLS dalam SQL ter-versioning; konfigurasi env-driven agar backend dapat ditukar tanpa mengubah kode aplikasi.
+- **UI**: `apps/web` migrasi ke **shadcn/ui** (Radix + Tailwind v4, primary `#003C16`) — fase UI-only `2026-08-23 → selesai`, hanya `components/ui/*` + layout/operations/finance (AGENTS.md #8, `docs/plan/ui-shadcn-roadmap.md`). Mobile tetap RN.
+
+---
+
+## 📖 Dokumentasi Lengkap
+- **`AGENTS.md`**: Panduan audit & instruksi pengembangan sistem untuk AI Coding Agent (termasuk **UI-Only Fase shadcn #8**).
+- **`DOCUMENTATION.md`**: Buku panduan teknis, arsitektur, domain bisnis, dan formula perhitungan lengkap.
+- **`rev-bumi-os/ROADMAP.md`**: Roadmap menuju produksi (8 gap fondasi, fase, strategi migrasi cloud, **Fase 3.5 UI shadcn**).
+- **`rev-bumi-os/docs/plan/ui-shadcn-roadmap.md`**: Roadmap perubahan UI ke shadcn/ui (fase, file boleh/dilarang, exit criteria).
+- **`MARKDOWN.md.md`**: Blueprint spesifikasi pengembangan (dengan keputusan arsitektur terbaru).
+
+---
+
+## 🛠️ Panduan Build & Validasi
+```bash
+# Validasi tipe TypeScript
+npm run lint
+
+# Kompilasi aplikasi produksi
+npm run build
 ```
-
-## What's inside?
-
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo build
-npm dlx turbo build
-npm exec turbo build
-```
-
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo build --filter=docs
-npm exec turbo build --filter=docs
-npm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-npm exec turbo dev
-npm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-npm exec turbo dev --filter=web
-npm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-npm exec turbo login
-npm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-npm exec turbo link
-npm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)

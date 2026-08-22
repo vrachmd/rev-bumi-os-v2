@@ -85,10 +85,11 @@
 
 ### Aktif — prioritas tinggi
 - [x] **Polish faktur PDF jsPDF agar identik pratinjau HTML** — ✅ selesai 2026-08-22 (mirror HTML, tema hijau `#003C16`, footer y=255, agregat IMCI group, pagination 20 baris) — verifikasi user `INV/RBN/20260821/004.pdf` approve.
-- [x] **Bulk Ritase Massal** — ✅ selesai 2026-08-23 (web CSV 50 chunk + mobile 10 baris max 20, 6 model ALL_IN/PER_TRIP primary, RLS patch 0012, E2E 20/20 + 50/50).
+- [x] **Bulk Ritase Massal** — ✅ selesai 2026-08-23 (web CSV 50 chunk + mobile 10 baris max 20, 6 model ALL_IN/PER_TRIP primary, RLS patch 0012, E2E 20/20 + 50/50; SJ global NNN, bulk status DELIVERED, SJ/RBN murni tanpa suffix).
+- [ ] **UI shadcn — UI-Only Fase (2026-08-23 → selesai)** — 🔒 hanya ubah `apps/web` UI (`components/ui/*`, `components/layout/*`, `components/operations/*`, `components/finance/*`, `app/globals.css`, `lib/utils.ts`). DILARANG ubah `context/*`, `engine/*`, `lib/supabase*.ts`, `supabase/migrations/*`, `packages/*`, `types/*` (AGENTS.md #8, `docs/plan/ui-shadcn-roadmap.md`). Progress: roadmap + MD sinkron done, setup `shadcn init` next.
 - [ ] UAT manual 3-role (quarry→site→admin) + bulk verifikasi langsung di `app.revbuminusantara.biz.id` — **siap dijalankan, checklist di `docs/UAT-20260823-bulk.md`** — konfirmasi user belum masuk.
-- [ ] Lengkapi Fase B UI kontrak `ContractsView.tsx` dropdown Template Faktur (backend `contracts.template_id` sudah siap via `0010`, pelanggan sudah dropdown, tinggal kontrak).
-- [ ] Verifikasi end-to-end multi-template: IMCI (Karya Beton Dadap/Sunter/Bogor → alias KBS, preview hijau agregat) vs Standard Per-Rit (non-IMCI) — buat faktur uji masing-masing template.
+- [ ] Lengkapi Fase B UI kontrak `ContractsView.tsx` dropdown Template Faktur (backend `contracts.template_id` sudah siap via `0010`, pelanggan sudah dropdown, tinggal kontrak) — **tunda sampai Fase UI selesai, hanya UI**.
+- [ ] Verifikasi end-to-end multi-template: IMCI vs Standard Per-Rit — **tunda, hanya verifikasi visual setelah Fase UI**.
 
 ### Menunggu / prioritas sedang
 - [ ] Build APK native Android: `eas build --platform android` (user pilih APK native, bukan PWA) + siapkan OTA `eas update`.

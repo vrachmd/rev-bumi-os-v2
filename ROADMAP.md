@@ -119,6 +119,11 @@ Deliverable:
 **Exit criteria:** semua engine lolos unit test; PR tidak bisa merge bila lint/test gagal; upgrade skema tidak merusak data.
 
 ### Fase 3 — Go-Live & Operasional 🚀 — ✅ LIVE di `https://app.revbuminusantara.biz.id` + `https://rev-bumi-os-v2-web.vercel.app` (`119de1a→f8bd64e Ready`, `Vercel` `Root apps/web` `turbo`, `NEXT_PUBLIC_SUPABASE_*`, `checkpoint-20260823-bulk`)
+### Fase 3.5 — UI shadcn (Web) 🎨 — 🔒 UI-Only (2026-08-23 → selesai)
+- Scope: migrasi `apps/web` ke **shadcn/ui** (New York, Tailwind v4, cssVariables, Inter, radius 0.75, primary `#003C16`) — hanya `components/ui/*`, `components/layout/*`, `components/operations/*`, `components/finance/*`, `components/commercial/*`, `app/globals.css`, `lib/utils.ts`.
+- Larangan: **jangan ubah** `context/*`, `engine/*`, `lib/supabase*.ts`, `supabase/migrations/*`, `packages/*`, `types/*` (AGENTS.md #8). Pelanggaran = rollback.
+- Fase: 0 Setup (init) → 1 Primitives (button/card/dialog/table) → 2 Layout (Sidebar/Navbar) → 3 Operasi/Keuangan (Deliveries/Bulk/Invoices) → 4 Polish (responsive, a11y, dark, toast).
+- Exit: semua view utama pakai primitives shadcn, brand `#003C16` konsisten, `lint/build` hijau. Detail: `docs/plan/ui-shadcn-roadmap.md`.
 Deliverable:
 - Deploy tahap awal (gratis): **Supabase Free + Vercel** (web + PWA), domain & SSL — ✅ `web` `Ready` `33s`, `quarry@` login ok, `demo` hapus wajib RLS.
 - Seed data master riil (quarry, vendor, kontrak, densitas) + onboarding — ✅ `quarry_material_costs` 15 baris `0006`.
@@ -166,6 +171,7 @@ Prinsip: **jaga portabilitas dari hari pertama** agar keputusan Supabase tidak m
 
 ## 7. Catatan Proses untuk Agen Berikutnya
 
+0. **Fase UI shadcn — UI-Only**: selama `docs/plan/ui-shadcn-roadmap.md` aktif, **hanya ubah UI** (lihat AGENTS.md #8). Jangan sentuh logika bisnis/data.
 1. **Tidak membangun fitur baru sebelum F-01 & F-02 selesai** — fondasi data & auth adalah prioritas mutlak.
 2. **Backend = Supabase** (free tier), target akhir GCP/Alibaba — selalu tulis kode & SQL yang **portabel** (env-driven, hindari vendor lock-in).
 3. Setiap perubahan skema data: tulis **SQL migration** (versioning), jangan mengubah langsung.
