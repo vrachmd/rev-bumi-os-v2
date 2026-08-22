@@ -646,7 +646,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         quarryId: ((r as Delivery).quarryId as string) || contract.quarryId || quarries[0]?.id || '',
         transportVendorId: ((r as Delivery).transportVendorId as string) || transportVendors[0]?.id || '',
         vehicleId: vehicleId || vehicles[0]?.id,
-        driverId: (r as any).driverId || '',
+        driverId: (r as any).driverId || null as any,
         driverName: (r as Delivery).driverName || 'Supir Vendor Armada',
         driverPhone: (r as Delivery).driverPhone || '',
         status: ((r as Delivery).status as Delivery['status']) || 'SCHEDULED',
