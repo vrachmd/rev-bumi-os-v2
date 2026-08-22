@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 class BulkErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
   state = { hasError: false, error: null as any };
   static getDerivedStateFromError(error: any) { return { hasError: true, error }; }
@@ -202,6 +203,14 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
     return matchesSearch && matchesStatus;
   });
 
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+  React.useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter, deliveries.length]);
+  const totalPages = Math.max(1, Math.ceil(filteredDeliveries.length / pageSize));
+  const pagedDeliveries = filteredDeliveries.slice((page - 1) * pageSize, page * pageSize);
+
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const contract = contracts.find((c) => c.id === newContractId);
@@ -308,7 +317,7 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredDeliveries.map((d) => {
+              {pagedDeliveries.map((d) => {
                 const product = products.find((p) => p.id === d.productId);
                 const contract = contracts.find((c) => c.id === d.contractId);
                 const customer = customers.find((c) => c.id === contract?.customerId);
@@ -476,6 +485,63 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
           </Table>
         </CardContent>
       </Card>
+
+      {/* Pagination shadcn — Fase 2 */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            Menampilkan {pagedDeliveries.length} dari {filteredDeliveries.length} ritase — halaman {page}/{totalPages}
+          </p>
+          <Pagination className="mx-0 w-auto justify-end">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setPage((p) => Math.max(1, p - 1));
+                  }}
+                  className={page === 1 ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
+              {Array.from({ length: Math.min(totalPages, 5) }).map((_, idx) => {
+                const pageNum = idx + 1 + Math.max(0, Math.min(page - 3, totalPages - 5));
+                if (pageNum > totalPages) return null;
+                const isActive = pageNum === page;
+                return (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      href="#"
+                      isActive={isActive}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPage(pageNum);
+                      }}
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
+              {totalPages > 5 && page < totalPages - 2 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setPage((p) => Math.min(totalPages, p + 1));
+                  }}
+                  className={page === totalPages ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       {/* Modal: New Delivery Dispatch Order */}
       {isCreatingDelivery && (

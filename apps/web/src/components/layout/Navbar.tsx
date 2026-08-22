@@ -3,6 +3,9 @@ import { Menu, UserCheck, Plus, LogOut, ShieldCheck } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Role } from '../../types';
 import { NavTab } from './Sidebar';
+import { Button } from '@/components/ui/button';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface NavbarProps {
   activeTab: NavTab;
@@ -90,77 +93,77 @@ export const Navbar: React.FC<NavbarProps> = ({
   const displayProfile = supabaseProfile ?? currentProfile;
 
   return (
-    <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-2xs">
+    <header className="sticky top-0 z-30 bg-card border-b border-border shadow-xs">
       <div className="px-4 lg:px-6 h-16 flex items-center justify-between gap-4">
-        {/* Left: Mobile Toggle & Page Title */}
+        {/* Left: Mobile Toggle & Breadcrumb + Title */}
         <div className="flex items-center gap-3 min-w-0">
-          <button
-            onClick={onOpenMobileMenu}
-            className="lg:hidden p-2 -ml-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          >
+          <Button variant="ghost" size="icon" onClick={onOpenMobileMenu} className="lg:hidden -ml-2 shrink-0">
             <Menu className="w-5 h-5" />
-          </button>
+            <span className="sr-only">Buka menu</span>
+          </Button>
 
           <div className="min-w-0">
-            <h1 className="text-base lg:text-lg font-bold text-slate-900 truncate tracking-tight">
+            <Breadcrumb className="hidden sm:flex mb-0.5">
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="#" className="text-[11px]">REV Bumi OS</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="text-[11px] font-medium truncate max-w-[260px]">{currentTabMeta.title}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <h1 className="text-base lg:text-lg font-bold text-foreground truncate tracking-tight leading-none">
               {currentTabMeta.title}
             </h1>
-            <p className="hidden sm:block text-xs text-slate-500 truncate">
+            <p className="hidden sm:block text-xs text-muted-foreground truncate">
               {currentTabMeta.subtitle}
             </p>
           </div>
         </div>
 
         {/* Right: Actions & Role Simulator */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          {/* Quick Action Button */}
+        <div className="flex items-center gap-2 shrink-0">
           {onOpenNewDelivery && (
-            <button
-              onClick={onOpenNewDelivery}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-[#003C16] hover:bg-[#002B10] transition-colors shadow-2xs"
-            >
+            <Button size="sm" onClick={onOpenNewDelivery} className="bg-primary hover:bg-primary/90 shadow-xs">
               <Plus className="w-4 h-4" />
               <span className="hidden md:inline">Buat Surat Jalan</span>
               <span className="md:hidden">Kirim</span>
-            </button>
+            </Button>
           )}
 
-          {/* Role Switcher for RBAC Simulation */}
           {isSupabaseAuthed ? (
-            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-md px-2.5 py-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
-              <span className="text-[11px] font-medium text-slate-600 hidden xl:inline">
+            <div className="hidden sm:flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-md px-2.5 py-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-300" />
+              <span className="text-[11px] font-medium text-muted-foreground hidden xl:inline">
                 {displayProfile.fullName} · {displayProfile.role}
               </span>
+              <span className="text-[11px] font-medium xl:hidden">{displayProfile.role}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-md px-2.5 py-1">
-              <UserCheck className="w-3.5 h-3.5 text-emerald-700" />
-              <span className="text-[11px] font-medium text-slate-600 hidden xl:inline">
-                Role:
-              </span>
-              <select
-                value={currentProfile.role}
-                onChange={(e) => setCurrentRole(e.target.value as Role)}
-                className="text-xs font-semibold text-[#003C16] bg-transparent border-0 focus:ring-0 cursor-pointer outline-hidden py-0.5"
-              >
-                {ROLES.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
+            <div className="flex items-center gap-1.5 bg-muted border border-border rounded-md px-2 py-1">
+              <UserCheck className="w-3.5 h-3.5 text-primary hidden sm:block" />
+              <span className="text-[11px] font-medium text-muted-foreground hidden xl:inline">Role:</span>
+              <Select value={currentProfile.role} onValueChange={(v) => setCurrentRole(v as Role)}>
+                <SelectTrigger size="sm" className="h-7 text-xs font-semibold border-0 bg-transparent shadow-none gap-1.5 px-1.5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLES.map((r) => (
+                    <SelectItem key={r.id} value={r.id} className="text-xs">
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
           {isSupabaseAuthed && (
-            <button
-              onClick={logoutFromSupabase}
-              title="Keluar dari Supabase"
-              className="p-1.5 rounded-md text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-            >
+            <Button variant="ghost" size="icon" onClick={logoutFromSupabase} title="Keluar dari Supabase" className="text-muted-foreground hover:text-destructive">
               <LogOut className="w-4 h-4" />
-            </button>
+            </Button>
           )}
         </div>
       </div>
