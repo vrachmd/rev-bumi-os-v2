@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Truck, Scale, User, MapPin, Plus, DollarSign, CheckCircle2, Search, Pencil, Trash2 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { formatIDR, formatVolumeM3 } from '../../lib/formatters';
-import { FreightPricingModel, VendorSupplyType } from '../../types';
+import { FreightPricingModel, VendorSupplyType, FreightRate } from '../../types';
 
 export const LogisticsView: React.FC = () => {
   const {
@@ -24,6 +24,7 @@ export const LogisticsView: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'vendors' | 'vehicles' | 'drivers' | 'rates'>('rates');
   const [isAddingRate, setIsAddingRate] = useState(false);
+  const [editingRateId, setEditingRateId] = useState<string | null>(null);
 
   // Vendor CRUD state
   const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
@@ -133,11 +134,24 @@ export const LogisticsView: React.FC = () => {
     setIsDriverModalOpen(false);
   };
 
+  const openEditRate = (rate: FreightRate) => {
+    setEditingRateId(rate.id);
+    setVendorId(rate.transportVendorId);
+    setQuarryId(rate.quarryId);
+    setProjectId(rate.projectId);
+    setPricingModel(rate.pricingModel);
+    setRatePerUnit(rate.ratePerUnit);
+    setMinCharge(rate.minimumChargeIdr ?? 0);
+    setDistanceKm(rate.distanceKm ?? 45);
+    setIsAddingRate(true);
+  };
+
   const handleAddRate = (e: React.FormEvent) => {
     e.preventDefault();
     const isAllIn = pricingModel === 'ALL_IN';
+    const id = editingRateId ?? `rate-${Date.now()}`;
     saveFreightRate({
-      id: `rate-${Date.now()}`,
+      id,
       transportVendorId: vendorId,
       quarryId,
       projectId,
@@ -152,6 +166,7 @@ export const LogisticsView: React.FC = () => {
       isActive: true,
     });
     setIsAddingRate(false);
+    setEditingRateId(null);
   };
 
   return (
@@ -213,7 +228,17 @@ export const LogisticsView: React.FC = () => {
               </p>
             </div>
             <button
-              onClick={() => setIsAddingRate(true)}
+              onClick={() => {
+                setEditingRateId(null);
+                setVendorId(transportVendors[0]?.id || '');
+                setQuarryId(quarries[0]?.id || '');
+                setProjectId(projects[0]?.id || '');
+                setPricingModel('PER_M3');
+                setRatePerUnit(65000);
+                setMinCharge(0);
+                setDistanceKm(45);
+                setIsAddingRate(true);
+              }}
               className="px-3.5 py-2 rounded-md bg-[#003C16] hover:bg-[#002B10] text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs"
             >
               <Plus className="w-4 h-4" /> Tambah Tarif Rute Baru
@@ -269,13 +294,24 @@ export const LogisticsView: React.FC = () => {
                           {(fr.minimumChargeIdr ?? 0) > 0 ? formatIDR(fr.minimumChargeIdr!) : '-'}
                         </td>
                         <td className="py-3 px-2 text-center">
-                          <button
-                            onClick={() => deleteFreightRate(fr.id)}
-                            title="Hapus tarif"
-                            className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => openEditRate(fr)}
+                              title="Edit tarif"
+                              className="p-1.5 rounded text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Hapus tarif ${vendor?.name} ${quarry?.name} → ${proj?.name} (${fr.pricingModel})?`)) deleteFreightRate(fr.id);
+                              }}
+                              title="Hapus tarif"
+                              className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
