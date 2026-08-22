@@ -19,6 +19,12 @@ import { useApp } from '../../context/AppContext';
 import { Invoice, InvoiceStatus } from '../../types';
 import { formatDate, formatIDR, formatVolumeM3 } from '../../lib/formatters';
 import { supabase } from '../../lib/supabase';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 async function compressKwitansi(file: File): Promise<{ blob: Blob; ext: string }> {
   try {
@@ -113,135 +119,129 @@ export const InvoicesView: React.FC = () => {
 
   return (
     <div className="space-y-4 pb-12">
-      {/* Top Bar */}
-      <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md w-full">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Cari Faktur, Pelanggan, atau Proyek..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-[#003C16] outline-hidden"
-          />
-        </div>
+      {/* Top Bar — shadcn Card + Input + Button */}
+      <Card className="py-4">
+        <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-3 p-0 px-4">
+          <div className="relative flex-1 max-w-md w-full">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
+            <Input
+              placeholder="Cari Faktur, Pelanggan, atau Proyek..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 h-8 text-xs"
+            />
+          </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <button
-            onClick={() => exportToCsv('invoices')}
-            className="px-3 py-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-2xs"
-          >
-            <Download className="w-4 h-4 text-slate-500" /> Ekspor Invoices
-          </button>
-          <button
-            onClick={() => setIsCreatingInvoice(true)}
-            className="px-3.5 py-2 rounded-md bg-[#003C16] hover:bg-[#002B10] text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
-          >
-            <Plus className="w-4 h-4" /> Terbitkan Faktur Baru
-          </button>
-        </div>
-      </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <Button variant="outline" size="sm" onClick={() => exportToCsv('invoices')}>
+              <Download className="w-4 h-4" /> Ekspor Invoices
+            </Button>
+            <Button size="sm" onClick={() => setIsCreatingInvoice(true)}>
+              <Plus className="w-4 h-4" /> Terbitkan Faktur Baru
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Invoices Table */}
-      <div className="bg-white border border-slate-200 rounded-lg shadow-2xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
-                <th className="py-3 px-3.5">No. Faktur</th>
-                <th className="py-3 px-3">Status</th>
-                <th className="py-3 px-3">Pelanggan & Proyek</th>
-                <th className="py-3 px-3 text-right">Volume Tagih (m³)</th>
-                <th className="py-3 px-3 text-right">Subtotal DPP</th>
-                <th className="py-3 px-3 text-right">PPN 11%</th>
-                <th className="py-3 px-3 text-right">Total Faktur</th>
-                <th className="py-3 px-3 text-right">Sudah Dibayar</th>
-                <th className="py-3 px-3 text-right">Sisa Piutang (AR)</th>
-                <th className="py-3 px-3 text-center">Cetak</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+      {/* Invoices Table — shadcn Table + Badge + Button */}
+      <Card className="overflow-hidden py-0 gap-0">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">No. Faktur</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Status</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Pelanggan & Proyek</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Volume Tagih (m³)</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Subtotal DPP</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">PPN 11%</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Total Faktur</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Sudah Dibayar</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Sisa Piutang (AR)</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-center">Cetak</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filteredInvoices.map((inv) => {
                 const cust = customers.find((c) => c.id === inv.customerId);
                 const proj = projects.find((p) => p.id === inv.projectId);
 
                 return (
-                  <tr key={inv.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3 px-3.5">
-                      <p className="font-bold text-slate-900 font-mono text-[13px]">
+                  <TableRow key={inv.id} className="hover:bg-muted/50 text-xs">
+                    <TableCell>
+                      <p className="font-bold text-foreground font-mono text-[13px]">
                         {inv.invoiceNumber}
                       </p>
-                      <span className="text-[10px] text-slate-500">
+                      <span className="text-[10px] text-muted-foreground">
                         Jatuh Tempo: {formatDate(inv.dueDate)}
                       </span>
-                    </td>
+                    </TableCell>
 
-                    <td className="py-3 px-3">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] font-bold border ${
                           inv.status === 'PAID'
-                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-200'
                             : inv.status === 'PARTIALLY_PAID'
-                            ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                            ? 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-200'
                             : inv.status === 'OVERDUE'
-                            ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                            : 'bg-slate-100 text-slate-700'
+                            ? 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-900/30 dark:text-rose-200'
+                            : 'bg-muted text-muted-foreground'
                         }`}
                       >
                         {inv.status}
-                      </span>
-                    </td>
+                      </Badge>
+                    </TableCell>
 
-                    <td className="py-3 px-3">
-                      <p className="font-semibold text-slate-900">{cust?.name}</p>
-                      <p className="text-[11px] text-slate-500">{proj?.name}</p>
-                    </td>
+                    <TableCell>
+                      <p className="font-semibold text-foreground">{cust?.name}</p>
+                      <p className="text-[11px] text-muted-foreground">{proj?.name}</p>
+                    </TableCell>
 
-                    <td className="py-3 px-3 text-right font-mono font-bold">
+                    <TableCell className="text-right font-mono font-bold">
                       {formatVolumeM3(inv.totalApprovedVolumeM3, false)}
-                    </td>
+                    </TableCell>
 
-                    <td className="py-3 px-3 text-right font-mono text-slate-700">
+                    <TableCell className="text-right font-mono">
                       {formatIDR(inv.subtotalIdr)}
-                    </td>
+                    </TableCell>
 
-                    <td className="py-3 px-3 text-right font-mono text-slate-600">
+                    <TableCell className="text-right font-mono text-muted-foreground">
                       {formatIDR(inv.taxAmountIdr)}
-                    </td>
+                    </TableCell>
 
-                    <td className="py-3 px-3 text-right font-mono font-extrabold text-slate-900">
+                    <TableCell className="text-right font-mono font-extrabold">
                       {formatIDR(inv.totalInvoiceIdr)}
-                    </td>
+                    </TableCell>
 
-                    <td className="py-3 px-3 text-right font-mono font-semibold text-emerald-800">
+                    <TableCell className="text-right font-mono font-semibold text-emerald-700 dark:text-emerald-300">
                       {formatIDR(inv.totalPaidIdr)}
-                    </td>
+                    </TableCell>
 
-                    <td className="py-3 px-3 text-right font-mono font-extrabold text-rose-700">
+                    <TableCell className="text-right font-mono font-extrabold text-destructive">
                       {formatIDR(inv.outstandingBalanceIdr)}
-                    </td>
+                    </TableCell>
 
-                    <td className="py-3 px-3 text-center">
+                    <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => setSelectedInvoiceForPrint(inv)}
-                          className="p-1.5 rounded border border-slate-200 hover:bg-[#003C16] hover:text-white transition-colors"
-                          title="Cetak Faktur"
-                        >
+                        <Button variant="outline" size="icon-xs" onClick={() => setSelectedInvoiceForPrint(inv)} title="Cetak Faktur">
                           <Printer className="w-3.5 h-3.5" />
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon-xs"
                           onClick={() => {
                             const n = prompt('Edit catatan faktur:', inv.notes || '');
                             if (n !== null) updateInvoiceNotes(inv.id, n);
                           }}
-                          className="p-1.5 rounded border border-amber-200 text-amber-700 hover:bg-amber-50"
+                          className="border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300"
                           title="Edit catatan"
                         >
                           <FileText className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
                         <label
-                          className={`p-1.5 rounded border cursor-pointer ${(inv as any).kwitansiPhotoUrl ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-sky-200 text-sky-600 hover:bg-sky-50'}`}
+                          className={`inline-flex items-center justify-center size-6 rounded-md border cursor-pointer hover:opacity-90 ${(inv as any).kwitansiPhotoUrl ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30' : 'border-sky-200 text-sky-600 hover:bg-sky-50 dark:border-sky-800'}`}
                           title={(inv as any).kwitansiPhotoUrl ? 'Lihat/Ganti Foto Kwitansi' : 'Upload Foto Kwitansi Bermaterai'}
                         >
                           {(inv as any).kwitansiPhotoUrl ? <ImageIcon className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />}
@@ -265,24 +265,26 @@ export const InvoicesView: React.FC = () => {
                             }}
                           />
                         </label>
-                        <button
+                        <Button
+                          variant="outline"
+                          size="icon-xs"
                           onClick={() => {
                             if (confirm(`Hapus faktur ${inv.invoiceNumber}?`)) deleteInvoice(inv.id);
                           }}
-                          className="p-1.5 rounded border border-rose-200 text-rose-600 hover:bg-rose-50"
+                          className="border-destructive/30 text-destructive hover:bg-destructive/10"
                           title="Hapus faktur"
                         >
                           <X className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Modal Create Invoice */}
       {isCreatingInvoice && (
