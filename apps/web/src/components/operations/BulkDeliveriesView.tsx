@@ -53,16 +53,37 @@ export const BulkDeliveriesView: React.FC = () => {
 
   const handleSubmit = async () => {
     if (rows.length === 0) { alert('Pilih file dulu'); return; }
-    // validasi minimal di server: cukup mapping manual via AppContext bulkCreate — untuk versi minimal, kirim apa adanya dan biarkan server log error per baris
-    const toCreate = rows.slice(0, 50).map((r: any) => {
-      // cari ID master secara aman (tanpa vendor variable plain)
-      const quarry = (app.quarries||[]).find((q:any)=> (q.name||'').toLowerCase().includes((r.quarryName||'').toLowerCase()));
-      const product = (app.products||[]).find((p:any)=> (p.name||'').toLowerCase().includes((r.produkName||'').toLowerCase()));
-      const vnd = (app.transportVendors||[]).find((v:any)=> (v.name||'').toLowerCase().includes((r.vendorName||'').toLowerCase()));
-      const proj = (app.projects||[]).find((p:any)=> (p.name||'').toLowerCase().includes((r.projectName||'').toLowerCase()));
-      const ctr = quarry && product && proj ? (app.contracts||[]).find((c:any)=> c.quarryId===quarry.id && c.productId===product.id && c.projectId===proj.id) : (app.contracts||[])[0];
-      if (!quarry || !product || !vnd || !proj || !ctr) return null;
-      return {
+    // fallback ID jika master belum load / nama tidak exact
+    const fallback = {
+      quarry: { 'rampin':'quarry-01','rumpin':'quarry-01','sudamanik':'quarry-02','bojonegara':'quarry-03','bojong':'quarry-03' },
+      product: { 'split 1-2':'prod-01','batu split 1-2':'prod-01','base course':'prod-02','abu batu':'prod-03','pasir':'prod-04','makadam':'prod-05' },
+      vendor: { 'ivan':'vendor-05','yudhi':'vendor-06','lintas':'vendor-01','andalas':'vendor-02','samudera':'vendor-03','mitra':'vendor-04' },
+      project: { 'dadap':'proj-07','legok':'proj-05','pluit':'proj-06','sunter':'proj-04','bogor':'proj-08','cisumdawu':'proj-01','ciawi':'proj-02','mrt':'proj-03' },
+    } as any;
+    const findFallback = (map:any, key:string) => {
+      const k = (key||'').toLowerCase();
+      for (const sub in map) if (k.includes(sub)) return map[sub];
+      return null;
+    };
+    const toCreate: any[] = [];
+    const errs: string[] = [];
+    rows.slice(0,50).forEach((r:any, idx:number)=>{
+      let quarry = (app.quarries||[]).find((q:any)=> (q.name||'').toLowerCase().includes((r.quarryName||'').toLowerCase()));
+      let product = (app.products||[]).find((p:any)=> (p.name||'').toLowerCase().includes((r.produkName||'').toLowerCase()));
+      let vnd = (app.transportVendors||[]).find((v:any)=> (v.name||'').toLowerCase().includes((r.vendorName||'').toLowerCase()));
+      let proj = (app.projects||[]).find((p:any)=> (p.name||'').toLowerCase().includes((r.projectName||'').toLowerCase()));
+      // fallback ID jika tidak ketemu
+      if (!quarry) { const fid = findFallback(fallback.quarry, r.quarryName); if (fid) quarry = (app.quarries||[]).find((q:any)=>q.id===fid) || { id: fid } as any; }
+      if (!product) { const fid = findFallback(fallback.product, r.produkName); if (fid) product = (app.products||[]).find((p:any)=>p.id===fid) || { id: fid } as any; }
+      if (!vnd) { const fid = findFallback(fallback.vendor, r.vendorName); if (fid) vnd = (app.transportVendors||[]).find((v:any)=>v.id===fid) || { id: fid } as any; }
+      if (!proj) { const fid = findFallback(fallback.project, r.projectName); if (fid) proj = (app.projects||[]).find((p:any)=>p.id===fid) || { id: fid } as any; }
+      let ctr = null as any;
+      if (proj) ctr = (app.contracts||[]).find((c:any)=> c.projectId===proj.id) || (app.contracts||[])[0];
+      if (!quarry || !product || !vnd || !proj || !ctr) {
+        errs.push(`baris ${r.idx}: quarry=${quarry?'ok':'x'} produk=${product?'ok':'x'} vendor=${vnd?'ok':'x'} project=${proj?'ok':'x'} kontrak=${ctr?'ok':'x'}`);
+        return;
+      }
+      toCreate.push({
         quarryId: quarry.id,
         productId: product.id,
         transportVendorId: vnd.id,
@@ -73,9 +94,9 @@ export const BulkDeliveriesView: React.FC = () => {
         driverName: r.raw?.supir || 'Supir Vendor Armada',
         plateNumber: r.plat,
         notes: r.raw?.sj_imci ? `SJ IMCI ${r.raw.sj_imci}` : '',
-      };
-    }).filter(Boolean);
-    if (toCreate.length===0) { alert('Tidak ada baris yang bisa dipetakan ke master (quarry/produk/vendor/project/kontrak). Cek nama di CSV sesuai master.'); return; }
+      });
+    });
+    if (toCreate.length===0) { alert('Tidak ada baris yang bisa dipetakan ke master.\n'+errs.slice(0,3).join('\n')+'\nCek nama di CSV sesuai: Quarry Rumpin/Sudamanik/Bojonegara, Produk Batu Split 1-2, Vendor IVAN/Yudhi, Project Karya Beton Dadap/Legok/Pluit/Sunter/Bogor.'); return; }
     setIsSubmitting(true);
     try {
       const res: any = await app.bulkCreateDeliveries(toCreate as any);
