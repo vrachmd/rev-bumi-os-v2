@@ -1492,6 +1492,56 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return exists ? prev.map((item) => (item.id === r.id ? r : item)) : [r, ...prev];
     });
     syncMaster({ freightRates: [r] });
+    // Sinkronkan HPP: recalculate cost untuk ritase yang pakai rute ini (vendor+quarry+project)
+    setTimeout(() => {
+      const newRates = [...freightRates.filter((x) => x.id !== r.id), r];
+      const affected = deliveries.filter(
+        (d) => d.transportVendorId === r.transportVendorId && d.quarryId === r.quarryId && contracts.find((c) => c.id === d.contractId)?.projectId === r.projectId
+      );
+      if (affected.length === 0) return;
+      const updates: Delivery[] = [];
+      for (const d of affected) {
+        const contract = contracts.find((c) => c.id === d.contractId);
+        const product = products.find((p) => p.id === d.productId);
+        const vendor = transportVendors.find((v) => v.id === d.transportVendorId);
+        if (!contract || !product || !d.approvedVolumeM3) continue;
+        const rate = resolveFreightRate(newRates, {
+          transportVendorId: d.transportVendorId,
+          projectId: contract.projectId,
+          quarryId: d.quarryId,
+          onDate: d.scheduledDate || new Date().toISOString().slice(0, 10),
+        });
+        if (!rate) continue;
+        const qmc = quarryMaterialCosts.find((q) => q.quarryId === d.quarryId && q.productId === d.productId);
+        const materialCostPerM3 = qmc?.costPerM3 ?? product.defaultMaterialCost;
+        const isAllIn = rate.pricingModel === 'ALL_IN' || rate.isAllInclusiveMaterial === true || vendor?.supplyType === 'MATERIAL_AND_TRANSPORT';
+        const fin = calculateDeliveryFinance({
+          deliveryId: d.id,
+          approvedVolumeM3: d.approvedVolumeM3,
+          loadedVolumeM3: d.loadedVolumeM3,
+          approvedWeightKg: d.approvedWeightKg,
+          sellingPricePerM3: contract.unitPricePerM3,
+          materialCostPerM3,
+          freightPricingModel: isAllIn ? 'ALL_IN' : (vendor?.defaultPricingModel as any) || (rate.pricingModel as any) || 'PER_M3',
+          freightRatePerUnit: rate.ratePerUnit,
+          allInPricePerM3: isAllIn ? rate.ratePerUnit : undefined,
+          allInVolumeBasis: isAllIn ? 'PER_M3_RECEIVED' : undefined,
+          otherOperationalCostPerM3: 5000,
+          tollFee: isAllIn ? 0 : (rate.tollFee as any) || 0,
+          loadingFee: isAllIn ? 0 : (rate.loadingFee as any) || 0,
+          unloadingFee: isAllIn ? 0 : (rate.unloadingFee as any) || 0,
+          isActualFinalized: true,
+        });
+        const updated: Delivery = { ...d, costRecord: fin.costRecord, updatedAt: new Date().toISOString() };
+        updates.push(updated);
+        // sync to Supabase cost_records via delivery upsert (akan upsert cost_records juga)
+        upsertDeliveryToSupabase(updated).catch(() => {});
+      }
+      if (updates.length > 0) {
+        setDeliveries((prev) => prev.map((d) => updates.find((u) => u.id === d.id) || d));
+        console.log(`[sync] HPP recalculated for ${updates.length} ritase (rate ${r.id})`);
+      }
+    }, 300);
   };
 
   const deleteVendor = (vendorId: string) => {

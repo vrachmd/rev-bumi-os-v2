@@ -160,9 +160,14 @@ export const ReportsView: React.FC = () => {
             const quarry = quarries.find((q: any) => q.id === d.quarryId);
             const vehicle = vehicles.find((v: any) => v.id === d.vehicleId);
             const vendor = transportVendors.find((v: any) => v.id === d.transportVendorId);
+            const cust = customers.find((c: any) => c.id === contracts.find((co: any) => co.id === d.contractId)?.customerId);
+            const proj = projects.find((p: any) => p.id === contracts.find((co: any) => co.id === d.contractId)?.projectId);
             return {
               'NO. SURAT JALAN': d.deliveryNumber,
               'TANGGAL': d.scheduledDate,
+              'JENIS MATERIAL': products.find((p: any) => p.id === d.productId)?.name || '',
+              'PELANGGAN': cust?.name || '',
+              'TUJUAN PROYEK': proj?.name || '',
               'VOL LOADING (m³)': d.loadedVolumeM3,
               'VOL (M³)': d.approvedVolumeM3,
               'SUMBER QUARRY': quarry?.name || '',
@@ -507,6 +512,9 @@ export const ReportsView: React.FC = () => {
                 <TableRow className="border-b border-slate-200 bg-slate-50 text-slate-600 font-semibold uppercase text-[11px]">
                   <TableHead className="py-3 px-3.5">No. Surat Jalan</TableHead>
                   <TableHead className="py-3 px-3">Tanggal</TableHead>
+                  <TableHead className="py-3 px-3">Jenis Material</TableHead>
+                  <TableHead className="py-3 px-3">Pelanggan</TableHead>
+                  <TableHead className="py-3 px-3">Tujuan Proyek</TableHead>
                   <TableHead className="py-3 px-3 text-right">Vol Loading (m³)</TableHead>
                   <TableHead className="py-3 px-3 text-right">Vol (m³)</TableHead>
                   <TableHead className="py-3 px-3">Sumber Quarry</TableHead>
@@ -534,6 +542,9 @@ export const ReportsView: React.FC = () => {
                         {d.deliveryNumber}
                       </TableCell>
                       <TableCell className="py-2.5 px-3 font-mono text-[11px]">{formatDate(d.scheduledDate)}</TableCell>
+                      <TableCell className="py-2.5 px-3">{products.find((p: any) => p.id === d.productId)?.name || '-'}</TableCell>
+                      <TableCell className="py-2.5 px-3">{customers.find((c: any) => c.id === contracts.find((co: any) => co.id === d.contractId)?.customerId)?.name || '-'}</TableCell>
+                      <TableCell className="py-2.5 px-3">{projects.find((p: any) => p.id === contracts.find((co: any) => co.id === d.contractId)?.projectId)?.name || '-'}</TableCell>
                       <TableCell className="py-2.5 px-3 text-right font-mono text-slate-600">
                         {formatVolumeM3(d.loadedVolumeM3, false)}
                       </TableCell>
