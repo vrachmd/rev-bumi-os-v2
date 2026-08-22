@@ -17,6 +17,13 @@ import { useApp } from '../../context/AppContext';
 import { evaluateContractFulfillment } from '../../engine/contract.engine';
 import { formatIDR, formatPercent, formatVolumeM3, formatDate } from '../../lib/formatters';
 import { Contract, OverDeliveryPolicy } from '../../types';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export const ContractsView: React.FC = () => {
   const { contracts, customers, projects, products, quarries, deliveries, createContract, updateContract, deleteContract } = useApp();
@@ -38,6 +45,7 @@ export const ContractsView: React.FC = () => {
   const [unitPricePerM3, setUnitPricePerM3] = useState<number>(175000);
   const [tolerancePercent, setTolerancePercent] = useState<number>(2.0);
   const [overDeliveryPolicy, setOverDeliveryPolicy] = useState<OverDeliveryPolicy>('WARNING');
+  const [templateId, setTemplateId] = useState<'IMCI-AGREGAT' | 'STANDARD-PER-RIT' | ''>('');
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState('2026-12-31');
   const [notes, setNotes] = useState('');
@@ -55,6 +63,7 @@ export const ContractsView: React.FC = () => {
     setUnitPricePerM3(175000);
     setTolerancePercent(2.0);
     setOverDeliveryPolicy('WARNING');
+    setTemplateId('');
     setStartDate(new Date().toISOString().slice(0, 10));
     setEndDate('2026-12-31');
     setNotes('');
@@ -82,6 +91,7 @@ export const ContractsView: React.FC = () => {
     setUnitPricePerM3(contract.unitPricePerM3);
     setTolerancePercent(contract.tolerancePercent);
     setOverDeliveryPolicy(contract.overDeliveryPolicy);
+    setTemplateId((contract as any).templateId || '');
     setStartDate(contract.startDate);
     setEndDate(contract.endDate);
     setNotes(contract.notes || '');
@@ -116,6 +126,7 @@ export const ContractsView: React.FC = () => {
       unitPricePerM3: Number(unitPricePerM3),
       tolerancePercent: Number(tolerancePercent),
       overDeliveryPolicy,
+      templateId: templateId || undefined,
       startDate,
       endDate,
       notes,
@@ -131,26 +142,24 @@ export const ContractsView: React.FC = () => {
 
   return (
     <div className="space-y-4 pb-12">
-      {/* Top Bar */}
-      <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md w-full">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Cari Kontrak, Customer, atau Proyek..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-[#003C16] outline-hidden"
-          />
-        </div>
+      {/* Top Bar — shadcn Card + Input + Button */}
+      <Card className="py-4">
+        <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-3 p-0 px-4">
+          <div className="relative flex-1 max-w-md w-full">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
+            <Input
+              placeholder="Cari Kontrak, Customer, atau Proyek..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 h-8 text-xs"
+            />
+          </div>
 
-        <button
-          onClick={openCreateModal}
-          className="w-full sm:w-auto px-3.5 py-2 rounded-md bg-[#003C16] hover:bg-[#002B10] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
-        >
-          <Plus className="w-4 h-4" /> Daftarkan Kontrak Proyek Baru
-        </button>
-      </div>
+          <Button size="sm" onClick={openCreateModal} className="w-full sm:w-auto">
+            <Plus className="w-4 h-4" /> Daftarkan Kontrak Proyek Baru
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Contract Cards Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -163,9 +172,9 @@ export const ContractsView: React.FC = () => {
           const metrics = evaluateContractFulfillment(contract, deliveries);
 
           return (
-            <div
+            <Card
               key={contract.id}
-              className="bg-white border border-slate-200 rounded-lg p-5 shadow-2xs space-y-4 hover:border-slate-300 transition-colors"
+              className="p-5 space-y-4"
             >
               {/* Header */}
               <div className="flex items-start justify-between border-b border-slate-100 pb-3">
@@ -209,20 +218,12 @@ export const ContractsView: React.FC = () => {
                     </span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <button
-                      onClick={() => openEditModal(contract)}
-                      title="Edit kontrak"
-                      className="p-1.5 rounded text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
-                    >
+                    <Button variant="ghost" size="icon-xs" onClick={() => openEditModal(contract)} title="Edit kontrak">
                       <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setConfirmDeleteId(contract.id)}
-                      title="Hapus kontrak"
-                      className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                    >
+                    </Button>
+                    <Button variant="ghost" size="icon-xs" onClick={() => setConfirmDeleteId(contract.id)} title="Hapus kontrak" className="text-muted-foreground hover:text-destructive">
                       <Trash2 className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -312,29 +313,21 @@ export const ContractsView: React.FC = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </Card>
           );
         })}
       </div>
 
-      {/* Modal Contract (Tambah / Edit) */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
-            <div className="px-5 py-3.5 bg-[#003C16] text-white flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileBadge className="w-5 h-5 text-emerald-300" />
-                <h3 className="text-sm font-bold uppercase tracking-wider">
-                  {editingContractId ? 'Edit Kontrak Suplai Material' : 'Daftarkan Kontrak Suplai Material'}
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded text-white/80 hover:text-white"
-              >
-                ✕
-              </button>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
+          <DialogHeader className="px-5 py-3.5 bg-primary text-primary-foreground rounded-t-lg shrink-0">
+            <div className="flex items-center gap-2">
+              <FileBadge className="w-5 h-5 text-emerald-200" />
+              <DialogTitle className="text-sm font-bold uppercase tracking-wider text-primary-foreground">
+                {editingContractId ? 'Edit Kontrak Suplai Material' : 'Daftarkan Kontrak Suplai Material'}
+              </DialogTitle>
             </div>
+          </DialogHeader>
 
             <form onSubmit={handleCreateSubmit} className="p-5 space-y-3.5">
               <div>
@@ -533,81 +526,80 @@ export const ContractsView: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">
-                  Kebijakan Over-Delivery
-                </label>
-                <select
-                  value={overDeliveryPolicy}
-                  onChange={(e) => setOverDeliveryPolicy(e.target.value as OverDeliveryPolicy)}
-                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-md focus:ring-2 focus:ring-[#003C16] outline-hidden font-medium"
-                >
-                  <option value="WARNING">WARNING (Peringatan Visual, Tetap Kirim)</option>
-                  <option value="REQUIRES_APPROVAL">REQUIRES_APPROVAL (Perlu Persetujuan Direksi)</option>
-                  <option value="BLOCKED">BLOCKED (Kunci / Blokir Pengiriman Baru)</option>
-                  <option value="ALLOWED">ALLOWED (Diperbolehkan Tanpa Peringatan)</option>
-                </select>
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Kebijakan Over-Delivery</Label>
+                <Select value={overDeliveryPolicy} onValueChange={(v) => setOverDeliveryPolicy(v as OverDeliveryPolicy)}>
+                  <SelectTrigger className="text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="WARNING" className="text-xs">WARNING (Peringatan Visual, Tetap Kirim)</SelectItem>
+                    <SelectItem value="REQUIRES_APPROVAL" className="text-xs">REQUIRES_APPROVAL (Perlu Persetujuan Direksi)</SelectItem>
+                    <SelectItem value="BLOCKED" className="text-xs">BLOCKED (Kunci / Blokir Pengiriman Baru)</SelectItem>
+                    <SelectItem value="ALLOWED" className="text-xs">ALLOWED (Diperbolehkan Tanpa Peringatan)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-3 py-2 rounded-md text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                >
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Template Faktur</Label>
+                <Select value={templateId || '__auto'} onValueChange={(v) => setTemplateId(v === '__auto' ? '' : (v as any))}>
+                  <SelectTrigger className="text-xs">
+                    <SelectValue placeholder="Auto (IMCI → Agregat)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__auto" className="text-xs">Auto (IMCI → Agregat)</SelectItem>
+                    <SelectItem value="IMCI-AGREGAT" className="text-xs">IMCI Agregat (tgl plat IMCI vol KBS)</SelectItem>
+                    <SelectItem value="STANDARD-PER-RIT" className="text-xs">Standard Per-Rit (No|SJ|Approved)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">Kosong = auto: IMCI → agregat, lainnya → standar (override pelanggan)</p>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t">
+                <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
                   Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-md text-xs font-bold text-white bg-[#003C16] hover:bg-[#002B10] flex items-center gap-1.5 shadow-xs"
-                >
+                </Button>
+                <Button type="submit" size="sm" className="gap-1.5">
                   <CheckCircle2 className="w-4 h-4" /> {editingContractId ? 'Simpan Perubahan' : 'Simpan Kontrak'}
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
-      {/* Modal Konfirmasi Hapus Kontrak */}
-      {confirmDeleteId && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-200">
-            <div className="px-5 py-3.5 bg-rose-700 text-white flex items-center justify-between">
-              <h3 className="text-sm font-bold uppercase tracking-wider">Hapus Kontrak</h3>
-              <button onClick={() => setConfirmDeleteId(null)} className="text-white/80 hover:text-white">✕</button>
-            </div>
-            <div className="p-5 space-y-3">
-              <p className="text-xs text-slate-600">
-                Yakin ingin menghapus kontrak{' '}
-                <strong className="text-slate-900 font-mono">
-                  {contracts.find((c) => c.id === confirmDeleteId)?.contractNumber}
-                </strong>
-                ? Tindakan ini tercatat di audit log dan tidak dapat dibatalkan.
-              </p>
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setConfirmDeleteId(null)}
-                  className="px-3 py-2 rounded-md text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                >
-                  Batal
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    deleteContract(confirmDeleteId);
-                    setConfirmDeleteId(null);
-                  }}
-                  className="px-4 py-2 rounded-md text-xs font-bold text-white bg-rose-700 hover:bg-rose-800 flex items-center gap-1.5 shadow-xs"
-                >
-                  <Trash2 className="w-4 h-4" /> Hapus Kontrak
-                </button>
-              </div>
+      <Dialog open={!!confirmDeleteId} onOpenChange={(open) => !open && setConfirmDeleteId(null)}>
+        <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden">
+          <DialogHeader className="px-5 py-3.5 bg-destructive text-destructive-foreground rounded-t-lg">
+            <DialogTitle className="text-sm font-bold uppercase tracking-wider text-destructive-foreground">Hapus Kontrak</DialogTitle>
+          </DialogHeader>
+          <div className="p-5 space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Yakin ingin menghapus kontrak{' '}
+              <strong className="text-foreground font-mono">
+                {contracts.find((c) => c.id === confirmDeleteId)?.contractNumber}
+              </strong>
+              ? Tindakan ini tercatat di audit log dan tidak dapat dibatalkan.
+            </p>
+            <div className="pt-2 flex items-center justify-end gap-2 border-t">
+              <Button variant="outline" size="sm" onClick={() => setConfirmDeleteId(null)}>
+                Batal
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  deleteContract(confirmDeleteId!);
+                  setConfirmDeleteId(null);
+                }}
+                className="gap-1.5"
+              >
+                <Trash2 className="w-4 h-4" /> Hapus Kontrak
+              </Button>
             </div>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
