@@ -81,6 +81,7 @@ interface AppState {
   recordUnloading: (id: string, input: UnloadingInput) => void;
   submitPod: (id: string, signatureDriver: string) => void;
   advancePod: (id: string) => void;
+  bulkAddRitase: (inputs: NewRitaseInput[]) => { ok: number; batchId: string };
   reset: () => void;
 }
 
@@ -568,6 +569,46 @@ export const useAppStore = create<AppState>((set, get) => ({
       auditLogs: [entry, ...state.auditLogs],
     });
     syncDelivery(get().deliveries.find((d) => d.id === id));
+  },
+
+  bulkAddRitase: (inputs) => {
+    const state = get();
+    const batchId = `bulk-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.random().toString(36).slice(2,6).toUpperCase()}`;
+    const now = new Date().toISOString();
+    const todayStr = now.slice(0,7).replace(/-/g,'');
+    const baseCount = state.deliveries.length;
+    const newDeliveries: DeliveryItem[] = inputs.map((input, i) => {
+      const vehicle = state.vehicles.find((v) => v.id === input.vehicleId);
+      const quarry = state.quarries.find((q) => q.id === input.quarryId);
+      const contract = state.contracts.find((c) => c.id === input.contractId);
+      const count = baseCount + i + 1;
+      const nextNumber = `SJ/RBN/${todayStr}/${String(count).padStart(3,'0')}`;
+      return {
+        id: `D-${Date.now()}-${i}`,
+        deliveryNumber: nextNumber,
+        contractId: input.contractId,
+        productId: input.productId,
+        quarryId: input.quarryId,
+        transportVendorId: input.transportVendorId,
+        vehicleId: input.vehicleId,
+        driverName: input.driverName,
+        driverPhone: input.driverPhone,
+        plateNumber: vehicle?.name ?? '',
+        status: 'SCHEDULED' as const,
+        scheduledAt: now,
+        createdAt: now,
+        loadedVolumeM3: 0,
+        evidenceAt: now,
+        evidenceGps: quarry?.gps,
+        evidencePlace: quarry?.name,
+        gps: contract?.gps,
+      } as DeliveryItem;
+    });
+    const entry = auditEntry(state.profile.name, 'CREATE', batchId, undefined, { batchId, count: newDeliveries.length, inputs }, `Bulk ritase ${batchId} (${newDeliveries.length} rit)`);
+    set({ deliveries: [...newDeliveries, ...state.deliveries], auditLogs: [entry, ...state.auditLogs] });
+    newDeliveries.forEach((d) => syncDelivery(d));
+    persistDeliveries([...newDeliveries, ...state.deliveries]);
+    return { ok: newDeliveries.length, batchId };
   },
 
   reset: () => set({ deliveries: [] }),

@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing } from 'react-native';
+import { Animated, Easing, View, TouchableOpacity, Text } from 'react-native';
 import { QuarryListView, QuarryDetailView } from '../screens/QuarryScreen';
+import { BulkQuarryScreen } from '../screens/BulkQuarryScreen';
 
 export const QuarryStack: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const slide = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -15,6 +17,10 @@ export const QuarryStack: React.FC = () => {
     }).start();
   }, [selectedId, slide]);
 
+  if (bulkOpen) {
+    return <BulkQuarryScreen onBack={() => setBulkOpen(false)} />;
+  }
+
   if (selectedId) {
     return (
       <Animated.View style={{ flex: 1, opacity: slide, transform: [{ translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }] }}>
@@ -23,8 +29,15 @@ export const QuarryStack: React.FC = () => {
     );
   }
   return (
-    <Animated.View style={{ flex: 1, opacity: slide.interpolate({ inputRange: [0, 1], outputRange: [1, 0.98] }) }}>
-      <QuarryListView onSelect={setSelectedId} />
-    </Animated.View>
+    <View style={{ flex: 1 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 8, backgroundColor: '#F8FAFC' }}>
+        <TouchableOpacity onPress={() => setBulkOpen(true)} style={{ backgroundColor: '#003C16', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 }}>
+          <Text style={{ color: 'white', fontWeight: '800', fontSize: 12 }}>+ Bulk 10 Ritase</Text>
+        </TouchableOpacity>
+      </View>
+      <Animated.View style={{ flex: 1, opacity: slide.interpolate({ inputRange: [0, 1], outputRange: [1, 0.98] }) }}>
+        <QuarryListView onSelect={setSelectedId} />
+      </Animated.View>
+    </View>
   );
 };

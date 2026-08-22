@@ -31,6 +31,10 @@ import {
   subscribeDeliveryChanges,
 } from '../lib/supabaseDelivery';
 import {
+  bulkInsertDeliveriesToSupabase,
+  bulkEnsureVehiclesToSupabase,
+} from '../lib/supabaseBulk';
+import {
   deleteInvoiceFromSupabase,
   fetchFinanceFromSupabase,
   subscribeFinanceChanges,
@@ -177,6 +181,7 @@ interface AppContextType {
   updatePayment: (paymentId: string, updates: Partial<Payment>) => { success: boolean; error?: string };
   deletePayment: (paymentId: string) => { success: boolean; error?: string };
   
+  bulkCreateDeliveries: (rows: Partial<Delivery>[], opts?: { bulkBatchId?: string }) => Promise<{ success: boolean; batchId: string; ok: number; failed: { id: string; error: string }[]; error?: string }>;
   // Master Data CRUD
   saveProduct: (product: Product) => void;
   saveQuarry: (quarry: Quarry) => void;
@@ -604,7 +609,81 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { success: true };
   };
 
-  // Update existing delivery
+  const bulkCreateDeliveries: AppContextType['bulkCreateDeliveries'] = async (rows, opts) => {
+    if (!rows || rows.length === 0) return { success: false, batchId: '', ok: 0, failed: [], error: 'Tidak ada data ritase' };
+    const batchId = opts?.bulkBatchId || `bulk-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Date.now().toString(36).slice(-5).toUpperCase()}`;
+    const nowIso = new Date().toISOString();
+    const todayStr = nowIso.slice(0, 7).replace(/-/g, '');
+    const baseCount = deliveries.length;
+    const toInsert: Delivery[] = [];
+    const vehiclesToEnsure: { id: string; transport_vendor_id: string; plate_number: string; vehicle_type: string; nominal_capacity_m3: number }[] = [];
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i] as Partial<Delivery> & Record<string, unknown> | undefined;
+      if (!r) continue;
+      const contract = contracts.find((c) => c.id === (r as Delivery).contractId) || contracts[0];
+      const product = products.find((p) => p.id === ((r as Delivery).productId || contract?.productId)) || products[0];
+      if (!contract || !product) continue;
+      const count = baseCount + i + 1;
+      const deliveryNumber = (r as any).deliveryNumber || `SJ/RBN/${todayStr}/${String(count).padStart(3, '0')}`;
+      const id = (r as any).id || `del-bulk-${Date.now()}-${i}`;
+      const plate = (r as any).plateNumber || (r as Delivery).driverName || '';
+      // vehicle resolve/create
+      let vehicleId = (r as Delivery).vehicleId as string | undefined;
+      if (!vehicleId && plate) {
+        const existing = vehicles.find((v) => v.plateNumber.replace(/\s/g, '').toUpperCase() === plate.replace(/\s/g, '').toUpperCase());
+        if (existing) vehicleId = existing.id;
+        else {
+          vehicleId = `veh-${plate.replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 10)}-${i}`;
+          vehiclesToEnsure.push({ id: vehicleId, transport_vendor_id: (r as Delivery).transportVendorId || contract.quarryId || transportVendors[0]?.id || '', plate_number: plate, vehicle_type: 'Dump Truck', nominal_capacity_m3: (r as Delivery).loadedVolumeM3 || 24 });
+        }
+      }
+      const d: Delivery = {
+        id,
+        deliveryNumber,
+        contractId: contract.id,
+        productId: product.id,
+        quarryId: ((r as Delivery).quarryId as string) || contract.quarryId || quarries[0]?.id || '',
+        transportVendorId: ((r as Delivery).transportVendorId as string) || transportVendors[0]?.id || '',
+        vehicleId: vehicleId || vehicles[0]?.id,
+        driverId: (r as any).driverId || '',
+        driverName: (r as Delivery).driverName || 'Supir Vendor Armada',
+        driverPhone: (r as Delivery).driverPhone || '',
+        status: ((r as Delivery).status as Delivery['status']) || 'SCHEDULED',
+        loadedVolumeM3: (r as Delivery).loadedVolumeM3 || 0,
+        receivedVolumeM3: 0,
+        approvedVolumeM3: 0,
+        loadedWeightKg: (r as Delivery).loadedWeightKg || 0,
+        receivedWeightKg: 0,
+        approvedWeightKg: 0,
+        densityApplied: (r as any).densityApplied || product.density || 1.6,
+        measurementMode: ((r as Delivery).measurementMode as Delivery['measurementMode']) || 'ACTUAL_MEASURED',
+        scheduledDate: ((r as Delivery).scheduledDate as string) || nowIso.slice(0, 10),
+        departureDate: (r as any).departureDate,
+        notes: (r as Delivery).notes || '',
+        quarryLoadingInfo: (r as any).quarryLoadingInfo,
+        siteUnloadingInfo: (r as any).siteUnloadingInfo,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      } as Delivery;
+      // attach bulk_batch_id via any for supabaseBulk
+      (d as any).bulk_batch_id = batchId;
+      toInsert.push(d);
+    }
+    if (toInsert.length === 0) return { success: false, batchId, ok: 0, failed: [], error: 'Gagal mapping kontrak/produk' };
+    // optimistic local
+    setDeliveries((prev) => [...toInsert, ...prev]);
+    toInsert.forEach((d) => logAudit('deliveries', d.id, d.deliveryNumber, 'CREATE', null, { ...d, bulk_batch_id: batchId }, `Bulk ritase ${batchId} (${toInsert.length} rit)`));
+    if (isSupabaseAuthed) {
+      if (vehiclesToEnsure.length > 0) {
+        await bulkEnsureVehiclesToSupabase(vehiclesToEnsure as any);
+        // also push into local vehicles state
+        setVehicles((prev) => [...vehiclesToEnsure.map((v) => ({ id: v.id, transportVendorId: v.transport_vendor_id, plateNumber: v.plate_number, vehicleType: v.vehicle_type, nominalCapacityM3: v.nominal_capacity_m3, isActive: true } as Vehicle)), ...prev]);
+      }
+      const res = await bulkInsertDeliveriesToSupabase(toInsert, batchId);
+      return { success: res.failed.length === 0, batchId, ok: res.ok, failed: res.failed };
+    }
+    return { success: true, batchId, ok: toInsert.length, failed: [] };
+  };
   const updateDelivery = (deliveryId: string, updates: Partial<Delivery>) => {
     const delivery = deliveries.find((d) => d.id === deliveryId);
     if (!delivery) return { success: false, error: 'Pengiriman tidak ditemukan.' };
@@ -1675,6 +1754,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         auditLogs,
         correctionRequests,
         addDelivery,
+        bulkCreateDeliveries,
         updateDelivery,
         deleteDelivery,
         updateDeliveryStatus,
