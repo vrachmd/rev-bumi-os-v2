@@ -18,6 +18,17 @@ import { formatDate, formatDateTime } from '../../lib/formatters';
 import { AuditLog, CorrectionRequest } from '../../types';
 import { fetchAuditLogsFromSupabase } from '../../lib/supabaseAudit';
 import { isSupabaseConfigured } from '../../lib/supabase';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 
 export const AuditAdminView: React.FC = () => {
   const {
@@ -108,52 +119,39 @@ export const AuditAdminView: React.FC = () => {
       }
     );
 
+    toast.success('Pengajuan koreksi diajukan ke Management');
     setIsRequestModalOpen(false);
   };
 
   const handleExecuteReview = (status: 'APPROVED' | 'REJECTED') => {
     if (!reviewingRequest) return;
     reviewCorrectionRequest(reviewingRequest.id, status, reviewNotes);
+    toast.success(status === 'APPROVED' ? 'Koreksi disetujui & diterapkan' : 'Koreksi ditolak');
     setReviewingRequest(null);
     setReviewNotes('');
   };
 
   return (
     <div className="space-y-4 pb-12">
-      {/* Tab Switcher & Action */}
-      <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <button
-            onClick={() => setActiveTab('audit-trail')}
-            className={`px-3.5 py-2 rounded-md text-xs font-bold flex items-center gap-2 transition-colors ${
-              activeTab === 'audit-trail'
-                ? 'bg-[#003C16] text-white shadow-2xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            <History className="w-4 h-4" /> Immutable Audit Trail ({auditLogs.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('corrections')}
-            className={`px-3.5 py-2 rounded-md text-xs font-bold flex items-center gap-2 transition-colors ${
-              activeTab === 'corrections'
-                ? 'bg-[#003C16] text-white shadow-2xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            <ShieldAlert className="w-4 h-4" /> Pengajuan Koreksi Data ({correctionRequests.length})
-          </button>
-        </div>
+      {/* Tab Switcher & Action — shadcn Tabs + Card + Button */}
+      <Card className="py-3">
+        <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-3 p-0 px-4">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full sm:w-auto">
+            <TabsList>
+              <TabsTrigger value="audit-trail" className="text-xs gap-1.5">
+                <History className="w-4 h-4" /> Immutable Audit Trail ({auditLogs.length})
+              </TabsTrigger>
+              <TabsTrigger value="corrections" className="text-xs gap-1.5">
+                <ShieldAlert className="w-4 h-4" /> Pengajuan Koreksi Data ({correctionRequests.length})
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <button
-            onClick={() => setIsRequestModalOpen(true)}
-            className="px-3.5 py-2 rounded-md bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs"
-          >
+          <Button size="sm" onClick={() => setIsRequestModalOpen(true)} className="bg-amber-700 hover:bg-amber-800 w-full sm:w-auto">
             <ShieldAlert className="w-4 h-4" /> Ajukan Koreksi Surat Jalan
-          </button>
-        </div>
-      </div>
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* AUDIT TRAIL LOGS */}
       {activeTab === 'audit-trail' && (
@@ -166,280 +164,215 @@ export const AuditAdminView: React.FC = () => {
             <div className="px-3 py-2 rounded border border-amber-200 bg-amber-50 text-amber-900 text-[11px]">Audit server: {serverError} — menampilkan audit lokal (fallback).</div>
           ) : null}
         <div className="space-y-4">
-          {/* Filter Bar */}
-          <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-            <div className="relative flex-1 max-w-md w-full">
-              <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Cari identitas dokumen, user, atau tindakan..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-[#003C16] outline-hidden"
-              />
-            </div>
+          {/* Filter Bar — shadcn Card + Input + Select */}
+          <Card className="py-3">
+            <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-3 p-0 px-3">
+              <div className="relative flex-1 max-w-md w-full">
+                <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
+                <Input
+                  placeholder="Cari identitas dokumen, user, atau tindakan..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 h-8 text-xs"
+                />
+              </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500 font-medium">Tabel:</span>
-              <select
-                value={selectedTableFilter}
-                onChange={(e) => setSelectedTableFilter(e.target.value)}
-                className="px-2.5 py-1.5 border border-slate-200 rounded-md bg-slate-50 font-semibold text-slate-800"
-              >
-                <option value="ALL">Semua Tabel Database</option>
-                <option value="deliveries">Deliveries (Surat Jalan)</option>
-                <option value="invoices">Invoices (Faktur)</option>
-                <option value="payments">Payments (Pembayaran)</option>
-                <option value="contracts">Contracts (Kontrak)</option>
-              </select>
-            </div>
-          </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground">Tabel:</Label>
+                <Select value={selectedTableFilter} onValueChange={setSelectedTableFilter}>
+                  <SelectTrigger className="h-8 text-xs min-w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL" className="text-xs">Semua Tabel Database</SelectItem>
+                    <SelectItem value="deliveries" className="text-xs">Deliveries (Surat Jalan)</SelectItem>
+                    <SelectItem value="invoices" className="text-xs">Invoices (Faktur)</SelectItem>
+                    <SelectItem value="payments" className="text-xs">Payments (Pembayaran)</SelectItem>
+                    <SelectItem value="contracts" className="text-xs">Contracts (Kontrak)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Audit Logs Table */}
-          <div className="bg-white border border-slate-200 rounded-lg shadow-2xs overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 font-semibold uppercase text-[11px]">
-                    <th className="py-3 px-3.5">Waktu & Timestamp</th>
-                    <th className="py-3 px-3">Tabel Entitas</th>
-                    <th className="py-3 px-3">Identitas Dokumen</th>
-                    <th className="py-3 px-3">Aksi / Event</th>
-                    <th className="py-3 px-3">Pelaku Perubahan</th>
-                    <th className="py-3 px-3">Catatan / Alasan</th>
-                    <th className="py-3 px-3 text-center">Diff</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+          {/* Audit Logs Table — shadcn Card + Table + Badge */}
+          <Card className="overflow-hidden py-0 gap-0">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Waktu & Timestamp</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Tabel Entitas</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Identitas Dokumen</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Aksi / Event</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Pelaku Perubahan</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Catatan / Alasan</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-center">Diff</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {filteredLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-slate-50/80">
-                      <td className="py-2.5 px-3.5 font-mono text-[11px] text-slate-500">
-                        {formatDateTime(log.timestamp)}
-                      </td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-slate-700">
-                        <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
-                          {log.tableName}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
-                        {log.recordIdentifier}
-                      </td>
-                      <td className="py-2.5 px-3">
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                    <TableRow key={log.id} className="hover:bg-muted/50 text-xs">
+                      <TableCell className="font-mono text-[11px] text-muted-foreground">{formatDateTime(log.timestamp)}</TableCell>
+                      <TableCell className="font-mono font-bold">
+                        <Badge variant="outline" className="bg-muted text-muted-foreground">{log.tableName}</Badge>
+                      </TableCell>
+                      <TableCell className="font-mono font-bold">{log.recordIdentifier}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] font-bold border ${
                             log.action === 'CREATE'
-                              ? 'bg-emerald-100 text-emerald-800'
+                              ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-200'
                               : log.action === 'STATUS_CHANGE'
-                              ? 'bg-blue-100 text-blue-800'
+                              ? 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-200'
                               : log.action === 'RECONCILE'
-                              ? 'bg-purple-100 text-purple-800'
+                              ? 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/30 dark:text-purple-200'
                               : log.action === 'CORRECTION'
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-slate-100 text-slate-800'
+                              ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/30 dark:text-amber-200'
+                              : 'bg-muted text-muted-foreground'
                           }`}
                         >
                           {log.action}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-3">
-                        <p className="font-semibold text-slate-900">{log.changedBy}</p>
-                        <span className="text-[10px] text-slate-500 font-mono">({log.userRole})</span>
-                      </td>
-                      <td className="py-2.5 px-3 text-slate-600 max-w-xs truncate">
-                        {log.reason || 'Operasi reguler sistem'}
-                      </td>
-                      <td className="py-2.5 px-3 text-center">
-                        <button
-                          onClick={() => setSelectedLogForDetails(log)}
-                          className="p-1 rounded text-slate-500 hover:text-[#003C16] hover:bg-slate-100"
-                          title="Lihat Detail Diff JSON"
-                        >
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <p className="font-semibold">{log.changedBy}</p>
+                        <span className="text-[10px] text-muted-foreground font-mono">({log.userRole})</span>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground max-w-xs truncate">{log.reason || 'Operasi reguler sistem'}</TableCell>
+                      <TableCell className="text-center">
+                        <Button variant="ghost" size="icon-xs" onClick={() => setSelectedLogForDetails(log)} title="Lihat Detail Diff JSON">
                           <Eye className="w-3.5 h-3.5" />
-                        </button>
-                      </td>
-                    </tr>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
         </>
       )}
 
-      {/* CORRECTION REQUESTS */}
+      {/* CORRECTION REQUESTS — shadcn Card + Table + Badge */}
       {activeTab === 'corrections' && (
-        <div className="bg-white border border-slate-200 rounded-lg shadow-2xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 font-semibold uppercase text-[11px]">
-                  <th className="py-3 px-3.5">No. Pengajuan</th>
-                  <th className="py-3 px-3">Target Dokumen</th>
-                  <th className="py-3 px-3">Pemohon</th>
-                  <th className="py-3 px-3">Waktu Diajukan</th>
-                  <th className="py-3 px-3">Alasan Koreksi</th>
-                  <th className="py-3 px-3">Status Permohonan</th>
-                  <th className="py-3 px-3 text-center">Tindakan QS / Management</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+        <Card className="overflow-hidden py-0 gap-0">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableHead className="text-[11px] uppercase tracking-wider font-semibold">No. Pengajuan</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Target Dokumen</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Pemohon</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Waktu Diajukan</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Alasan Koreksi</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Status Permohonan</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-center">Tindakan QS / Management</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {correctionRequests.map((req) => (
-                  <tr key={req.id} className="hover:bg-slate-50/80">
-                    <td className="py-3 px-3.5 font-mono font-bold text-slate-900">{req.id}</td>
-                    <td className="py-3 px-3">
-                      <span className="font-mono font-bold text-[#003C16] block">
-                        {req.targetNumber}
-                      </span>
-                      <span className="text-[10px] text-slate-500">Tipe: {req.targetType}</span>
-                    </td>
-                    <td className="py-3 px-3 font-semibold text-slate-900">{req.requestedBy}</td>
-                    <td className="py-3 px-3 font-mono text-slate-600">
-                      {formatDateTime(req.requestedAt)}
-                    </td>
-                    <td className="py-3 px-3 text-slate-700 max-w-sm">{req.reason}</td>
-                    <td className="py-3 px-3">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                  <TableRow key={req.id} className="hover:bg-muted/50 text-xs">
+                    <TableCell className="font-mono font-bold">{req.id}</TableCell>
+                    <TableCell>
+                      <span className="font-mono font-bold text-primary block">{req.targetNumber}</span>
+                      <span className="text-[10px] text-muted-foreground">Tipe: {req.targetType}</span>
+                    </TableCell>
+                    <TableCell className="font-semibold">{req.requestedBy}</TableCell>
+                    <TableCell className="font-mono text-muted-foreground">{formatDateTime(req.requestedAt)}</TableCell>
+                    <TableCell className="max-w-sm">{req.reason}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] font-bold border ${
                           req.status === 'APPROVED'
-                            ? 'bg-emerald-100 text-emerald-800'
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-200'
                             : req.status === 'REJECTED'
-                            ? 'bg-rose-100 text-rose-800'
-                            : 'bg-amber-100 text-amber-800'
+                            ? 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-900/30 dark:text-rose-200'
+                            : 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/30 dark:text-amber-200'
                         }`}
                       >
                         {req.status}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 text-center">
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
                       {req.status === 'PENDING' ? (
-                        <button
-                          onClick={() => setReviewingRequest(req)}
-                          className="px-2.5 py-1 rounded bg-[#003C16] hover:bg-[#002B10] text-white text-[11px] font-bold shadow-2xs"
-                        >
+                        <Button size="xs" onClick={() => setReviewingRequest(req)} className="text-[11px] h-6">
                           Review & Setujui
-                        </button>
+                        </Button>
                       ) : (
-                        <span className="text-[10px] text-slate-500">
-                          Diputuskan oleh {req.reviewedBy || 'Management'}
-                        </span>
+                        <span className="text-[10px] text-muted-foreground">Diputuskan oleh {req.reviewedBy || 'Management'}</span>
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
 
-      {/* New Correction Request Modal */}
-      {isRequestModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
-            <div className="px-5 py-3.5 bg-amber-700 text-white flex items-center justify-between">
-              <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4" /> Pengajuan Koreksi Data Resmi
-              </h3>
-              <button
-                onClick={() => setIsRequestModalOpen(false)}
-                className="text-white/80 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
+      <Dialog open={isRequestModalOpen} onOpenChange={setIsRequestModalOpen}>
+        <DialogContent className="max-w-md p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
+          <DialogHeader className="px-5 py-3.5 bg-amber-700 text-white rounded-t-lg shrink-0">
+            <DialogTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 text-white">
+              <ShieldAlert className="w-4 h-4" /> Pengajuan Koreksi Data Resmi
+            </DialogTitle>
+          </DialogHeader>
 
-            <form onSubmit={handleCreateCorrection} className="p-5 space-y-3.5 text-xs">
-              <div className="p-2.5 rounded bg-amber-50 border border-amber-200 text-amber-900 text-[11px] flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-                <p>
-                  Sesuai tata kelola REV Bumi OS, data yang sudah disetujui tidak dapat dihapus
-                  sembarangan melainkan melalui proses pengajuan koreksi resmi dan tercatat pada audit trail.
-                </p>
+            <form onSubmit={handleCreateCorrection} className="p-5 space-y-3.5 text-xs overflow-y-auto flex-1">
+              <div className="p-2.5 rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-100 text-[11px] flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-700 dark:text-amber-300 shrink-0 mt-0.5" />
+                <p>Sesuai tata kelola REV Bumi OS, data yang sudah disetujui tidak dapat dihapus sembarangan melainkan melalui proses pengajuan koreksi resmi dan tercatat pada audit trail.</p>
               </div>
 
-              <div>
-                <label className="font-semibold text-slate-700 block mb-1">
-                  Pilih Surat Jalan / Dokumen Target *
-                </label>
-                <select
-                  value={correctionTargetId}
-                  onChange={(e) => setCorrectionTargetId(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-[#003C16] font-mono font-medium"
-                >
-                  {deliveries.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.deliveryNumber} (Vol Approved: {d.approvedVolumeM3} m³)
-                    </option>
-                  ))}
-                </select>
+              <div className="space-y-1">
+                <Label className="text-xs">Pilih Surat Jalan / Dokumen Target *</Label>
+                <Select value={correctionTargetId} onValueChange={setCorrectionTargetId}>
+                  <SelectTrigger className="text-xs font-mono">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {deliveries.map((d) => (
+                      <SelectItem key={d.id} value={d.id} className="text-xs font-mono">{d.deliveryNumber} (Vol Approved: {d.approvedVolumeM3} m³)</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div>
-                <label className="font-semibold text-slate-700 block mb-1">
-                  Volume Rekonsiliasi yang Diusulkan (m³) *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={proposedNewApprovedVol}
-                  onChange={(e) => setProposedNewApprovedVol(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-[#003C16] font-mono font-bold"
-                />
+              <div className="space-y-1">
+                <Label className="text-xs">Volume Rekonsiliasi yang Diusulkan (m³) *</Label>
+                <Input type="number" step="0.01" required value={proposedNewApprovedVol} onChange={(e) => setProposedNewApprovedVol(Number(e.target.value))} className="font-mono font-bold" />
               </div>
 
-              <div>
-                <label className="font-semibold text-slate-700 block mb-1">
-                  Alasan & Justifikasi Koreksi Resmi *
-                </label>
-                <textarea
-                  rows={3}
-                  required
-                  value={correctionReason}
-                  onChange={(e) => setCorrectionReason(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-[#003C16]"
-                />
+              <div className="space-y-1">
+                <Label className="text-xs">Alasan & Justifikasi Koreksi Resmi *</Label>
+                <Textarea rows={3} required value={correctionReason} onChange={(e) => setCorrectionReason(e.target.value)} />
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsRequestModalOpen(false)}
-                  className="px-3 py-2 rounded-md font-semibold text-slate-600 hover:bg-slate-100"
-                >
+              <div className="pt-2 flex items-center justify-end gap-2 border-t">
+                <Button type="button" variant="outline" size="sm" onClick={() => setIsRequestModalOpen(false)}>
                   Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-md font-bold text-white bg-amber-700 hover:bg-amber-800 flex items-center gap-1.5"
-                >
+                </Button>
+                <Button type="submit" size="sm" className="bg-amber-700 hover:bg-amber-800 gap-1.5">
                   <CheckCircle2 className="w-4 h-4" /> Ajukan ke Management
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
-      {/* Review & Approve Request Modal */}
-      {reviewingRequest && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
-            <div className="px-5 py-3.5 bg-[#003C16] text-white flex items-center justify-between">
-              <h3 className="text-sm font-bold uppercase tracking-wider">
-                Review Pengajuan Koreksi Data
-              </h3>
-              <button
-                onClick={() => setReviewingRequest(null)}
-                className="text-white/80 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
+      <Dialog open={!!reviewingRequest} onOpenChange={(open) => !open && setReviewingRequest(null)}>
+        <DialogContent className="max-w-md p-0 gap-0 overflow-hidden">
+          <DialogHeader className="px-5 py-3.5 bg-primary text-primary-foreground rounded-t-lg shrink-0">
+            <DialogTitle className="text-sm font-bold uppercase tracking-wider text-primary-foreground">Review Pengajuan Koreksi Data</DialogTitle>
+          </DialogHeader>
 
+            {reviewingRequest && (
             <div className="p-5 space-y-3.5 text-xs">
-              <div className="space-y-1.5 bg-slate-50 p-3 rounded-lg border border-slate-200">
+              <div className="space-y-1.5 bg-muted p-3 rounded-lg border">
                 <p>
                   <strong>Target Dokumen:</strong> {reviewingRequest.targetNumber}
                 </p>
@@ -449,86 +382,65 @@ export const AuditAdminView: React.FC = () => {
                 <p>
                   <strong>Alasan:</strong> {reviewingRequest.reason}
                 </p>
-                <p className="font-mono text-emerald-800">
+                <p className="font-mono text-emerald-700 dark:text-emerald-300">
                   <strong>Usulan Perubahan:</strong>{' '}
                   {JSON.stringify(reviewingRequest.proposedChanges)}
                 </p>
               </div>
 
-              <div>
-                <label className="font-semibold text-slate-700 block mb-1">
-                  Catatan Evaluasi Direksi / QS
-                </label>
-                <input
-                  type="text"
+              <div className="space-y-1">
+                <Label className="text-xs">Catatan Evaluasi Direksi / QS</Label>
+                <Input
                   placeholder="e.g. Disetujui berdasarkan hasil cek ulang slip timbangan quarry."
                   value={reviewNotes}
                   onChange={(e) => setReviewNotes(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-[#003C16]"
                 />
               </div>
 
-              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => handleExecuteReview('REJECTED')}
-                  className="px-3.5 py-2 rounded-md font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 flex items-center gap-1"
-                >
+              <div className="pt-3 flex items-center justify-end gap-2 border-t">
+                <Button variant="outline" size="sm" onClick={() => handleExecuteReview('REJECTED')} className="gap-1 text-destructive border-destructive/30 hover:bg-destructive/10">
                   <XCircle className="w-4 h-4" /> Tolak Pengajuan
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleExecuteReview('APPROVED')}
-                  className="px-4 py-2 rounded-md font-bold text-white bg-[#003C16] hover:bg-[#002B10] flex items-center gap-1.5"
-                >
+                </Button>
+                <Button size="sm" onClick={() => handleExecuteReview('APPROVED')} className="gap-1.5">
                   <CheckCircle2 className="w-4 h-4" /> Setujui & Terapkan Perubahan
-                </button>
+                </Button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+            )}
+        </DialogContent>
+      </Dialog>
 
-      {/* JSON Diff Inspector Modal */}
-      {selectedLogForDetails && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 max-h-[85vh] flex flex-col">
-            <div className="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between shrink-0">
-              <h3 className="text-sm font-bold uppercase tracking-wider font-mono">
-                Log Detail Diff: {selectedLogForDetails.recordIdentifier}
-              </h3>
-              <button
-                onClick={() => setSelectedLogForDetails(null)}
-                className="text-white/80 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
+      <Dialog open={!!selectedLogForDetails} onOpenChange={(open) => !open && setSelectedLogForDetails(null)}>
+        <DialogContent className="max-w-2xl p-0 gap-0 max-h-[85vh] flex flex-col">
+          {selectedLogForDetails && (
+            <>
+              <DialogHeader className="px-5 py-3.5 bg-slate-900 text-white rounded-t-lg shrink-0">
+                <DialogTitle className="text-sm font-bold uppercase tracking-wider font-mono text-white">
+                  Log Detail Diff: {selectedLogForDetails.recordIdentifier}
+                </DialogTitle>
+              </DialogHeader>
 
-            <div className="p-5 overflow-y-auto space-y-4 text-xs font-mono">
-              <div>
-                <span className="text-[10px] text-slate-500 uppercase font-sans font-bold">
-                  Nilai Sebelum Perubahan (Old Values):
-                </span>
-                <pre className="mt-1 p-3 bg-rose-50 text-rose-900 rounded border border-rose-200 text-[11px] overflow-x-auto">
-                  {selectedLogForDetails.oldValues
-                    ? JSON.stringify(selectedLogForDetails.oldValues, null, 2)
-                    : '(Initial / Null)'}
-                </pre>
+              <div className="p-5 overflow-y-auto space-y-4 text-xs font-mono">
+                <div>
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold">Nilai Sebelum Perubahan (Old Values):</span>
+                  <pre className="mt-1 p-3 bg-rose-50 dark:bg-rose-950/30 text-rose-900 dark:text-rose-200 rounded border border-rose-200 dark:border-rose-800 text-[11px] overflow-x-auto">
+                    {selectedLogForDetails.oldValues
+                      ? JSON.stringify(selectedLogForDetails.oldValues, null, 2)
+                      : '(Initial / Null)'}
+                  </pre>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold">Nilai Sesudah Perubahan (New Values):</span>
+                  <pre className="mt-1 p-3 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200 rounded border border-emerald-200 dark:border-emerald-800 text-[11px] overflow-x-auto">
+                    {JSON.stringify(selectedLogForDetails.newValues, null, 2)}
+                  </pre>
+                </div>
               </div>
-
-              <div>
-                <span className="text-[10px] text-slate-500 uppercase font-sans font-bold">
-                  Nilai Sesudah Perubahan (New Values):
-                </span>
-                <pre className="mt-1 p-3 bg-emerald-50 text-emerald-900 rounded border border-emerald-200 text-[11px] overflow-x-auto">
-                  {JSON.stringify(selectedLogForDetails.newValues, null, 2)}
-                </pre>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
