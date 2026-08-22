@@ -614,8 +614,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const batchId = opts?.bulkBatchId || `bulk-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Date.now().toString(36).slice(-5).toUpperCase()}`;
     const nowIso = new Date().toISOString();
     const todayStr = nowIso.slice(0, 7).replace(/-/g, '');
-    const baseCount = deliveries.length;
-    // max NNN untuk YYYYMM ini biar sekuensial tanpa tabrakan (tanpa suffix)
+    // lanjut murni dari max NNN bulan ini (jangan pakai deliveries.length yang bisa jauh karena bulk terhapus di DB tapi masih di state)
     const maxN = deliveries.reduce((m: number, d: Delivery) => {
       const parts = d.deliveryNumber.split('/');
       if (parts[0] === 'SJ' && parts[1] === 'RBN' && parts[2] === todayStr) {
@@ -624,7 +623,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return m;
     }, 0);
-    const startCount = Math.max(baseCount, maxN);
+    const startCount = maxN;
     const toInsert: Delivery[] = [];
     const vehiclesToEnsure: { id: string; transport_vendor_id: string; plate_number: string; vehicle_type: string; nominal_capacity_m3: number }[] = [];
     for (let i = 0; i < rows.length; i++) {
