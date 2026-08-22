@@ -573,7 +573,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const todayStr = new Date().toISOString().slice(0, 7).replace(/-/g, '');
-    const count = deliveries.length + 1;
+    // global NNN — lanjut terus walau ganti YYYYMM
+    const maxNGlobal = deliveries.reduce((m: number, d: Delivery) => {
+      const n = parseInt((d.deliveryNumber.split('/')[3] || '').split('-')[0] || '0', 10);
+      return Number.isFinite(n) ? Math.max(m, n) : m;
+    }, 0);
+    const count = maxNGlobal + 1;
     const deliveryNumber = data.deliveryNumber || `SJ/RBN/${todayStr}/${String(count).padStart(3, '0')}`;
 
     const newDelivery: Delivery = {
@@ -614,14 +619,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const batchId = opts?.bulkBatchId || `bulk-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Date.now().toString(36).slice(-5).toUpperCase()}`;
     const nowIso = new Date().toISOString();
     const todayStr = nowIso.slice(0, 7).replace(/-/g, '');
-    // lanjut murni dari max NNN bulan ini (jangan pakai deliveries.length yang bisa jauh karena bulk terhapus di DB tapi masih di state)
+    // global NNN — lanjut terus walau ganti YYYYMM (sesuai data SJ existing yang lanjut)
     const maxN = deliveries.reduce((m: number, d: Delivery) => {
-      const parts = d.deliveryNumber.split('/');
-      if (parts[0] === 'SJ' && parts[1] === 'RBN' && parts[2] === todayStr) {
-        const n = parseInt((parts[3] || '').split('-')[0] || '0', 10);
-        return Number.isFinite(n) ? Math.max(m, n) : m;
-      }
-      return m;
+      const n = parseInt((d.deliveryNumber.split('/')[3] || '').split('-')[0] || '0', 10);
+      return Number.isFinite(n) ? Math.max(m, n) : m;
     }, 0);
     const startCount = maxN;
     const toInsert: Delivery[] = [];

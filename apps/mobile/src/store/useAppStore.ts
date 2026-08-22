@@ -342,7 +342,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     const contract = state.contracts.find((c) => c.id === input.contractId);
     const d = new Date();
     const todayStr = d.toISOString().slice(0, 7).replace(/-/g, '');
-    const count = state.deliveries.length + 1;
+    // global NNN — lanjut terus walau ganti bulan
+    const maxN = state.deliveries.reduce((m: number, x: DeliveryItem) => {
+      const n = parseInt((x.deliveryNumber.split('/')[3] || '').split('-')[0] || '0', 10);
+      return Number.isFinite(n) ? Math.max(m, n) : m;
+    }, 0);
+    const count = maxN + 1;
     const nextNumber = `SJ/RBN/${todayStr}/${String(count).padStart(3, '0')}`;
     const now = d.toISOString();
     const delivery: DeliveryItem = {
@@ -576,12 +581,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     const batchId = `bulk-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.random().toString(36).slice(2,6).toUpperCase()}`;
     const now = new Date().toISOString();
     const todayStr = now.slice(0,7).replace(/-/g,'');
-    const baseCount = state.deliveries.length;
+    const maxN = state.deliveries.reduce((m: number, x: DeliveryItem) => {
+      const n = parseInt((x.deliveryNumber.split('/')[3] || '').split('-')[0] || '0', 10);
+      return Number.isFinite(n) ? Math.max(m, n) : m;
+    }, 0);
     const newDeliveries: DeliveryItem[] = inputs.map((input, i) => {
       const vehicle = state.vehicles.find((v) => v.id === input.vehicleId);
       const quarry = state.quarries.find((q) => q.id === input.quarryId);
       const contract = state.contracts.find((c) => c.id === input.contractId);
-      const count = baseCount + i + 1;
+      const count = maxN + i + 1;
       const nextNumber = `SJ/RBN/${todayStr}/${String(count).padStart(3,'0')}`;
       return {
         id: `D-${Date.now()}-${i}`,
