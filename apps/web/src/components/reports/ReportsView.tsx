@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { formatDate, formatIDR, formatVolumeM3 } from '../../lib/formatters';
+import { calculateDeliveryFinance } from '../../engine/finance.engine';
+import { resolveFreightRate } from '../../lib/freightRate';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,6 +40,8 @@ export const ReportsView: React.FC = () => {
     invoices,
     vehicles,
     transportVendors,
+    freightRates,
+    quarryMaterialCosts,
   } = useApp() as any;
 
   const [selectedReportType, setSelectedReportType] = useState<
@@ -99,20 +103,60 @@ export const ReportsView: React.FC = () => {
   const totalNetWeightTons =
     filteredDeliveries.reduce((sum, d) => sum + (d.approvedWeightKg || 0), 0) / 1000;
 
-  const totalRevenue = filteredDeliveries.reduce(
-    (sum, d) => sum + (d.costRecord?.recognizedRevenueIdr || 0),
-    0
-  );
-  const totalHpp = filteredDeliveries.reduce(
-    (sum, d) => sum + (d.costRecord?.totalHppIdr || 0),
-    0
-  );
+  const totalRevenue = filteredDeliveries.reduce((sum, d) => {
+    const c = getDynamicCost(d);
+    return sum + (c?.recognizedRevenueIdr || 0);
+  }, 0);
+  const totalHpp = filteredDeliveries.reduce((sum, d) => {
+    const c = getDynamicCost(d);
+    return sum + (c?.totalHppIdr || 0);
+  }, 0);
   const totalGrossProfit = totalRevenue - totalHpp;
   const avgGrossMargin = totalRevenue > 0 ? (totalGrossProfit / totalRevenue) * 100 : 0;
 
   const varianceExceededCount = filteredDeliveries.filter(
     (d) => d.reconciliation?.varianceStatus === 'ABOVE_TOLERANCE'
   ).length;
+
+  // Dynamic HPP — sinkron dengan Vendor & Tarif terbaru (bukan hanya costRecord tersimpan)
+  const getDynamicCost = (d: any) => {
+    const contract = contracts.find((c: any) => c.id === d.contractId);
+    const product = products.find((p: any) => p.id === d.productId);
+    const vendor = transportVendors.find((v: any) => v.id === d.transportVendorId);
+    if (!contract || !product || !d.approvedVolumeM3) return d.costRecord;
+    const rate = resolveFreightRate(freightRates as any, {
+      transportVendorId: d.transportVendorId,
+      projectId: contract.projectId,
+      quarryId: d.quarryId,
+      onDate: d.scheduledDate,
+    });
+    if (!rate) return d.costRecord;
+    const qmc = (quarryMaterialCosts as any[]).find((q: any) => q.quarryId === d.quarryId && q.productId === d.productId);
+    const materialCostPerM3 = qmc?.costPerM3 ?? (product as any).defaultMaterialCost;
+    const isAllIn = (rate as any).pricingModel === 'ALL_IN' || (rate as any).isAllInclusiveMaterial || (vendor as any)?.supplyType === 'MATERIAL_AND_TRANSPORT';
+    try {
+      const res = calculateDeliveryFinance({
+        deliveryId: d.id,
+        approvedVolumeM3: d.approvedVolumeM3,
+        loadedVolumeM3: d.loadedVolumeM3,
+        approvedWeightKg: d.approvedWeightKg,
+        sellingPricePerM3: (contract as any).unitPricePerM3,
+        materialCostPerM3,
+        freightPricingModel: isAllIn ? 'ALL_IN' : (((vendor as any)?.defaultPricingModel as any) || (rate as any).pricingModel as any),
+        freightRatePerUnit: (rate as any).ratePerUnit,
+        allInPricePerM3: isAllIn ? (rate as any).ratePerUnit : undefined,
+        allInVolumeBasis: isAllIn ? 'PER_M3_RECEIVED' : undefined,
+        otherOperationalCostPerM3: 5000,
+        tollFee: isAllIn ? 0 : ((rate as any).tollFee as any) || 0,
+        loadingFee: isAllIn ? 0 : ((rate as any).loadingFee as any) || 0,
+        unloadingFee: isAllIn ? 0 : ((rate as any).unloadingFee as any) || 0,
+        isActualFinalized: true,
+      });
+      return res.costRecord;
+    } catch {
+      return d.costRecord;
+    }
+  };
 
   // Export CSV — respects current filters & satuan baku (sesuai [Image 1] kolom HPP)
   const handleExport = () => {
@@ -154,9 +198,9 @@ export const ReportsView: React.FC = () => {
         });
       } else if (selectedReportType === 'finance') {
         rows = filteredDeliveries
-          .filter((d) => d.costRecord)
-          .map((d) => {
-            const cr = d.costRecord!;
+          .map((d) => ({ d, cr: getDynamicCost(d) }))
+          .filter(({ cr }) => !!cr)
+          .map(({ d, cr }) => {
             const quarry = quarries.find((q: any) => q.id === d.quarryId);
             const vehicle = vehicles.find((v: any) => v.id === d.vehicleId);
             const vendor = transportVendors.find((v: any) => v.id === d.transportVendorId);
@@ -168,17 +212,17 @@ export const ReportsView: React.FC = () => {
               'JENIS MATERIAL': products.find((p: any) => p.id === d.productId)?.name || '',
               'PELANGGAN': cust?.name || '',
               'TUJUAN PROYEK': proj?.name || '',
-              'VOL LOADING (m³)': d.loadedVolumeM3,
-              'VOL (M³)': d.approvedVolumeM3,
+              'VOL LOADING (m³)': (d as any).loadedVolumeM3,
+              'VOL (M³)': (d as any).approvedVolumeM3,
               'SUMBER QUARRY': quarry?.name || '',
               'PLAT NOMOR': vehicle?.plateNumber || (d as any).driverName || '',
               'VENDOR ARMADA': vendor?.name || '',
-              'PENDAPATAN JUAL (IDR)': cr.recognizedRevenueIdr,
-              'BIAYA MATERIAL (IDR)': cr.totalMaterialCostIdr,
-              'ONGKOS ANGKUT (IDR)': cr.totalFreightCostIdr,
-              'TOTAL HPP (IDR)': cr.totalHppIdr,
-              'LABA KOTOR (IDR)': cr.grossProfitIdr,
-              'GROSS MARGIN (%)': cr.grossMarginPercent,
+              'PENDAPATAN JUAL (IDR)': (cr as any).recognizedRevenueIdr,
+              'BIAYA MATERIAL (IDR)': (cr as any).totalMaterialCostIdr,
+              'ONGKOS ANGKUT (IDR)': (cr as any).totalFreightCostIdr,
+              'TOTAL HPP (IDR)': (cr as any).totalHppIdr,
+              'LABA KOTOR (IDR)': (cr as any).grossProfitIdr,
+              'GROSS MARGIN (%)': (cr as any).grossMarginPercent,
             };
           });
         filename = `REV_BUMI_HPP_${new Date().toISOString().slice(0, 10)}.csv`;
@@ -530,7 +574,7 @@ export const ReportsView: React.FC = () => {
               </TableHeader>
               <TableBody className="divide-y divide-slate-100 font-medium text-slate-800">
                 {filteredDeliveries.map((d) => {
-                  const cost = d.costRecord;
+                  const cost = getDynamicCost(d);
                   if (!cost) return null;
                   const quarry = quarries.find((q) => q.id === d.quarryId);
                   const vehicle = vehicles.find((v) => v.id === d.vehicleId);
