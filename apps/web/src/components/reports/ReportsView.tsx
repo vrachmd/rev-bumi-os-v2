@@ -35,7 +35,6 @@ export const ReportsView: React.FC = () => {
     quarries,
     products,
     invoices,
-    exportToCsv,
   } = useApp();
 
   const [selectedReportType, setSelectedReportType] = useState<
@@ -91,6 +90,104 @@ export const ReportsView: React.FC = () => {
     (d) => d.reconciliation?.varianceStatus === 'ABOVE_TOLERANCE'
   ).length;
 
+  // Export CSV — respects current filters & satuan baku (sesuai [Image 1] kolom HPP)
+  const handleExport = () => {
+    let rows: any[] = [];
+    let filename = `REV_BUMI_${selectedReportType}_${new Date().toISOString().slice(0, 10)}.csv`;
+    try {
+      if (selectedReportType === 'deliveries') {
+        rows = filteredDeliveries.map((d) => {
+          const contract = contracts.find((c) => c.id === d.contractId);
+          const cust = customers.find((c) => c.id === contract?.customerId);
+          const proj = projects.find((p) => p.id === contract?.projectId);
+          const prod = products.find((p) => p.id === d.productId);
+          const qry = quarries.find((q) => q.id === d.quarryId);
+          return {
+            'NO. SURAT JALAN': d.deliveryNumber,
+            'TANGGAL': d.scheduledDate,
+            'PELANGGAN': cust?.name || '',
+            'PROYEK': proj?.name || '',
+            'MATERIAL AGREGAT': prod?.name || '',
+            'QUARRY ASAL': qry?.name || '',
+            'VOL. LOADING (m³)': d.loadedVolumeM3,
+            'VOL. APPROVED (m³)': d.approvedVolumeM3,
+            'STATUS RITASE': d.status,
+          };
+        });
+      } else if (selectedReportType === 'reconciliation') {
+        rows = filteredDeliveries.map((d) => {
+          const rec = d.reconciliation;
+          return {
+            'NO. SURAT JALAN': d.deliveryNumber,
+            'VOL. MUAT (m³)': d.loadedVolumeM3,
+            'VOL. TERIMA (m³)': d.receivedVolumeM3,
+            'SELISIH FISIK (m³)': rec?.physicalVarianceM3 ?? 0,
+            '% SELISIH': rec?.variancePercentage ?? 0,
+            'STATUS TOLERANSI': rec?.varianceStatus || 'WITHIN_TOLERANCE',
+            'ALASAN / PENYEBAB': rec?.varianceReason || '',
+            'VOL. TAGIH FINAL (m³)': d.approvedVolumeM3,
+          };
+        });
+      } else if (selectedReportType === 'finance') {
+        rows = filteredDeliveries
+          .filter((d) => d.costRecord)
+          .map((d) => {
+            const cr = d.costRecord!;
+            return {
+              'NO. SURAT JALAN': d.deliveryNumber,
+              'VOL (M³)': d.approvedVolumeM3,
+              'PENDAPATAN JUAL (IDR)': cr.recognizedRevenueIdr,
+              'BIAYA MATERIAL (IDR)': cr.totalMaterialCostIdr,
+              'ONGKOS ANGKUT (IDR)': cr.totalFreightCostIdr,
+              'TOTAL HPP (IDR)': cr.totalHppIdr,
+              'LABA KOTOR (IDR)': cr.grossProfitIdr,
+              'GROSS MARGIN (%)': cr.grossMarginPercent,
+            };
+          });
+        filename = `REV_BUMI_HPP_${new Date().toISOString().slice(0, 10)}.csv`;
+      } else if (selectedReportType === 'contracts') {
+        rows = contracts.map((c) => {
+          const cust = customers.find((cu) => cu.id === c.customerId);
+          const proj = projects.find((p) => p.id === c.projectId);
+          const prod = products.find((p) => p.id === c.productId);
+          const rel = deliveries.filter((d) => d.contractId === c.id);
+          const fulfilled = rel.reduce((s, d) => s + (d.approvedVolumeM3 || 0), 0);
+          const isNonPo = c.contractType === 'NON_PO';
+          const remaining = isNonPo ? 0 : Math.max(0, c.contractedVolumeM3 - fulfilled);
+          const burn = isNonPo ? 0 : (fulfilled / c.contractedVolumeM3) * 100;
+          return {
+            'NO. KONTRAK': c.contractNumber,
+            'PELANGGAN': cust?.name || '',
+            'PROYEK': proj?.name || '',
+            'MATERIAL': prod?.name || '',
+            'VOLUME KONTRAK (m³)': isNonPo ? 'Rutin' : c.contractedVolumeM3,
+            'REALISASI APPROVED (m³)': fulfilled,
+            'SISA KUOTA (m³)': isNonPo ? 'Rutin' : remaining,
+            'BURN RATE (%)': isNonPo ? 'Rutin' : burn.toFixed(1),
+            'STATUS KONTRAK': c.status,
+          };
+        });
+      }
+      if (rows.length === 0) {
+        toast.error('Tidak ada data untuk diekspor (filter kosong)');
+        return;
+      }
+      const headers = Object.keys(rows[0]!);
+      const csv =
+        [headers.join(','), ...rows.map((r) => headers.map((h) => `"${String((r as any)[h] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`CSV ${selectedReportType} berhasil diunduh — ${rows.length} baris (satuan baku)`);
+    } catch (e: any) {
+      toast.error(e?.message || 'Gagal ekspor CSV');
+    }
+  };
+
   return (
     <div className="space-y-4 pb-12">
       {/* Top Selector & Export Bar — shadcn Tabs + Button */}
@@ -105,18 +202,7 @@ export const ReportsView: React.FC = () => {
             </TabsList>
           </Tabs>
 
-          <Button
-            size="sm"
-            onClick={() => {
-              try {
-                exportToCsv(selectedReportType);
-                toast.success('CSV berhasil diunduh');
-              } catch (e: any) {
-                toast.error(e?.message || 'Gagal ekspor CSV');
-              }
-            }}
-            className="w-full md:w-auto shrink-0 bg-emerald-700 hover:bg-emerald-800"
-          >
+          <Button size="sm" onClick={handleExport} className="w-full md:w-auto shrink-0 bg-emerald-700 hover:bg-emerald-800">
             <Download className="w-4 h-4" /> Unduh Laporan (CSV Baku)
           </Button>
         </CardContent>

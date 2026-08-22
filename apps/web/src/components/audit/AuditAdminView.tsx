@@ -12,6 +12,7 @@ import {
   UserCheck,
   ArrowRight,
   Eye,
+  Download,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { formatDate, formatDateTime } from '../../lib/formatters';
@@ -104,6 +105,34 @@ export const AuditAdminView: React.FC = () => {
     return matchesSearch && matchesTable;
   });
 
+  const handleExportAudit = () => {
+    if (filteredLogs.length === 0) {
+      toast.error('Tidak ada log audit untuk diekspor');
+      return;
+    }
+    const rows = filteredLogs.map((log) => ({
+      'WAKTU': log.timestamp,
+      'TABEL': log.tableName,
+      'IDENTITAS DOKUMEN': log.recordIdentifier,
+      'AKSI': log.action,
+      'PELAKU': log.changedBy,
+      'ROLE': log.userRole,
+      'ALASAN': log.reason || '',
+      'OLD VALUES': log.oldValues ? JSON.stringify(log.oldValues) : '',
+      'NEW VALUES': log.newValues ? JSON.stringify(log.newValues) : '',
+    }));
+    const headers = Object.keys(rows[0]!);
+    const csv = [headers.join(','), ...rows.map((r) => headers.map((h) => `"${String((r as any)[h] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `REV_BUMI_AUDIT_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Audit trail diekspor — ${rows.length} baris (immutability terjaga)`);
+  };
+
   const handleCreateCorrection = (e: React.FormEvent) => {
     e.preventDefault();
     const targetDelivery = deliveries.find((d) => d.id === correctionTargetId);
@@ -191,6 +220,9 @@ export const AuditAdminView: React.FC = () => {
                     <SelectItem value="contracts" className="text-xs">Contracts (Kontrak)</SelectItem>
                   </SelectContent>
                 </Select>
+                <Button variant="outline" size="sm" onClick={handleExportAudit} className="gap-1.5 shrink-0">
+                  <Download className="w-3.5 h-3.5" /> Unduh Audit CSV
+                </Button>
               </div>
             </CardContent>
           </Card>
