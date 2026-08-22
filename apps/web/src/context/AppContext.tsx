@@ -624,8 +624,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const product = products.find((p) => p.id === ((r as Delivery).productId || contract?.productId)) || products[0];
       if (!contract || !product) continue;
       const count = baseCount + i + 1;
-      const deliveryNumber = (r as any).deliveryNumber || `SJ/RBN/${todayStr}/${String(count).padStart(3, '0')}`;
-      const id = (r as any).id || `del-bulk-${Date.now()}-${i}`;
+      const uniq = `${Date.now().toString(36).slice(-4).toUpperCase()}${i}`;
+      const deliveryNumber = (r as any).deliveryNumber || `SJ/BULK/${todayStr}/${String(count).padStart(3, '0')}-${uniq}`;
+      const id = (r as any).id || `del-bulk-${Date.now()}-${i}-${uniq}`;
       const plate = (r as any).plateNumber || (r as Delivery).driverName || '';
       // vehicle resolve/create
       let vehicleId = (r as Delivery).vehicleId as string | undefined;

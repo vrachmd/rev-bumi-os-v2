@@ -136,7 +136,7 @@ export const BulkDeliveriesView: React.FC = () => {
               </table>
             </div>
             <button onClick={handleSubmit} disabled={isSubmitting} className="px-4 py-2 rounded-md bg-[#003C16] text-white text-xs font-bold flex items-center gap-1.5 disabled:opacity-50">{isSubmitting ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>}{isSubmitting ? 'Import...' : `Import ${rows.length} Ritase`}</button>
-            {result && <span className="ml-3 text-xs font-semibold text-emerald-700">Batch {result.batchId}: {result.ok} sukses {result.failed?.length? `, ${result.failed.length} gagal`:''}</span>}
+            {result && <div className="ml-3 text-xs"><span className={`font-semibold ${result.failed?.length? 'text-amber-700':'text-emerald-700'}`}>Batch {result.batchId}: {result.ok} sukses {result.failed?.length? `, ${result.failed.length} gagal`:''}</span>{result.failed?.length>0 && <details className="mt-1 text-[11px] text-rose-600"><summary className="cursor-pointer">Lihat 3 error pertama</summary><ul className="list-disc pl-4">{result.failed.slice(0,3).map((f:any,j:number)=><li key={j}>{f.id}: {f.error}</li>)}</ul></details>}</div>}
           </div>
         )}
       </div>
