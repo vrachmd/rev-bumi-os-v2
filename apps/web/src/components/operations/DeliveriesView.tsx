@@ -24,7 +24,8 @@ import { resolveFreightRate } from '../../lib/freightRate';
 import { SuratJalanPrintModal } from './SuratJalanPrintModal';
 import { WeighbridgeModal } from './WeighbridgeModal';
 import { PodModal } from './PodModal';
-import { BulkDeliveriesView } from './BulkDeliveriesView';
+import dynamic from 'next/dynamic';
+const BulkDeliveriesView = dynamic(() => import('./BulkDeliveriesView').then(m => m.BulkDeliveriesView), { ssr: false, loading: () => <div className="p-8 text-center text-xs text-slate-500">Memuat bulk...</div> });
 
 interface DeliveriesViewProps {
   onNavigateToReconcile?: () => void;
