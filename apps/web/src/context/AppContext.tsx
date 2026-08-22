@@ -1103,6 +1103,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const finResult = calculateDeliveryFinance({
       deliveryId,
       approvedVolumeM3: approvedVol,
+      loadedVolumeM3: delivery.loadedVolumeM3,
       approvedWeightKg: approvedWeight,
       sellingPricePerM3: contract.unitPricePerM3,
       materialCostPerM3,

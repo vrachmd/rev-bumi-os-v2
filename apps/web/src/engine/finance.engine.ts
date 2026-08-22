@@ -5,6 +5,7 @@ import { calculateFreightCost } from './freight.engine';
 export interface DeliveryFinancialParams {
   deliveryId: string;
   approvedVolumeM3: number;
+  loadedVolumeM3?: number;
   approvedWeightKg?: number;
   sellingPricePerM3: number;
   materialCostPerM3: number;
@@ -39,6 +40,7 @@ export function calculateDeliveryFinance(params: DeliveryFinancialParams): Finan
   const {
     deliveryId,
     approvedVolumeM3 = 0,
+    loadedVolumeM3,
     approvedWeightKg = 0,
     sellingPricePerM3 = 0,
     materialCostPerM3 = 0,
@@ -55,28 +57,34 @@ export function calculateDeliveryFinance(params: DeliveryFinancialParams): Finan
 
   const isAllIn = freightPricingModel === 'ALL_IN';
 
-  // 1. Recognized Revenue = Approved Volume m3 * Contract Selling Price per m3
+  // 1. Recognized Revenue = Approved Volume m3 * Contract Selling Price per m3 (hanya yang ditagih)
   const revenueIdr = roundCurrency(approvedVolumeM3 * sellingPricePerM3);
 
-  // 2. Material Cost: untuk ALL_IN, harga all-in (material + angkut) menjadi dasar HPP.
-  //    Volume dasar tagihan all-in = m3 diterima di site (approvedVolumeM3 = volume terima).
+  // 2. Material & Freight Cost — untuk non ALL_IN, hitung berdasarkan LOADED (volume berangkat quarry),
+  //    karena material dibeli & angkut dibayar untuk muatan awal, selisih loading-approved = susut rugi.
+  //    Untuk ALL_IN, tetap pakai approved (all-in sudah termasuk susut).
+  const volumeForCost = isAllIn ? approvedVolumeM3 : (loadedVolumeM3 ?? approvedVolumeM3);
+  const weightForCost = isAllIn
+    ? approvedWeightKg
+    : Math.round(volumeForCost * 1.6 * 1000); // fallback density 1.6 jika tidak ada approvedWeight
+
   const effectiveMaterialCostPerM3 = isAllIn ? allInPricePerM3 : materialCostPerM3;
-  const materialCostIdr = roundCurrency(approvedVolumeM3 * effectiveMaterialCostPerM3);
+  const materialCostIdr = roundCurrency(volumeForCost * effectiveMaterialCostPerM3);
 
   // 3. Freight Cost from Freight Engine (selalu 0 pada model ALL_IN)
   const freightResult = calculateFreightCost({
     pricingModel: freightPricingModel,
     ratePerUnit: freightRatePerUnit,
-    approvedVolumeM3,
-    approvedWeightKg,
+    approvedVolumeM3: volumeForCost,
+    approvedWeightKg: weightForCost,
     tollFee,
     loadingFee,
     unloadingFee,
   });
   const freightCostIdr = freightResult.totalFreightCostIdr;
 
-  // 4. Other operational cost (e.g. site handling, permit, quality testing)
-  const otherOperationalCostIdr = roundCurrency(approvedVolumeM3 * otherOperationalCostPerM3);
+  // 4. Other operational cost (e.g. site handling, permit, quality testing) — ikut volumeForCost
+  const otherOperationalCostIdr = roundCurrency(volumeForCost * otherOperationalCostPerM3);
 
   // 5. Total HPP = Material Cost + Freight Cost + Other Cost
   const totalHppIdr = roundCurrency(materialCostIdr + freightCostIdr + otherOperationalCostIdr);
