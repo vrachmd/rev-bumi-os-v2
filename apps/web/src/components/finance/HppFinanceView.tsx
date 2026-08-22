@@ -85,36 +85,36 @@ export const HppFinanceView: React.FC = () => {
             <span className="px-2 py-1 rounded bg-emerald-500 text-slate-900 font-bold">Laba Kotor = Pendapatan − HPP</span>
           </div>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-            <span className="text-[10px] text-emerald-300 block font-semibold uppercase tracking-wider">Total Pendapatan</span>
-            <span className="text-base font-bold font-mono mt-1 block">{formatIDR(totalRevenue)}</span>
-            <span className="text-[10px] text-white/60 mt-1 block">{filteredDeliveries.length} ritase • Approved</span>
+        <CardContent className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="p-4 bg-white/[0.06] rounded-xl border border-white/10 backdrop-blur-sm hover:bg-white/[0.08] transition-colors">
+            <span className="text-[10px] text-emerald-300/90 block font-semibold uppercase tracking-widest">Total Pendapatan</span>
+            <span className="text-base font-bold font-mono mt-1.5 block tracking-tight">{formatIDR(totalRevenue)}</span>
+            <span className="text-[11px] text-white/60 mt-1 block">{filteredDeliveries.length} ritase • Approved</span>
           </div>
-          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-            <span className="text-[10px] text-emerald-300 block font-semibold uppercase tracking-wider">Biaya Material</span>
-            <span className="text-base font-bold font-mono mt-1 block">{formatIDR(totalMaterialCost)}</span>
-            <span className="text-[10px] text-white/60 mt-1 block">Quarry × {(totalMaterialCost / (totalRevenue || 1) * 100).toFixed(0)}% dari HPP</span>
+          <div className="p-4 bg-white/[0.06] rounded-xl border border-white/10 backdrop-blur-sm hover:bg-white/[0.08] transition-colors">
+            <span className="text-[10px] text-emerald-300/90 block font-semibold uppercase tracking-widest">Biaya Material</span>
+            <span className="text-base font-bold font-mono mt-1.5 block tracking-tight">{formatIDR(totalMaterialCost)}</span>
+            <span className="text-[11px] text-white/60 mt-1 block">Quarry • {((totalMaterialCost / (totalHpp || 1)) * 100).toFixed(0)}% HPP</span>
           </div>
-          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-            <span className="text-[10px] text-emerald-300 block font-semibold uppercase tracking-wider">Biaya Angkut</span>
-            <span className="text-base font-bold font-mono mt-1 block">{formatIDR(totalFreightCost)}</span>
-            <span className="text-[10px] text-white/60 mt-1 block">Vendor • {((totalFreightCost / (totalHpp || 1)) * 100).toFixed(0)}% HPP</span>
+          <div className="p-4 bg-white/[0.06] rounded-xl border border-white/10 backdrop-blur-sm hover:bg-white/[0.08] transition-colors">
+            <span className="text-[10px] text-emerald-300/90 block font-semibold uppercase tracking-widest">Biaya Angkut</span>
+            <span className="text-base font-bold font-mono mt-1.5 block tracking-tight">{formatIDR(totalFreightCost)}</span>
+            <span className="text-[11px] text-white/60 mt-1 block">Vendor • {((totalFreightCost / (totalHpp || 1)) * 100).toFixed(0)}% HPP</span>
           </div>
-          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-            <span className="text-[10px] text-emerald-300 block font-semibold uppercase tracking-wider">Biaya Operasional</span>
-            <span className="text-base font-bold font-mono mt-1 block">{formatIDR(totalOperationalCost)}</span>
-            <span className="text-[10px] text-white/60 mt-1 block">5rb/m³ • Site handling</span>
+          <div className="p-4 bg-white/[0.06] rounded-xl border border-white/10 backdrop-blur-sm hover:bg-white/[0.08] transition-colors">
+            <span className="text-[10px] text-emerald-300/90 block font-semibold uppercase tracking-widest">Biaya Operasional</span>
+            <span className="text-base font-bold font-mono mt-1.5 block tracking-tight">{formatIDR(totalOperationalCost)}</span>
+            <span className="text-[11px] text-white/60 mt-1 block">5rb/m³ • Site</span>
           </div>
-          <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/30">
-            <span className="text-[10px] text-amber-300 block font-semibold uppercase tracking-wider">Total HPP</span>
-            <span className="text-base font-bold font-mono text-amber-200 mt-1 block">{formatIDR(totalHpp)}</span>
-            <span className="text-[10px] text-amber-200/70 mt-1 block">Material+Angkut+Ops</span>
+          <div className="p-4 bg-amber-500/[0.12] rounded-xl border border-amber-500/20 backdrop-blur-sm">
+            <span className="text-[10px] text-amber-300/90 block font-semibold uppercase tracking-widest">Total HPP</span>
+            <span className="text-base font-bold font-mono text-amber-200 mt-1.5 block tracking-tight">{formatIDR(totalHpp)}</span>
+            <span className="text-[11px] text-amber-200/70 mt-1 block">Material+Angkut+Ops</span>
           </div>
-          <div className="p-3 bg-emerald-500 text-slate-900 rounded-lg border border-emerald-400">
-            <span className="text-[10px] text-slate-900/70 block uppercase font-bold tracking-wider">Laba Kotor ({formatPercent(overallMargin)})</span>
-            <span className="text-base font-extrabold font-mono mt-1 block">{formatIDR(totalGrossProfit)}</span>
-            <span className="text-[10px] text-slate-900/60 mt-1 block">Pendapatan − HPP</span>
+          <div className="p-4 bg-emerald-400 text-slate-900 rounded-xl border border-emerald-300 shadow-lg shadow-emerald-900/20">
+            <span className="text-[10px] text-slate-900/70 block uppercase font-bold tracking-widest">Laba Kotor ({formatPercent(overallMargin)})</span>
+            <span className="text-base font-extrabold font-mono mt-1.5 block tracking-tight">{formatIDR(totalGrossProfit)}</span>
+            <span className="text-[11px] text-slate-900/60 mt-1 block">Pendapatan − HPP</span>
           </div>
         </CardContent>
       </Card>
@@ -159,7 +159,7 @@ export const HppFinanceView: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-muted font-medium">
-              {filteredDeliveries.map((d) => {
+              {filteredDeliveries.map((d, idx) => {
                 const product = products.find((p) => p.id === d.productId);
                 const contract = contracts.find((c: any) => c.id === d.contractId);
                 const customer = customers.find((c: any) => c.id === contract?.customerId);
@@ -171,7 +171,7 @@ export const HppFinanceView: React.FC = () => {
 
                 if (!cost) {
                   return (
-                    <TableRow key={d.id} className="hover:bg-slate-50/70">
+                    <TableRow key={d.id} className={`hover:bg-muted/40 ${idx % 2 === 0 ? 'bg-card' : 'bg-muted/20'}`}>
                       <TableCell className="py-3 px-3.5 font-bold font-mono">{d.deliveryNumber}</TableCell>
                       <TableCell className="py-3 px-3 font-mono text-[11px]">{formatDate(d.scheduledDate)}</TableCell>
                       <TableCell className="py-3 px-3">{product?.name}</TableCell>
@@ -182,7 +182,7 @@ export const HppFinanceView: React.FC = () => {
                       <TableCell className="py-3 px-3">{quarry?.name || '-'}</TableCell>
                       <TableCell className="py-3 px-3 font-mono">{vehicle?.plateNumber || '-'}</TableCell>
                       <TableCell className="py-3 px-3">{vendor?.name || '-'}</TableCell>
-                      <TableCell colSpan={5} className="py-3 px-3 text-center text-slate-400">
+                      <TableCell colSpan={5} className="py-3 px-3 text-center text-muted-foreground">
                         Menunggu finalisasi kalkulasi HPP
                       </TableCell>
                     </TableRow>
@@ -190,7 +190,7 @@ export const HppFinanceView: React.FC = () => {
                 }
 
                 return (
-                  <TableRow key={d.id} className="hover:bg-muted/50">
+                  <TableRow key={d.id} className={`hover:bg-muted/40 transition-colors ${idx % 2 === 0 ? 'bg-card' : 'bg-muted/20'}`}>
                     <TableCell className="py-3 px-3.5 font-bold font-mono">{d.deliveryNumber}</TableCell>
                     <TableCell className="py-3 px-3 font-mono text-[11px]">{formatDate(d.scheduledDate)}</TableCell>
                     <TableCell className="py-3 px-3">{product?.name}</TableCell>
