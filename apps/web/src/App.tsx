@@ -21,6 +21,7 @@ import { MasterDataView } from './components/master/MasterDataView';
 import { ReportsView } from './components/reports/ReportsView';
 import { AuditAdminView } from './components/audit/AuditAdminView';
 import { AuthGate } from './components/auth/AuthGate';
+import { Toaster } from '@/components/ui/sonner';
 
 const MainLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
@@ -76,6 +77,7 @@ export default function App() {
     <AppProvider>
       <AuthGate>
         <MainLayout />
+        <Toaster richColors position="top-right" />
       </AuthGate>
     </AppProvider>
   );

@@ -17,6 +17,13 @@ import {
   FileSpreadsheet,
   X,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 class BulkErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
   state = { hasError: false, error: null as any };
   static getDerivedStateFromError(error: any) { return { hasError: true, error }; }
@@ -228,74 +235,79 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
 
   return (
     <div className="space-y-4 pb-12">
-      {/* Top Filter and Action Bar */}
-      <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-3">
-        <div className="flex flex-1 items-center gap-2.5 w-full md:w-auto">
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Cari No Surat Jalan, Kontrak, atau Material..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-[#003C16] outline-hidden"
-            />
+      {/* Top Filter and Action Bar — shadcn Card + Input/Select/Button */}
+      <Card className="py-4">
+        <CardContent className="flex flex-col md:flex-row items-center justify-between gap-3 p-0 px-4">
+          <div className="flex flex-1 items-center gap-2.5 w-full md:w-auto">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
+              <Input
+                placeholder="Cari No Surat Jalan, Kontrak, atau Material..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 h-8 text-xs"
+              />
+            </div>
+
+            <div className="flex items-center gap-1 text-xs">
+              <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger size="sm" className="h-8 text-xs font-medium min-w-[170px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Semua Status ({deliveries.length})</SelectItem>
+                  <SelectItem value="PLANNED">PLANNED</SelectItem>
+                  <SelectItem value="LOADING">LOADING</SelectItem>
+                  <SelectItem value="IN_TRANSIT">IN_TRANSIT</SelectItem>
+                  <SelectItem value="UNLOADED">UNLOADED</SelectItem>
+                  <SelectItem value="POD_SUBMITTED">POD_SUBMITTED</SelectItem>
+                  <SelectItem value="DELIVERED">DELIVERED</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="flex items-center gap-1 text-xs">
-            <Filter className="w-3.5 h-3.5 text-slate-500" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-2.5 py-1.5 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-[#003C16] outline-hidden bg-white text-slate-700 font-medium"
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowBulk(true)}
+              title="Import CSV/XLSX 10–50 ritase sekaligus"
+              className="flex-1 md:flex-none"
             >
-              <option value="ALL">Semua Status ({deliveries.length})</option>
-              <option value="PLANNED">PLANNED</option>
-              <option value="LOADING">LOADING</option>
-              <option value="IN_TRANSIT">IN_TRANSIT</option>
-              <option value="UNLOADED">UNLOADED</option>
-              <option value="POD_SUBMITTED">POD_SUBMITTED</option>
-              <option value="DELIVERED">DELIVERED</option>
-            </select>
+              <FileSpreadsheet className="w-4 h-4" /> Ritase Massal (Bulk)
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setIsCreatingDelivery(true)}
+              className="flex-1 md:flex-none bg-primary hover:bg-primary/90"
+            >
+              <Plus className="w-4 h-4" /> Terbitkan Pengiriman Baru
+            </Button>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <button
-            onClick={() => setShowBulk(true)}
-            className="flex-1 md:flex-none px-3.5 py-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
-            title="Import CSV/XLSX 10–50 ritase sekaligus"
-          >
-            <FileSpreadsheet className="w-4 h-4" /> Ritase Massal (Bulk)
-          </button>
-          <button
-            onClick={() => setIsCreatingDelivery(true)}
-            className="flex-1 md:flex-none px-3.5 py-2 rounded-md bg-[#003C16] hover:bg-[#002B10] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
-          >
-            <Plus className="w-4 h-4" /> Terbitkan Pengiriman Baru
-          </button>
-        </div>
-      </div>
-
-      {/* Main Table */}
-      <div className="bg-white border border-slate-200 rounded-lg shadow-2xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
-                <th className="py-3 px-3.5">No. Surat Jalan</th>
-                <th className="py-3 px-3">Status</th>
-                <th className="py-3 px-3">Pelanggan / Proyek</th>
-                <th className="py-3 px-3 whitespace-nowrap min-w-[130px]">Plat Nomor</th>
-                <th className="py-3 px-3 text-right">Loaded (m³)</th>
-                <th className="py-3 px-3 text-right">Received (m³)</th>
-                <th className="py-3 px-3 text-right">Approved (m³)</th>
-                <th className="py-3 px-3 text-right">Timbangan Net</th>
-                <th className="py-3 px-3">Vendor Armada</th>
-                <th className="py-3 px-3 text-center">AKSI & Dokumen</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+      {/* Main Table — shadcn Table + Card + Badge */}
+      <Card className="overflow-hidden py-0 gap-0">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">No. Surat Jalan</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Status</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Pelanggan / Proyek</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold whitespace-nowrap min-w-[130px]">Plat Nomor</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Loaded (m³)</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Received (m³)</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Approved (m³)</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Timbangan Net</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Vendor Armada</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-center">AKSI & Dokumen</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filteredDeliveries.map((d) => {
                 const product = products.find((p) => p.id === d.productId);
                 const contract = contracts.find((c) => c.id === d.contractId);
@@ -308,183 +320,162 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
                 const rec = d.reconciliation;
 
                 return (
-                  <tr key={d.id} className="hover:bg-slate-50/70 transition-colors">
+                  <TableRow key={d.id} className="hover:bg-muted/50 text-xs">
                     {/* Delivery Number & Date */}
-                    <td className="py-3 px-3.5">
+                    <TableCell>
                       <button
                         onClick={() => setSelectedDetailDelivery(d)}
-                        className="text-left hover:text-[#003C16] transition-colors group"
+                        className="text-left hover:text-primary transition-colors group"
                         title="Lihat detail surat jalan"
                       >
-                        <p className="font-bold text-slate-900 font-mono text-[13px] group-hover:text-[#003C16] group-hover:underline">
+                        <p className="font-bold text-foreground font-mono text-[13px] group-hover:text-primary group-hover:underline">
                           {d.deliveryNumber}
                         </p>
-                        <span className="text-[10px] text-slate-500">
+                        <span className="text-[10px] text-muted-foreground">
                           {formatDate(d.scheduledDate)}
                         </span>
                       </button>
-                    </td>
+                    </TableCell>
 
-                    {/* Status Badge */}
-                    <td className="py-3 px-3">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                    {/* Status Badge — shadcn Badge */}
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] font-bold border ${
                           d.status === 'DELIVERED'
-                            ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                            ? 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-100'
                             : d.status === 'POD_SUBMITTED'
-                            ? 'bg-blue-100 text-blue-900 border border-blue-300'
+                            ? 'bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-900/30 dark:text-blue-100'
                             : d.status === 'IN_TRANSIT'
-                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                            ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/30 dark:text-amber-100'
                             : d.status === 'LOADING'
-                            ? 'bg-purple-100 text-purple-900 border border-purple-300'
-                            : 'bg-slate-100 text-slate-700'
+                            ? 'bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-900/30 dark:text-purple-100'
+                            : 'bg-muted text-muted-foreground'
                         }`}
                       >
                         {d.status}
-                      </span>
-                    </td>
+                      </Badge>
+                    </TableCell>
 
                     {/* Customer & Project */}
-                    <td className="py-3 px-3">
-                      <p className="font-semibold text-slate-900 truncate max-w-[170px]">
+                    <TableCell>
+                      <p className="font-semibold text-foreground truncate max-w-[170px]">
                         {customer?.name}
                       </p>
-                      <p className="text-[11px] text-slate-500 truncate max-w-[170px]">
+                      <p className="text-[11px] text-muted-foreground truncate max-w-[170px]">
                         {project?.name}
                       </p>
-                    </td>
+                    </TableCell>
 
                     {/* Plat Nomor */}
-                    <td className="py-3 px-3 font-mono font-semibold text-slate-900 whitespace-nowrap">
+                    <TableCell className="font-mono font-semibold whitespace-nowrap">
                       {vehicle?.plateNumber || d.driverName || '-'}
-                    </td>
+                    </TableCell>
 
                     {/* Loaded Volume */}
-                    <td className="py-3 px-3 text-right font-mono font-semibold">
+                    <TableCell className="text-right font-mono font-semibold">
                       {formatVolumeM3(d.loadedVolumeM3, false)}
-                    </td>
+                    </TableCell>
 
                     {/* Received Volume */}
-                    <td className="py-3 px-3 text-right font-mono text-slate-700">
+                    <TableCell className="text-right font-mono">
                       {d.receivedVolumeM3 > 0
                         ? formatVolumeM3(d.receivedVolumeM3, false)
                         : '-'}
-                    </td>
+                    </TableCell>
 
                     {/* Approved Volume */}
-                    <td className="py-3 px-3 text-right font-mono font-bold text-[#003C16]">
+                    <TableCell className="text-right font-mono font-bold text-primary">
                       {d.approvedVolumeM3 > 0
                         ? formatVolumeM3(d.approvedVolumeM3, false)
                         : '-'}
-                    </td>
+                    </TableCell>
 
                     {/* Weighbridge Net */}
-                    <td className="py-3 px-3 text-right font-mono text-slate-600">
+                    <TableCell className="text-right font-mono text-muted-foreground">
                       {wb ? formatWeightKg(wb.netWeightKg) : '-'}
-                    </td>
+                    </TableCell>
 
                     {/* Vendor Armada */}
-                    <td className="py-3 px-3">
-                      <p className="font-medium text-slate-900 truncate max-w-[140px]">{vendor?.name || '-'}</p>
-                      <p className="text-[10px] text-slate-500">{vehicle ? `${vehicle.nominalCapacityM3} m³` : ''}</p>
-                    </td>
+                    <TableCell>
+                      <p className="font-medium truncate max-w-[140px]">{vendor?.name || '-'}</p>
+                      <p className="text-[10px] text-muted-foreground">{vehicle ? `${vehicle.nominalCapacityM3} m³` : ''}</p>
+                    </TableCell>
 
-                    {/* Action buttons */}
-                    <td className="py-3 px-3 text-center">
+                    {/* Action buttons — shadcn Button icon */}
+                    <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
-                        {/* Detail */}
-                        <button
+                        <Button
+                          variant="outline"
+                          size="icon-xs"
                           onClick={() => setSelectedDetailDelivery(d)}
                           title="Lihat detail Surat Jalan"
-                          className="p-1.5 rounded text-slate-700 hover:text-white hover:bg-slate-800 transition-colors border border-slate-200"
                         >
                           <Eye className="w-3.5 h-3.5" />
-                        </button>
-                        {/* Print Surat Jalan Button */}
-                        <button
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon-xs"
                           onClick={() => setSelectedDeliveryForPrint(d)}
                           title="Cetak Surat Jalan Resmi"
-                          className="p-1.5 rounded text-slate-700 hover:text-white hover:bg-[#003C16] transition-colors border border-slate-200"
+                          className="hover:bg-primary hover:text-primary-foreground"
                         >
                           <Printer className="w-3.5 h-3.5" />
-                        </button>
-
-                        {/* Weighbridge button */}
-                        <button
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon-xs"
                           onClick={() => setSelectedDeliveryForWb(d)}
                           title="Catat Timbangan Quarry"
-                          className={`p-1.5 rounded border transition-colors ${
-                            wb
-                              ? 'text-emerald-700 border-emerald-300 bg-emerald-50'
-                              : 'text-slate-600 border-slate-200 hover:bg-slate-100'
-                          }`}
+                          className={wb ? 'text-emerald-700 border-emerald-300 bg-emerald-50 dark:bg-emerald-900/20' : ''}
                         >
                           <Scale className="w-3.5 h-3.5" />
-                        </button>
-
-                        {/* POD button */}
-                        <button
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon-xs"
                           onClick={() => setSelectedDeliveryForPod(d)}
                           title="Isi / Periksa POD Lapangan"
-                          className={`p-1.5 rounded border transition-colors ${
-                            d.pod
-                              ? 'text-blue-700 border-blue-300 bg-blue-50'
-                              : 'text-slate-600 border-slate-200 hover:bg-slate-100'
-                          }`}
+                          className={d.pod ? 'text-blue-700 border-blue-300 bg-blue-50 dark:bg-blue-900/20' : ''}
                         >
                           <FileCheck2 className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
 
                         {/* Status Progression Shortcut */}
                         {d.status === 'PLANNED' && (
-                          <button
-                            onClick={() => updateDeliveryStatus(d.id, 'LOADING')}
-                            className="px-2 py-1 rounded bg-[#003C16] text-white text-[10px] font-bold"
-                          >
+                          <Button size="xs" onClick={() => updateDeliveryStatus(d.id, 'LOADING')} className="text-[10px] h-6">
                             Mulai Loading
-                          </button>
+                          </Button>
                         )}
                         {d.status === 'LOADING' && (
-                          <button
-                            onClick={() => updateDeliveryStatus(d.id, 'IN_TRANSIT')}
-                            className="px-2 py-1 rounded bg-amber-600 text-white text-[10px] font-bold"
-                          >
+                          <Button size="xs" onClick={() => updateDeliveryStatus(d.id, 'IN_TRANSIT')} className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] h-6">
                             Kirim Truk
-                          </button>
+                          </Button>
                         )}
                         {d.status === 'IN_TRANSIT' && (
-                          <button
-                            onClick={() => updateDeliveryStatus(d.id, 'ARRIVED')}
-                            className="px-2 py-1 rounded bg-blue-600 text-white text-[10px] font-bold"
-                          >
+                          <Button size="xs" onClick={() => updateDeliveryStatus(d.id, 'ARRIVED')} className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] h-6">
                             Tiba di Site
-                          </button>
+                          </Button>
                         )}
                         {d.status === 'ARRIVED' && (
-                          <button
-                            onClick={() => updateDeliveryStatus(d.id, 'UNLOADED')}
-                            className="px-2 py-1 rounded bg-purple-600 text-white text-[10px] font-bold"
-                          >
+                          <Button size="xs" onClick={() => updateDeliveryStatus(d.id, 'UNLOADED')} className="bg-purple-600 hover:bg-purple-700 text-white text-[10px] h-6">
                             Unload
-                          </button>
+                          </Button>
                         )}
                         {d.status === 'POD_SUBMITTED' && !d.pod?.verifiedAt && (
-                          <button
-                            onClick={() => verifyPod(d.id)}
-                            className="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold"
-                          >
+                          <Button size="xs" onClick={() => verifyPod(d.id)} className="bg-emerald-600 hover:bg-emerald-500 text-[10px] h-6">
                             Verifikasi POD
-                          </button>
+                          </Button>
                         )}
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Modal: New Delivery Dispatch Order */}
       {isCreatingDelivery && (
@@ -915,17 +906,16 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
           </div>
         </div>
         )}
-      {showBulk && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm overflow-auto p-4">
-          <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-50 rounded-t-xl">
-              <h3 className="font-bold text-sm">Ritase Massal (Bulk) — Import CSV/XLSX</h3>
-              <button onClick={() => setShowBulk(false)} className="p-1.5 rounded hover:bg-slate-100"><X className="w-5 h-5" /></button>
-            </div>
+      <Dialog open={showBulk} onOpenChange={setShowBulk}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-auto p-0 gap-0 sm:max-w-6xl">
+          <DialogHeader className="px-4 py-3 border-b bg-muted/50 rounded-t-lg shrink-0">
+            <DialogTitle className="text-sm font-bold">Ritase Massal (Bulk) — Import CSV/XLSX</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto">
             <BulkErrorBoundary><BulkDeliveriesView /></BulkErrorBoundary>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
       </div>
     );
   };
