@@ -615,6 +615,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const nowIso = new Date().toISOString();
     const todayStr = nowIso.slice(0, 7).replace(/-/g, '');
     const baseCount = deliveries.length;
+    // max NNN untuk YYYYMM ini biar sekuensial tanpa tabrakan (tanpa suffix)
+    const maxN = deliveries.reduce((m: number, d: Delivery) => {
+      const parts = d.deliveryNumber.split('/');
+      if (parts[0] === 'SJ' && parts[1] === 'RBN' && parts[2] === todayStr) {
+        const n = parseInt((parts[3] || '').split('-')[0] || '0', 10);
+        return Number.isFinite(n) ? Math.max(m, n) : m;
+      }
+      return m;
+    }, 0);
+    const startCount = Math.max(baseCount, maxN);
     const toInsert: Delivery[] = [];
     const vehiclesToEnsure: { id: string; transport_vendor_id: string; plate_number: string; vehicle_type: string; nominal_capacity_m3: number }[] = [];
     for (let i = 0; i < rows.length; i++) {
@@ -623,10 +633,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const contract = contracts.find((c) => c.id === (r as Delivery).contractId) || contracts[0];
       const product = products.find((p) => p.id === ((r as Delivery).productId || contract?.productId)) || products[0];
       if (!contract || !product) continue;
-      const count = baseCount + i + 1;
-      const uniq = `${Date.now().toString(36).slice(-4).toUpperCase()}${i}`;
-      const deliveryNumber = (r as any).deliveryNumber || `SJ/RBN/${todayStr}/${String(count).padStart(3, '0')}-${uniq}`;
-      const id = (r as any).id || `del-bulk-${Date.now()}-${i}-${uniq}`;
+      const count = startCount + i + 1;
+      // SJ konsisten: SJ/RBN/YYYYMM/NNN murni sekuensial tanpa suffix, lanjut dari max NNN bulan ini
+      const deliveryNumber = (r as any).deliveryNumber || `SJ/RBN/${todayStr}/${String(count).padStart(3, '0')}`;
+      const id = (r as any).id || `del-bulk-${Date.now()}-${i}`;
       const plate = (r as any).plateNumber || (r as Delivery).driverName || '';
       // vehicle resolve/create
       let vehicleId = (r as Delivery).vehicleId as string | undefined;
