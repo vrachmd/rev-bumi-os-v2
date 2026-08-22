@@ -5,9 +5,9 @@ import { Upload, Download, CheckCircle2, FileSpreadsheet, X, Loader2, Truck } fr
 
 const TEMPLATE_HEADERS = ['tanggal_muat','quarry','produk','plat_nomor','supir','vendor_armada','project_tujuan','metode','gross_kg','tare_kg','panjang_m','lebar_m','tinggi_m','sj_imci'];
 const TEMPLATE_CSV = TEMPLATE_HEADERS.join(',') + '\n' + [
-  '2026-08-22,Rumpin,Batu Split 1-2,B 9510 UYV,Ujang,Yudhi,KBS Bogor,PER_TRIP,25400,14200,,,101162',
-  '2026-08-22,Rumpin,Batu Split 1-2,B 9420 FYU,Sutejo,Yudhi,KBS Bogor,PER_TRIP,,,,6.2,2.3,1.7,',
-  '2026-08-22,Bojonegara,Abu Batu,B 9001 NDC,IVAN,IVAN,Karya Beton Dadap,ALL_IN,23000,13000,,,',
+  '2026-08-22,Rumpin,Batu Split 1-2,B 9553 UIU,Ujang,Yudhi,KBS Bogor,PER_TRIP,25400,14200,,,,101162',
+  '2026-08-22,Rumpin,Batu Split 1-2,B 9420 FYU,Sutejo,Yudhi,KBS Bogor,PER_TRIP,,,6.2,2.3,1.7,',
+  '2026-08-22,Bojonegara,Abu Batu,B 9001 NDC,IVAN,IVAN,Karya Beton Dadap,ALL_IN,23000,13000,,,,',
 ].join('\n');
 
 export const BulkDeliveriesView: React.FC = () => {
@@ -83,14 +83,28 @@ export const BulkDeliveriesView: React.FC = () => {
         errs.push(`baris ${r.idx}: quarry=${quarry?'ok':'x'} produk=${product?'ok':'x'} vendor=${vnd?'ok':'x'} project=${proj?'ok':'x'} kontrak=${ctr?'ok':'x'}`);
         return;
       }
+      // hitung vol dari CSV: gross/tare atau PxLxT, fallback 0 biar kelihatan error
+      const gross = Number(r.raw?.gross_kg || 0);
+      const tare = Number(r.raw?.tare_kg || 0);
+      const pLen = Number(r.raw?.panjang_m || 0);
+      const lWid = Number(r.raw?.lebar_m || 0);
+      const tHei = Number(r.raw?.tinggi_m || 0);
+      const density = (product as any)?.density || (quarry as any)?.density || 1.6;
+      let vol = 0; let w = 0; let meas: any = 'ACTUAL_MEASURED'; let qInfo: any = null;
+      if (gross > 0 && tare > 0 && gross > tare) { vol = Math.max(0, (gross - tare) / 1000 / density); w = gross - tare; meas = 'CALCULATED_FROM_WEIGHT'; qInfo = { measurementMethod: 'WEIGHBRIDGE', grossWeightKg: gross, tareWeightKg: tare, netWeightKg: w, densityUsed: density }; }
+      else if (pLen > 0 && lWid > 0 && tHei > 0) { vol = pLen * lWid * tHei; w = Math.round(vol * density * 1000); meas = 'ACTUAL_MEASURED'; qInfo = { measurementMethod: 'TRUCK_BED_VOLUME', truckBedDimensions: { lengthM: pLen, widthM: lWid, heightM: tHei, calculatedM3: vol } }; }
+      else { vol = 0; w = 0; }
+      if (vol <= 0) { errs.push(`baris ${r.idx}: vol 0 — isi gross/tare atau panjang*lebar*tinggi`); return; }
       toCreate.push({
         quarryId: quarry.id,
         productId: product.id,
         transportVendorId: vnd.id,
         contractId: ctr.id,
         scheduledDate: r.tanggal || new Date().toISOString().slice(0,10),
-        loadedVolumeM3: 15,
-        loadedWeightKg: 24000,
+        loadedVolumeM3: Number(vol.toFixed(3)),
+        loadedWeightKg: w,
+        measurementMode: meas,
+        quarryLoadingInfo: qInfo,
         driverName: r.raw?.supir || 'Supir Vendor Armada',
         plateNumber: r.plat,
         notes: r.raw?.sj_imci ? `SJ IMCI ${r.raw.sj_imci}` : '',
