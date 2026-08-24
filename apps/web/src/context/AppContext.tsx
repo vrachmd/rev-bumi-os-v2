@@ -1094,11 +1094,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const densityApplied = delivery.densityApplied || 1.6;
     const approvedWeight = roundVolume(approvedVol * densityApplied * 1000);
 
-    // Compute Financials
-    const isAllInVendor =
-      rate.pricingModel === 'ALL_IN' ||
-      rate.isAllInclusiveMaterial === true ||
-      vendor?.supplyType === 'MATERIAL_AND_TRANSPORT';
+    // Compute Financials — exception 29-06 Sunter Ivan per-trip: hanya ALL_IN jika rate === ALL_IN
+    const isAllInVendor = rate.pricingModel === 'ALL_IN';
 
     const finResult = calculateDeliveryFinance({
       deliveryId,
@@ -1543,7 +1540,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!rate) continue;
         const qmc = quarryMaterialCosts.find((q) => q.quarryId === d.quarryId && q.productId === d.productId);
         const materialCostPerM3 = qmc?.costPerM3 ?? product.defaultMaterialCost;
-        const isAllIn = rate.pricingModel === 'ALL_IN' || rate.isAllInclusiveMaterial === true || vendor?.supplyType === 'MATERIAL_AND_TRANSPORT';
+        const isAllIn = rate.pricingModel === 'ALL_IN';
         const fin = calculateDeliveryFinance({
           deliveryId: d.id,
           approvedVolumeM3: d.approvedVolumeM3,

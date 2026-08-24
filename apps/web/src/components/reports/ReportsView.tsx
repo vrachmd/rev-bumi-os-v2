@@ -141,7 +141,7 @@ export const ReportsView: React.FC = () => {
     if (!rate) return d.costRecord;
     const qmc = resolveQuarryCost(quarryMaterialCosts as any, d.quarryId, d.productId, d.scheduledDate);
     const materialCostPerM3 = qmc?.costPerM3 ?? (product as any).defaultMaterialCost;
-    const isAllIn = (rate as any).pricingModel === 'ALL_IN' || (rate as any).isAllInclusiveMaterial || (vendor as any)?.supplyType === 'MATERIAL_AND_TRANSPORT';
+    const isAllIn = (rate as any).pricingModel === 'ALL_IN';
     try {
       const res = calculateDeliveryFinance({
         deliveryId: d.id,
