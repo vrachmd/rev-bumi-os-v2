@@ -8,11 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 
-const TEMPLATE_HEADERS = ['tanggal_muat','plat_nomor','sj_imci','panjang_m','lebar_m','tinggi_m','m3_otomatis','project_tujuan','produk','quarry','metode','gross_kg','tare_kg','supir','vendor_armada','status'];
+const TEMPLATE_HEADERS = ['tanggal_muat','plat_nomor','sj_imci','panjang_cm','lebar_cm','tinggi_cm','m3_otomatis','project_tujuan','produk','quarry','metode','gross_kg','tare_kg','supir','vendor_armada','status'];
 const TEMPLATE_CSV = TEMPLATE_HEADERS.join(',') + '\n' + [
-  '2026-08-22,B 9553 UIU,101162,6.2,2.3,1.7,24.24,KBS Bogor,Batu Split 1-2,Rumpin,PER_TRIP,25400,14200,Ujang,Yudhi,DELIVERED',
-  '2026-08-22,B 9420 FYU,,6.2,2.3,1.7,24.24,KBS Bogor,Batu Split 1-2,Rumpin,PER_TRIP,,,Sutejo,Yudhi,SCHEDULED',
-  '2026-08-22,B 9001 NDC,,6.2,2.3,1.6,22.94,Karya Beton Dadap,Abu Batu,Bojonegara,ALL_IN,23000,13000,IVAN,IVAN,DELIVERED',
+  '2026-08-22,B 9553 UIU,101162,620,230,170,24.24,KBS Bogor,Batu Split 1-2,Rumpin,PER_TRIP,25400,14200,Ujang,Yudhi,DELIVERED',
+  '2026-08-22,B 9420 FYU,,620,230,170,24.24,KBS Bogor,Batu Split 1-2,Rumpin,PER_TRIP,,,Sutejo,Yudhi,SCHEDULED',
+  '2026-08-22,B 9001 NDC,,620,230,160,22.94,Karya Beton Dadap,Abu Batu,Bojonegara,ALL_IN,23000,13000,IVAN,IVAN,DELIVERED',
 ].join('\n');
 
 export const BulkDeliveriesView: React.FC = () => {
@@ -88,17 +88,20 @@ export const BulkDeliveriesView: React.FC = () => {
         errs.push(`baris ${r.idx}: quarry=${quarry?'ok':'x'} produk=${product?'ok':'x'} vendor=${vnd?'ok':'x'} project=${proj?'ok':'x'} kontrak=${ctr?'ok':'x'}`);
         return;
       }
-      // hitung vol otomatis dari P×L×T (prioritas), fallback gross/tare, m3_otomatis hanya display/validasi
+      // hitung vol otomatis dari P×L×T cm → m (P/100 × L/100 × T/100), 2 desimal
       const gross = Number(r.raw?.gross_kg || 0);
       const tare = Number(r.raw?.tare_kg || 0);
-      const pLen = Number(r.raw?.panjang_m || 0);
-      const lWid = Number(r.raw?.lebar_m || 0);
-      const tHei = Number(r.raw?.tinggi_m || 0);
+      const pRaw = Number(r.raw?.panjang_cm ?? r.raw?.panjang_m ?? 0);
+      const lRaw = Number(r.raw?.lebar_cm ?? r.raw?.lebar_m ?? 0);
+      const tRaw = Number(r.raw?.tinggi_cm ?? r.raw?.tinggi_m ?? 0);
+      // deteksi satuan: >10 dianggap cm (620), <=10 dianggap m (6.2) — backward compat
+      const toM = (v:number) => v > 10 ? v/100 : v;
+      const pLen = toM(pRaw); const lWid = toM(lRaw); const tHei = toM(tRaw);
       const density = (product as any)?.density || (quarry as any)?.density || 1.6;
       let vol = 0; let w = 0; let meas: any = 'ACTUAL_MEASURED'; let qInfo: any = null;
-      if (pLen > 0 && lWid > 0 && tHei > 0) { vol = pLen * lWid * tHei; w = Math.round(vol * density * 1000); meas = 'ACTUAL_MEASURED'; qInfo = { measurementMethod: 'TRUCK_BED_VOLUME', truckBedDimensions: { lengthM: pLen, widthM: lWid, heightM: tHei, calculatedM3: vol } }; }
-      else if (gross > 0 && tare > 0 && gross > tare) { vol = Math.max(0, (gross - tare) / 1000 / density); w = gross - tare; meas = 'CALCULATED_FROM_WEIGHT'; qInfo = { measurementMethod: 'WEIGHBRIDGE', grossWeightKg: gross, tareWeightKg: tare, netWeightKg: w, densityUsed: density }; }
-      else { const m3auto = Number(r.raw?.m3_otomatis || 0); if (m3auto > 0) { vol = m3auto; w = Math.round(vol * density * 1000); meas = 'ACTUAL_MEASURED'; qInfo = { measurementMethod: 'TRUCK_BED_VOLUME', truckBedDimensions: null }; } else { vol = 0; w = 0; } }
+      if (pLen > 0 && lWid > 0 && tHei > 0) { vol = Number((pLen * lWid * tHei).toFixed(2)); w = Math.round(vol * density * 1000); meas = 'ACTUAL_MEASURED'; qInfo = { measurementMethod: 'TRUCK_BED_VOLUME', truckBedDimensions: { lengthM: pLen, widthM: lWid, heightM: tHei, calculatedM3: vol } }; }
+      else if (gross > 0 && tare > 0 && gross > tare) { vol = Number((Math.max(0, (gross - tare) / 1000 / density)).toFixed(2)); w = gross - tare; meas = 'CALCULATED_FROM_WEIGHT'; qInfo = { measurementMethod: 'WEIGHBRIDGE', grossWeightKg: gross, tareWeightKg: tare, netWeightKg: w, densityUsed: density }; }
+      else { const m3auto = Number(r.raw?.m3_otomatis || 0); if (m3auto > 0) { vol = Number(m3auto.toFixed(2)); w = Math.round(vol * density * 1000); meas = 'ACTUAL_MEASURED'; qInfo = { measurementMethod: 'TRUCK_BED_VOLUME', truckBedDimensions: null }; } else { vol = 0; w = 0; } }
       if (vol <= 0) { errs.push(`baris ${r.idx}: vol 0 — isi gross/tare atau panjang*lebar*tinggi`); return; }
       toCreate.push({
         quarryId: quarry.id,
