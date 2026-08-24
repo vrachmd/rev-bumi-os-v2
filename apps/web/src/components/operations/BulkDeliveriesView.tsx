@@ -171,13 +171,14 @@ export const BulkDeliveriesView: React.FC = () => {
                       <TableHead className="text-[11px]">#</TableHead>
                       <TableHead className="text-[11px]">TGL</TableHead>
                       <TableHead className="text-[11px]">PLAT</TableHead>
+                      <TableHead className="text-[11px]">Note/SJ IMCI</TableHead>
                       <TableHead className="text-[11px]">Quarry→Project</TableHead>
                       <TableHead className="text-[11px]">Produk</TableHead>
                       <TableHead className="text-[11px]">Vendor</TableHead>
                       <TableHead className="text-[11px]">Status</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>{rows.slice(0,20).map((r:any,i:number)=>(<TableRow key={i}><TableCell>{r.idx}</TableCell><TableCell>{r.tanggal||'-'}</TableCell><TableCell className="font-mono font-bold">{r.plat||'-'}</TableCell><TableCell>{r.quarryName} → {r.projectName}</TableCell><TableCell>{r.produkName}</TableCell><TableCell>{r.vendorName}</TableCell><TableCell><Badge variant="outline" className={r.statusRaw==='DELIVERED'?'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30':'bg-muted text-muted-foreground'}>{r.statusRaw}</Badge></TableCell></TableRow>))}</TableBody>
+                  <TableBody>{rows.slice(0,20).map((r:any,i:number)=>(<TableRow key={i}><TableCell>{r.idx}</TableCell><TableCell>{r.tanggal||'-'}</TableCell><TableCell className="font-mono font-bold">{r.plat||'-'}</TableCell><TableCell className="font-mono text-[11px]">{r.raw?.sj_imci || '-'}</TableCell><TableCell>{r.quarryName} → {r.projectName}</TableCell><TableCell>{r.produkName}</TableCell><TableCell>{r.vendorName}</TableCell><TableCell><Badge variant="outline" className={r.statusRaw==='DELIVERED'?'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30':'bg-muted text-muted-foreground'}>{r.statusRaw}</Badge></TableCell></TableRow>))}</TableBody>
                 </Table>
               </div>
               <div className="flex items-center gap-3">
