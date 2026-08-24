@@ -185,12 +185,14 @@ export const HppFinanceView: React.FC = () => {
           const vendor = transportVendors.find((v: any) => v.id === d.transportVendorId);
           const cust = customers.find((c: any) => c.id === contracts.find((co: any) => co.id === d.contractId)?.customerId);
           const proj = projects.find((p: any) => p.id === contracts.find((co: any) => co.id === d.contractId)?.projectId);
+          const sjImci = (d as any).quarry_loading_info?.notes?.replace('SJ IMCI ', '') || (d as any).quarry_loading_info?.sjImci || '';
           return {
             'NO. SURAT JALAN': d.deliveryNumber,
             'TANGGAL': formatDateDMY(d.scheduledDate),
             'JENIS MATERIAL': products.find((p: any) => p.id === d.productId)?.name || '',
             'PELANGGAN': cust?.name || '',
             'TUJUAN PROYEK': projectAlias(proj),
+            'NOTE/SJ IMCI': sjImci,
             'VOL LOADING (m³)': (d as any).loadedVolumeM3,
             'VOL (M³)': (d as any).approvedVolumeM3,
             'SUMBER QUARRY': quarry?.name || '',
@@ -371,6 +373,7 @@ export const HppFinanceView: React.FC = () => {
                 <TableHead className="py-3 px-2">Mat.</TableHead>
                 <TableHead className="py-3 px-2">Cust.</TableHead>
                 <TableHead className="py-3 px-2">Proyek</TableHead>
+                <TableHead className="py-3 px-2">Note</TableHead>
                 <TableHead className="py-3 px-2 text-right">Vol Load</TableHead>
                 <TableHead className="py-3 px-2 text-right">Vol App</TableHead>
                 <TableHead className="py-3 px-2">Quarry</TableHead>
@@ -416,6 +419,13 @@ export const HppFinanceView: React.FC = () => {
                       <span className="font-medium text-[11px] px-1.5 py-0.5 rounded bg-sky-50 border border-sky-200 text-sky-800">
                         {projectAlias(proj)}
                       </span>
+                    </TableCell>
+                    <TableCell className="py-2.5 px-2.5 font-mono text-[10px] text-slate-500" title={(d as any).quarry_loading_info?.notes || ''}>
+                      {(() => {
+                        const n = (d as any).quarry_loading_info?.notes || '';
+                        const m = n.match(/SJ IMCI\s*(\S+)/);
+                        return m ? m[1] : n ? n.slice(0, 20) : '-';
+                      })()}
                     </TableCell>
                     <TableCell className="py-2.5 px-2.5 text-right font-mono text-slate-600 text-[11px]">
                       {formatVolumeM3(d.loadedVolumeM3, false)}
