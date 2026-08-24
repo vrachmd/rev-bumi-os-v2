@@ -1097,7 +1097,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Compute Financials — exception 29-06 Sunter Ivan per-trip: hanya ALL_IN jika rate === ALL_IN
     const isAllInVendor = rate.pricingModel === 'ALL_IN';
 
-    const finResult = calculateDeliveryFinance({
+    const OTHER_COST_PER_RIT: Record<string, number> = { 'proj-04': 100000, 'proj-06': 100000, 'proj-05': 150000, 'proj-07': 150000, 'proj-08': 150000 };
+    const otherPerRit = OTHER_COST_PER_RIT[contract.projectId] ?? 100000;
+    let finResult = calculateDeliveryFinance({
       deliveryId,
       approvedVolumeM3: approvedVol,
       loadedVolumeM3: delivery.loadedVolumeM3,
@@ -1108,12 +1110,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       freightRatePerUnit: rate.ratePerUnit,
       allInPricePerM3: isAllInVendor ? rate.ratePerUnit : undefined,
       allInVolumeBasis: isAllInVendor ? 'PER_M3_RECEIVED' : undefined,
-      otherOperationalCostPerM3: 5000,
+      otherOperationalCostPerM3: 0,
       tollFee: isAllInVendor ? 0 : rate.tollFee || 0,
       loadingFee: isAllInVendor ? 0 : rate.loadingFee || 0,
       unloadingFee: isAllInVendor ? 0 : rate.unloadingFee || 0,
       isActualFinalized: true,
     });
+    // override otherOperational dengan per-rit per plant (bukan 5k/m3)
+    finResult.costRecord.otherOperationalCostIdr = otherPerRit;
+    finResult.costRecord.totalHppIdr = finResult.costRecord.totalMaterialCostIdr + finResult.costRecord.totalFreightCostIdr + otherPerRit;
+    finResult.costRecord.grossProfitIdr = finResult.costRecord.recognizedRevenueIdr - finResult.costRecord.totalHppIdr;
+    finResult.costRecord.grossMarginPercent = finResult.costRecord.recognizedRevenueIdr > 0 ? Number(((finResult.costRecord.grossProfitIdr / finResult.costRecord.recognizedRevenueIdr) * 100).toFixed(2)) : 0;
+    finResult.otherOperationalCostIdr = otherPerRit;
+    finResult.totalHppIdr = finResult.costRecord.totalHppIdr;
+    finResult.grossProfitIdr = finResult.costRecord.grossProfitIdr;
+    finResult.grossMarginPercent = finResult.costRecord.grossMarginPercent;
 
     const reconciliation = {
       id: `rec-${Date.now()}`,
@@ -1541,7 +1552,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const qmc = quarryMaterialCosts.find((q) => q.quarryId === d.quarryId && q.productId === d.productId);
         const materialCostPerM3 = qmc?.costPerM3 ?? product.defaultMaterialCost;
         const isAllIn = rate.pricingModel === 'ALL_IN';
-        const fin = calculateDeliveryFinance({
+        const OTHER_PER_RIT2: Record<string, number> = { 'proj-04': 100000, 'proj-06': 100000, 'proj-05': 150000, 'proj-07': 150000, 'proj-08': 150000 };
+        const otherPerRit2 = OTHER_PER_RIT2[contract.projectId] ?? 100000;
+        let fin = calculateDeliveryFinance({
           deliveryId: d.id,
           approvedVolumeM3: d.approvedVolumeM3,
           loadedVolumeM3: d.loadedVolumeM3,
@@ -1552,12 +1565,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           freightRatePerUnit: rate.ratePerUnit,
           allInPricePerM3: isAllIn ? rate.ratePerUnit : undefined,
           allInVolumeBasis: isAllIn ? 'PER_M3_RECEIVED' : undefined,
-          otherOperationalCostPerM3: 5000,
+          otherOperationalCostPerM3: 0,
           tollFee: isAllIn ? 0 : (rate.tollFee as any) || 0,
           loadingFee: isAllIn ? 0 : (rate.loadingFee as any) || 0,
           unloadingFee: isAllIn ? 0 : (rate.unloadingFee as any) || 0,
           isActualFinalized: true,
         });
+        fin.costRecord.otherOperationalCostIdr = otherPerRit2;
+        fin.costRecord.totalHppIdr = fin.costRecord.totalMaterialCostIdr + fin.costRecord.totalFreightCostIdr + otherPerRit2;
+        fin.costRecord.grossProfitIdr = fin.costRecord.recognizedRevenueIdr - fin.costRecord.totalHppIdr;
+        fin.costRecord.grossMarginPercent = fin.costRecord.recognizedRevenueIdr > 0 ? Number(((fin.costRecord.grossProfitIdr / fin.costRecord.recognizedRevenueIdr) * 100).toFixed(2)) : 0;
         const updated: Delivery = { ...d, costRecord: fin.costRecord, updatedAt: new Date().toISOString() };
         updates.push(updated);
         // sync to Supabase cost_records via delivery upsert (akan upsert cost_records juga)

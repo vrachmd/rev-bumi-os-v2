@@ -142,8 +142,10 @@ export const ReportsView: React.FC = () => {
     const qmc = resolveQuarryCost(quarryMaterialCosts as any, d.quarryId, d.productId, d.scheduledDate);
     const materialCostPerM3 = qmc?.costPerM3 ?? (product as any).defaultMaterialCost;
     const isAllIn = (rate as any).pricingModel === 'ALL_IN';
+    const OTHER_PER_RIT_R: Record<string, number> = { 'proj-04': 100000, 'proj-06': 100000, 'proj-05': 150000, 'proj-07': 150000, 'proj-08': 150000 };
+    const otherPerRitR = OTHER_PER_RIT_R[(contract as any).projectId] ?? 100000;
     try {
-      const res = calculateDeliveryFinance({
+      let res = calculateDeliveryFinance({
         deliveryId: d.id,
         approvedVolumeM3: d.approvedVolumeM3,
         loadedVolumeM3: d.loadedVolumeM3,
@@ -154,12 +156,16 @@ export const ReportsView: React.FC = () => {
         freightRatePerUnit: (rate as any).ratePerUnit,
         allInPricePerM3: isAllIn ? (rate as any).ratePerUnit : undefined,
         allInVolumeBasis: isAllIn ? 'PER_M3_RECEIVED' : undefined,
-        otherOperationalCostPerM3: 5000,
+        otherOperationalCostPerM3: 0,
         tollFee: isAllIn ? 0 : ((rate as any).tollFee as any) || 0,
         loadingFee: isAllIn ? 0 : ((rate as any).loadingFee as any) || 0,
         unloadingFee: isAllIn ? 0 : ((rate as any).unloadingFee as any) || 0,
         isActualFinalized: true,
       });
+      res.costRecord.otherOperationalCostIdr = otherPerRitR;
+      res.costRecord.totalHppIdr = res.costRecord.totalMaterialCostIdr + res.costRecord.totalFreightCostIdr + otherPerRitR;
+      res.costRecord.grossProfitIdr = res.costRecord.recognizedRevenueIdr - res.costRecord.totalHppIdr;
+      res.costRecord.grossMarginPercent = res.costRecord.recognizedRevenueIdr > 0 ? Number(((res.costRecord.grossProfitIdr / res.costRecord.recognizedRevenueIdr) * 100).toFixed(2)) : 0;
       return res.costRecord;
     } catch {
       return d.costRecord;
