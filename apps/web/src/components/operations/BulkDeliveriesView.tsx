@@ -8,11 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 
-const TEMPLATE_HEADERS = ['tanggal_muat','plat_nomor','sj_imci','panjang_cm','lebar_cm','tinggi_cm','m3_otomatis','project_tujuan','produk','quarry','metode','gross_kg','tare_kg','supir','vendor_armada','status'];
+const TEMPLATE_HEADERS = ['tanggal_muat','plat_nomor','sj_imci','panjang_cm','lebar_cm','tinggi_cm','project_tujuan','produk','quarry','metode','gross_kg','tare_kg','supir','vendor_armada','status'];
 const TEMPLATE_CSV = TEMPLATE_HEADERS.join(',') + '\n' + [
-  '2026-08-22,B 9553 UIU,101162,620,230,170,24.24,KBS Bogor,Batu Split 1-2,Rumpin,PER_TRIP,25400,14200,Ujang,Yudhi,DELIVERED',
-  '2026-08-22,B 9420 FYU,,620,230,170,24.24,KBS Bogor,Batu Split 1-2,Rumpin,PER_TRIP,,,Sutejo,Yudhi,SCHEDULED',
-  '2026-08-22,B 9001 NDC,,620,230,160,22.94,Karya Beton Dadap,Abu Batu,Bojonegara,ALL_IN,23000,13000,IVAN,IVAN,DELIVERED',
+  '2026-08-22,B 9553 UIU,101162,620,230,170,KBS Bogor,Batu Split 1-2,Rumpin,PER_TRIP,25400,14200,Ujang,Yudhi,DELIVERED',
+  '2026-08-22,B 9420 FYU,,620,230,170,KBS Bogor,Batu Split 1-2,Rumpin,PER_TRIP,,,Sutejo,Yudhi,SCHEDULED',
+  '2026-08-22,B 9001 NDC,,620,230,160,Karya Beton Dadap,Abu Batu,Bojonegara,ALL_IN,23000,13000,IVAN,IVAN,DELIVERED',
 ].join('\n');
 
 export const BulkDeliveriesView: React.FC = () => {
