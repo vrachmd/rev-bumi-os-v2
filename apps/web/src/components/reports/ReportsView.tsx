@@ -178,16 +178,8 @@ export const ReportsView: React.FC = () => {
   const totalNetWeightTons =
     filteredDeliveries.reduce((sum, d) => sum + (d.approvedWeightKg || 0), 0) / 1000;
 
-  const totalRevenue = filteredDeliveries.reduce((sum, d) => {
-    if (!d.approvedVolumeM3 || d.approvedVolumeM3 <= 0) return sum;
-    const c = getDynamicCost(d);
-    return sum + (c?.recognizedRevenueIdr || 0);
-  }, 0);
-  const totalHpp = filteredDeliveries.reduce((sum, d) => {
-    if (!d.approvedVolumeM3 || d.approvedVolumeM3 <= 0) return sum;
-    const c = getDynamicCost(d);
-    return sum + (c?.totalHppIdr || 0);
-  }, 0);
+  const totalRevenue = filteredDeliveries.reduce((sum, d) => sum + ((d as any).costRecord?.recognizedRevenueIdr || 0), 0);
+  const totalHpp = filteredDeliveries.reduce((sum, d) => sum + ((d as any).costRecord?.totalHppIdr || 0), 0);
   const totalGrossProfit = totalRevenue - totalHpp;
   const avgGrossMargin = totalRevenue > 0 ? (totalGrossProfit / totalRevenue) * 100 : 0;
 
@@ -235,8 +227,8 @@ export const ReportsView: React.FC = () => {
         });
       } else if (selectedReportType === 'finance') {
         rows = filteredDeliveries
-          .filter((d) => d.approvedVolumeM3 > 0)
-          .map((d) => ({ d, cr: getDynamicCost(d) }))
+          .filter((d) => (d as any).costRecord && d.approvedVolumeM3 > 0)
+          .map((d) => ({ d, cr: (d as any).costRecord }))
           .filter(({ cr }) => !!cr)
           .map(({ d, cr }) => {
             const quarry = quarries.find((q: any) => q.id === d.quarryId);
@@ -613,7 +605,7 @@ export const ReportsView: React.FC = () => {
               <TableBody className="divide-y divide-slate-100 font-medium text-slate-800">
                 {filteredDeliveries.map((d) => {
                   if (!d.approvedVolumeM3 || d.approvedVolumeM3 <= 0) return null;
-                  const cost = getDynamicCost(d);
+                  const cost = (d as any).costRecord;
                   if (!cost) return null;
                   const quarry = quarries.find((q) => q.id === d.quarryId);
                   const vehicle = vehicles.find((v) => v.id === d.vehicleId);
