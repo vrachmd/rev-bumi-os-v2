@@ -558,22 +558,22 @@ export const ReportsView: React.FC = () => {
             <Table className="w-full text-left text-xs border-collapse">
               <TableHeader>
                 <TableRow className="border-b border-slate-200 bg-slate-50 text-slate-600 font-semibold uppercase text-[11px]">
-                  <TableHead className="py-3 px-3.5">No. Surat Jalan</TableHead>
-                  <TableHead className="py-3 px-3">Tanggal</TableHead>
-                  <TableHead className="py-3 px-3">Jenis Material</TableHead>
-                  <TableHead className="py-3 px-3">Pelanggan</TableHead>
-                  <TableHead className="py-3 px-3">Tujuan Proyek</TableHead>
-                  <TableHead className="py-3 px-3 text-right">Vol Loading (m³)</TableHead>
-                  <TableHead className="py-3 px-3 text-right">Vol (m³)</TableHead>
-                  <TableHead className="py-3 px-3">Sumber Quarry</TableHead>
-                  <TableHead className="py-3 px-3">Plat Nomor</TableHead>
-                  <TableHead className="py-3 px-3">Vendor Armada</TableHead>
-                  <TableHead className="py-3 px-3 text-right">Pendapatan Jual</TableHead>
-                  <TableHead className="py-3 px-3 text-right">Biaya Material</TableHead>
-                  <TableHead className="py-3 px-3 text-right">Ongkos Angkut</TableHead>
-                  <TableHead className="py-3 px-3 text-right">Total HPP</TableHead>
-                  <TableHead className="py-3 px-3 text-right">Laba Kotor</TableHead>
-                  <TableHead className="py-3 px-3 text-right">Gross Margin</TableHead>
+                  <TableHead className="py-3 px-2.5">No. SJ</TableHead>
+                  <TableHead className="py-3 px-2">Tgl</TableHead>
+                  <TableHead className="py-3 px-2">Mat.</TableHead>
+                  <TableHead className="py-3 px-2">Cust.</TableHead>
+                  <TableHead className="py-3 px-2">Proyek</TableHead>
+                  <TableHead className="py-3 px-2 text-right">Vol Load</TableHead>
+                  <TableHead className="py-3 px-2 text-right">Vol App</TableHead>
+                  <TableHead className="py-3 px-2">Quarry</TableHead>
+                  <TableHead className="py-3 px-2">Plat</TableHead>
+                  <TableHead className="py-3 px-2">Vendor</TableHead>
+                  <TableHead className="py-3 px-2 text-right">Pendapatan</TableHead>
+                  <TableHead className="py-3 px-2 text-right">Mat.</TableHead>
+                  <TableHead className="py-3 px-2 text-right">Angkut</TableHead>
+                  <TableHead className="py-3 px-2 text-right">HPP</TableHead>
+                  <TableHead className="py-3 px-2 text-right">Laba</TableHead>
+                  <TableHead className="py-3 px-2 text-right">Margin</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-slate-100 font-medium text-slate-800">
@@ -585,24 +585,47 @@ export const ReportsView: React.FC = () => {
                   const vehicle = vehicles.find((v) => v.id === d.vehicleId);
                   const vendor = transportVendors.find((v) => v.id === d.transportVendorId);
 
+                  const prod = products.find((p: any) => p.id === d.productId);
+                  const cust = customers.find((c: any) => c.id === contracts.find((co: any) => co.id === d.contractId)?.customerId);
+                  const proj = projects.find((p: any) => p.id === contracts.find((co: any) => co.id === d.contractId)?.projectId);
                   return (
                     <TableRow key={d.id} className="hover:bg-slate-50/80">
-                      <TableCell className="py-2.5 px-3.5 font-mono font-bold text-slate-900">
+                      <TableCell className="py-2.5 px-2.5 font-mono font-bold text-slate-900 text-[11px]">
                         {d.deliveryNumber}
                       </TableCell>
-                      <TableCell className="py-2.5 px-3 font-mono text-[11px]">{formatDate(d.scheduledDate)}</TableCell>
-                      <TableCell className="py-2.5 px-3">{products.find((p: any) => p.id === d.productId)?.name || '-'}</TableCell>
-                      <TableCell className="py-2.5 px-3">{customers.find((c: any) => c.id === contracts.find((co: any) => co.id === d.contractId)?.customerId)?.name || '-'}</TableCell>
-                      <TableCell className="py-2.5 px-3">{projects.find((p: any) => p.id === contracts.find((co: any) => co.id === d.contractId)?.projectId)?.name || '-'}</TableCell>
-                      <TableCell className="py-2.5 px-3 text-right font-mono text-slate-600">
+                      <TableCell className="py-2.5 px-2.5 font-mono text-[10px]">{formatDate(d.scheduledDate)}</TableCell>
+                      <TableCell className="py-2.5 px-2.5" title={prod?.name || ''}>
+                        <span className="font-mono font-bold text-[11px] px-1.5 py-0.5 rounded bg-slate-100 border text-slate-700">
+                          {prod?.code || prod?.name?.slice(0, 8) || '-'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-2.5 px-2.5" title={cust?.name || ''}>
+                        <span className="font-bold text-[11px] px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800">
+                          {cust?.code || cust?.name?.slice(0, 10) || '-'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-2.5 px-2.5" title={proj?.name || ''}>
+                        <span className="font-medium text-[11px] px-1.5 py-0.5 rounded bg-sky-50 border border-sky-200 text-sky-800">
+                          {proj?.code || proj?.name?.slice(0, 12) || '-'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-2.5 px-2.5 text-right font-mono text-slate-600 text-[11px]">
                         {formatVolumeM3(d.loadedVolumeM3, false)}
                       </TableCell>
-                      <TableCell className="py-2.5 px-3 text-right font-mono font-bold">
+                      <TableCell className="py-2.5 px-2.5 text-right font-mono font-bold text-[11px]">
                         {formatVolumeM3(d.approvedVolumeM3, false)}
                       </TableCell>
-                      <TableCell className="py-2.5 px-3">{quarry?.name || '-'}</TableCell>
-                      <TableCell className="py-2.5 px-3 font-mono font-bold">{vehicle?.plateNumber || d.driverName || '-'}</TableCell>
-                      <TableCell className="py-2.5 px-3">{vendor?.name || '-'}</TableCell>
+                      <TableCell className="py-2.5 px-2.5" title={quarry?.name || ''}>
+                        <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-800">
+                          {quarry?.code || quarry?.name?.slice(0, 8) || '-'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-2.5 px-2.5 font-mono font-bold text-[11px]">{vehicle?.plateNumber || (d as any).driverName || '-'}</TableCell>
+                      <TableCell className="py-2.5 px-2.5" title={vendor?.name || ''}>
+                        <span className="font-medium text-[11px] px-1.5 py-0.5 rounded bg-slate-100 border text-slate-700">
+                          {vendor?.code || vendor?.name?.split(' ')[0] || '-'}
+                        </span>
+                      </TableCell>
                       <TableCell className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
                         {formatIDR(cost.recognizedRevenueIdr)}
                       </TableCell>

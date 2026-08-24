@@ -9,19 +9,128 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
+import { calculateDeliveryFinance } from '../../engine/finance.engine';
+import { resolveFreightRate } from '../../lib/freightRate';
+import { resolveQuarryCost } from '../../lib/quarryCost';
 
 export const HppFinanceView: React.FC = () => {
-  const { deliveries, products, contracts, customers, projects, quarries, vehicles, transportVendors, exportToCsv } = useApp() as any;
+  const { deliveries, products, contracts, customers, projects, quarries, vehicles, transportVendors, freightRates, quarryMaterialCosts, exportToCsv } = useApp() as any;
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Total summary
-  const totalRevenue = deliveries.reduce((sum, d) => sum + (d.costRecord?.recognizedRevenueIdr || 0), 0);
-  const totalMaterialCost = deliveries.reduce((sum, d) => sum + (d.costRecord?.totalMaterialCostIdr || 0), 0);
-  const totalFreightCost = deliveries.reduce((sum, d) => sum + (d.costRecord?.totalFreightCostIdr || 0), 0);
-  const totalOperationalCost = deliveries.reduce((sum, d) => sum + (d.costRecord?.otherOperationalCostIdr || 0), 0);
-  const totalHpp = deliveries.reduce((sum, d) => sum + (d.costRecord?.totalHppIdr || 0), 0);
+  const getDynamicCost = (d: any) => {
+    const contract = contracts.find((c: any) => c.id === d.contractId);
+    const product = products.find((p: any) => p.id === d.productId);
+    const vendor = transportVendors.find((v: any) => v.id === d.transportVendorId);
+    if (!contract || !product || !d.approvedVolumeM3) return d.costRecord;
+    const rate = resolveFreightRate(freightRates as any, {
+      transportVendorId: d.transportVendorId,
+      projectId: contract.projectId,
+      quarryId: d.quarryId,
+      onDate: d.scheduledDate,
+    });
+    if (!rate) return d.costRecord;
+    const qmc = (quarryMaterialCosts as any[]).find((q: any) => q.quarryId === d.quarryId && q.productId === d.productId);
+    const mat = qmc?.costPerM3 ?? (product as any).defaultMaterialCost;
+    const isAllIn = (rate as any).pricingModel === 'ALL_IN' || (rate as any).isAllInclusiveMaterial || (vendor as any)?.supplyType === 'MATERIAL_AND_TRANSPORT';
+    try {
+      const res = calculateDeliveryFinance({
+        deliveryId: d.id,
+        approvedVolumeM3: d.approvedVolumeM3,
+        loadedVolumeM3: d.loadedVolumeM3,
+        approvedWeightKg: d.approvedWeightKg,
+        sellingPricePerM3: (contract as any).unitPricePerM3,
+        materialCostPerM3: mat,
+        freightPricingModel: isAllIn ? 'ALL_IN' : (((vendor as any)?.defaultPricingModel as any) || (rate as any).pricingModel as any),
+        freightRatePerUnit: (rate as any).ratePerUnit,
+        allInPricePerM3: isAllIn ? (rate as any).ratePerUnit : undefined,
+        allInVolumeBasis: isAllIn ? 'PER_M3_RECEIVED' : undefined,
+        otherOperationalCostPerM3: 5000,
+        tollFee: isAllIn ? 0 : ((rate as any).tollFee as any) || 0,
+        loadingFee: isAllIn ? 0 : ((rate as any).loadingFee as any) || 0,
+        unloadingFee: isAllIn ? 0 : ((rate as any).unloadingFee as any) || 0,
+        isActualFinalized: true,
+      });
+      return res.costRecord;
+    } catch {
+      return d.costRecord;
+    }
+  };
+
+  // Total summary — sinkron dengan Laporan HPP (dinamis, filter approved>0)
+  const totalRevenue = deliveries.reduce((sum: number, d: any) => {
+    if (!d.approvedVolumeM3 || d.approvedVolumeM3 <= 0) return sum;
+    const c = getDynamicCost(d);
+    return sum + (c?.recognizedRevenueIdr || 0);
+  }, 0);
+  const totalMaterialCost = deliveries.reduce((sum: number, d: any) => {
+    if (!d.approvedVolumeM3 || d.approvedVolumeM3 <= 0) return sum;
+    const c = getDynamicCost(d);
+    return sum + (c?.totalMaterialCostIdr || 0);
+  }, 0);
+  const totalFreightCost = deliveries.reduce((sum: number, d: any) => {
+    if (!d.approvedVolumeM3 || d.approvedVolumeM3 <= 0) return sum;
+    const c = getDynamicCost(d);
+    return sum + (c?.totalFreightCostIdr || 0);
+  }, 0);
+  const totalOperationalCost = deliveries.reduce((sum: number, d: any) => {
+    if (!d.approvedVolumeM3 || d.approvedVolumeM3 <= 0) return sum;
+    const c = getDynamicCost(d);
+    return sum + (c?.otherOperationalCostIdr || 0);
+  }, 0);
+  const totalHpp = deliveries.reduce((sum: number, d: any) => {
+    if (!d.approvedVolumeM3 || d.approvedVolumeM3 <= 0) return sum;
+    const c = getDynamicCost(d);
+    return sum + (c?.totalHppIdr || 0);
+  }, 0);
   const totalGrossProfit = totalRevenue - totalHpp;
   const overallMargin = totalRevenue > 0 ? (totalGrossProfit / totalRevenue) * 100 : 0;
+
+  const handleExport = () => {
+    const rows = filteredDeliveries
+      .filter((d: any) => d.approvedVolumeM3 > 0)
+      .map((d: any) => ({ d, cr: getDynamicCost(d) }))
+      .filter(({ cr }: any) => !!cr)
+      .map(({ d, cr }: any) => {
+        const quarry = quarries.find((q: any) => q.id === d.quarryId);
+        const vehicle = vehicles.find((v: any) => v.id === d.vehicleId);
+        const vendor = transportVendors.find((v: any) => v.id === d.transportVendorId);
+        const contract = contracts.find((c: any) => c.id === d.contractId);
+        const cust = customers.find((c: any) => c.id === contract?.customerId);
+        const proj = projects.find((p: any) => p.id === contract?.projectId);
+        return {
+          'NO. SURAT JALAN': d.deliveryNumber,
+          'TANGGAL': d.scheduledDate,
+          'JENIS MATERIAL': products.find((p: any) => p.id === d.productId)?.name || '',
+          'PELANGGAN': cust?.name || '',
+          'TUJUAN PROYEK': proj?.name || '',
+          'VOL LOADING (m³)': (d as any).loadedVolumeM3,
+          'VOL (M³)': (d as any).approvedVolumeM3,
+          'SUMBER QUARRY': quarry?.name || '',
+          'PLAT NOMOR': vehicle?.plateNumber || (d as any).driverName || '',
+          'VENDOR ARMADA': vendor?.name || '',
+          'PENDAPATAN JUAL (IDR)': (cr as any).recognizedRevenueIdr,
+          'BIAYA MATERIAL (IDR)': (cr as any).totalMaterialCostIdr,
+          'ONGKOS ANGKUT (IDR)': (cr as any).totalFreightCostIdr,
+          'TOTAL HPP (IDR)': (cr as any).totalHppIdr,
+          'LABA KOTOR (IDR)': (cr as any).grossProfitIdr,
+          'GROSS MARGIN (%)': (cr as any).grossMarginPercent,
+        };
+      });
+    if (rows.length === 0) {
+      toast.error('Tidak ada data untuk diekspor');
+      return;
+    }
+    const headers = Object.keys(rows[0]!);
+    const csv = [headers.join(','), ...rows.map((r) => headers.map((h) => `"${String((r as any)[h] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `REV_BUMI_HPP_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`HPP diekspor — ${rows.length} baris`);
+  };
 
   const filteredDeliveries = deliveries.filter((d) => {
     const product = products.find((p) => p.id === d.productId);
@@ -50,19 +159,7 @@ export const HppFinanceView: React.FC = () => {
                 </CardDescription>
               </div>
             </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                try {
-                  exportToCsv('finance');
-                  toast.success('Ledger HPP diekspor');
-                } catch (e: any) {
-                  toast.error(e?.message || 'Gagal ekspor');
-                }
-              }}
-              className="bg-white/10 hover:bg-white/20 text-white border-white/20 gap-1.5"
-            >
+            <Button variant="secondary" size="sm" onClick={handleExport} className="bg-white/10 hover:bg-white/20 text-white border-white/20 gap-1.5">
               <Download className="w-3.5 h-3.5" /> Ekspor Ledger HPP (CSV)
             </Button>
           </div>
@@ -140,36 +237,36 @@ export const HppFinanceView: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">No. Surat Jalan</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Tanggal</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Jenis Material</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Pelanggan</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Tujuan Proyek</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Vol Loading (m³)</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Vol (m³)</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Sumber Quarry</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Plat Nomor</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Vendor Armada</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Pendapatan</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Biaya Material</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Biaya Angkut</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Total HPP</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Laba Kotor</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Margin (%)</TableHead>
+                <TableHead className="py-3 px-2.5">No. SJ</TableHead>
+                <TableHead className="py-3 px-2.5">Tgl</TableHead>
+                <TableHead className="py-3 px-2.5">Mat.</TableHead>
+                <TableHead className="py-3 px-2.5">Cust.</TableHead>
+                <TableHead className="py-3 px-2.5">Proyek</TableHead>
+                <TableHead className="py-3 px-2.5 text-right">Vol Load</TableHead>
+                <TableHead className="py-3 px-2.5 text-right">Vol App</TableHead>
+                <TableHead className="py-3 px-2.5">Quarry</TableHead>
+                <TableHead className="py-3 px-2.5">Plat</TableHead>
+                <TableHead className="py-3 px-2.5">Vendor</TableHead>
+                <TableHead className="py-3 px-2.5 text-right">Pendapatan</TableHead>
+                <TableHead className="py-3 px-2.5 text-right">Mat.</TableHead>
+                <TableHead className="py-3 px-2.5 text-right">Angkut</TableHead>
+                <TableHead className="py-3 px-2.5 text-right">HPP</TableHead>
+                <TableHead className="py-3 px-2.5 text-right">Laba</TableHead>
+                <TableHead className="py-3 px-2.5 text-right">Margin</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-muted font-medium">
-              {filteredDeliveries.map((d, idx) => {
-                const product = products.find((p) => p.id === d.productId);
+              {filteredDeliveries.map((d: any, idx: number) => {
+                const product = products.find((p: any) => p.id === d.productId);
                 const contract = contracts.find((c: any) => c.id === d.contractId);
                 const customer = customers.find((c: any) => c.id === contract?.customerId);
                 const project = projects.find((p: any) => p.id === contract?.projectId);
                 const quarry = quarries.find((q: any) => q.id === d.quarryId);
                 const vehicle = vehicles.find((v: any) => v.id === d.vehicleId);
                 const vendor = transportVendors.find((v: any) => v.id === d.transportVendorId);
-                const cost = d.costRecord as any;
+                const cost = getDynamicCost(d) as any;
 
-                if (!cost) {
+                if (!cost || !d.approvedVolumeM3 || d.approvedVolumeM3 <= 0) {
                   return (
                     <TableRow key={d.id} className={`hover:bg-muted/40 ${idx % 2 === 0 ? 'bg-card' : 'bg-muted/20'}`}>
                       <TableCell className="py-3 px-3.5 font-bold font-mono">{d.deliveryNumber}</TableCell>
