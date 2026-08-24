@@ -33,6 +33,7 @@ class BulkErrorBoundary extends React.Component<{ children: React.ReactNode }, {
 import { useApp } from '../../context/AppContext';
 import { Delivery, DeliveryStatus, TransportVendor, Vehicle } from '../../types';
 import { formatDate, formatDateTime, formatIDR, formatVolumeM3, formatWeightKg } from '../../lib/formatters';
+import { normalizePlate } from '../../lib/utils';
 import { resolveFreightRate } from '../../lib/freightRate';
 import { SuratJalanPrintModal } from './SuratJalanPrintModal';
 import { WeighbridgeModal } from './WeighbridgeModal';
@@ -167,7 +168,7 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
 
   const handleSaveNewVehicle = () => {
     setAddError(null);
-    const plate = newVehiclePlate.trim();
+    const plate = normalizePlate(newVehiclePlate.trim());
     if (!plate) {
       setAddError('Nomor polisi armada wajib diisi.');
       return;

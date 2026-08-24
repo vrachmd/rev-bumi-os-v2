@@ -18,6 +18,7 @@ import {
   initialVehicles,
 } from '../data/seedData';
 import { calculateDeliveryFinance } from '../engine/finance.engine';
+import { normalizePlate as normalizePlateUtil } from '../lib/utils';
 import { reconcileQuantity } from '../engine/quantity.engine';
 import { validateDeliveryTransition } from '../engine/state-machine.engine';
 import { roundCurrency, roundVolume } from '../lib/decimal';
@@ -637,11 +638,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // SJ konsisten: SJ/RBN/YYYYMM/NNN murni sekuensial tanpa suffix, lanjut dari max NNN bulan ini
       const deliveryNumber = (r as any).deliveryNumber || `SJ/RBN/${todayStr}/${String(count).padStart(3, '0')}`;
       const id = (r as any).id || `del-bulk-${Date.now()}-${i}`;
-      const plate = (r as any).plateNumber || (r as Delivery).driverName || '';
+      const plateRaw = (r as any).plateNumber || (r as Delivery).driverName || '';
+      const plate = plateRaw ? normalizePlateUtil(plateRaw) : '';
       // vehicle resolve/create
       let vehicleId = (r as Delivery).vehicleId as string | undefined;
       if (!vehicleId && plate) {
-        const existing = vehicles.find((v) => v.plateNumber.replace(/\s/g, '').toUpperCase() === plate.replace(/\s/g, '').toUpperCase());
+        const existing = vehicles.find((v) => normalizePlateUtil(v.plateNumber) === plate);
         if (existing) vehicleId = existing.id;
         else {
           vehicleId = `veh-${plate.replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 10)}-${i}`;

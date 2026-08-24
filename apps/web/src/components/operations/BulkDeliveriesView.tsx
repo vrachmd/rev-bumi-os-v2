@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useState, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
+import { normalizePlate } from '../../lib/utils';
 import { Upload, Download, CheckCircle2, FileSpreadsheet, X, Loader2, Truck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,7 +41,7 @@ export const BulkDeliveriesView: React.FC = () => {
       const cols = lines[i].split(',');
       const raw: Record<string,string> = {};
       headers.forEach((h, idx) => raw[h] = (cols[idx] || '').trim());
-      out.push({ idx: i, raw, plat: raw['plat_nomor'] || raw['plat'] || '', quarryName: raw['quarry']||'', produkName: raw['produk']||'', vendorName: raw['vendor_armada']||'', projectName: raw['project_tujuan']||'', tanggal: raw['tanggal_muat']||'', statusRaw: (raw['status']||'SCHEDULED').toUpperCase() });
+      out.push({ idx: i, raw, plat: normalizePlate(raw['plat_nomor'] || raw['plat'] || ''), quarryName: raw['quarry']||'', produkName: raw['produk']||'', vendorName: raw['vendor_armada']||'', projectName: raw['project_tujuan']||'', tanggal: raw['tanggal_muat']||'', statusRaw: (raw['status']||'SCHEDULED').toUpperCase() });
     }
     return out;
   };
