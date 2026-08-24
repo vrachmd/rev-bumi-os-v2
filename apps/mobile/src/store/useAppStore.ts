@@ -481,6 +481,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         photoUri: input.photoUri,
         evidenceGps: input.evidenceGps,
         evidencePlace: input.evidencePlace,
+        sjImci: (input as any).sjImci || undefined,
       }),
     });
     syncDelivery(get().deliveries.find((d) => d.id === id));

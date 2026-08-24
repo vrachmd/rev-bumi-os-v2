@@ -295,8 +295,16 @@ export async function fetchMobileDeliveriesFromSupabase(): Promise<DeliveryItem[
     const sigQ = (qli.signatureUrl as string | undefined) ?? (qli.signatureUrl as string | undefined);
     // qli.signatureUrl adalah kanonik; legacy juga signatureUrl (sama)
     if (sigQ) item.signatureQuarry = sigQ;
-    const place = (qli.notes as string | undefined) ?? (qli.place as string | undefined);
-    if (place) item.evidencePlace = place;
+    const notes = qli.notes as string | undefined;
+    const placeVal = qli.place as string | undefined;
+    if (notes?.startsWith('SJ IMCI ')) {
+      item.sjImci = notes.replace('SJ IMCI ', '').trim();
+      if (placeVal) item.evidencePlace = placeVal;
+    } else if (notes) {
+      item.evidencePlace = notes;
+    } else if (placeVal) {
+      item.evidencePlace = placeVal;
+    }
     const checker = qli.checkerName as string | undefined;
     if (checker) item.quarryCheckerName = checker;
     const egps = (qli as Record<string, unknown>).gps as { lat: number; lng: number } | undefined;
@@ -358,14 +366,13 @@ const toDeliveryDbRow = (d: DeliveryItem): DeliveryDbRow => ({
   quarry_loading_info: d.loadingMethod
     ? (() => {
         const loadedAt = d.evidenceAt ?? d.createdAt;
-        const common = {
+        const common: Record<string, unknown> = {
           checkerName: d.quarryCheckerName || 'Petugas Lapangan',
           loadedAt,
           densityUsed: d.densityApplied ?? null,
-          notes: d.evidencePlace ?? null,
+          notes: (d as any).sjImci ? `SJ IMCI ${(d as any).sjImci}` : null,
           quarryPhotoUrl: d.photoUri ?? null,
           signatureUrl: d.signatureQuarry ?? null,
-          // extra mobile context (web akan ignore, mobile tetap bisa baca)
           gps: d.evidenceGps ?? null,
           place: d.evidencePlace ?? null,
         };

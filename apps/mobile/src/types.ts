@@ -90,6 +90,7 @@ export interface DeliveryItem {
   photoUri?: string;
   evidenceGps?: { lat: number; lng: number };
   evidencePlace?: string;
+  sjImci?: string;
   deliveredAt?: string;
 
   varianceM3?: number;
@@ -107,6 +108,7 @@ export type QuarryLoadingInput =
       photoUri: string;
       evidenceGps: { lat: number; lng: number };
       evidencePlace?: string;
+      sjImci?: string;
     }
   | {
       method: 'DIMENSION';
@@ -118,6 +120,7 @@ export type QuarryLoadingInput =
       photoUri: string;
       evidenceGps: { lat: number; lng: number };
       evidencePlace?: string;
+      sjImci?: string;
     };
 
 export interface UnloadingInput {

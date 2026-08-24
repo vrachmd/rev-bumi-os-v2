@@ -100,6 +100,7 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
   const [evidenceAt, setEvidenceAt] = useState('');
   const [evidenceGps, setEvidenceGps] = useState<{ lat: number; lng: number } | null>(null);
   const [evidencePlace, setEvidencePlace] = useState('');
+  const [sjImci, setSjImci] = useState('');
   const [evidenceError, setEvidenceError] = useState('');
   const [signatureDriver, setSignatureDriver] = useState('');
   const [viewer, setViewer] = useState<{
@@ -193,7 +194,8 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
         photoUri,
         evidenceGps: evidenceGps ?? quarryGps,
         evidencePlace: evidencePlace || undefined,
-      });
+        sjImci: sjImci.trim() || undefined,
+      } as any);
     } else {
       recordQuarryLoading(delivery.id, {
         method: 'DIMENSION',
@@ -205,7 +207,8 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
         photoUri,
         evidenceGps: evidenceGps ?? quarryGps,
         evidencePlace: evidencePlace || undefined,
-      });
+        sjImci: sjImci.trim() || undefined,
+      } as any);
     }
   };
 
@@ -353,6 +356,21 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
               {overload && (
                 <View style={styles.overloadCard}>
                   <View style={styles.overloadRow}><AlertTriangle size={14} color="#92400E" /><Text style={styles.overloadText}> {overload}</Text></View>
+                </View>
+              )}
+
+              {['cont-04','cont-05','cont-06','cont-07','cont-08'].includes(delivery.contractId) && (
+                <View style={styles.formCard}>
+                  <Text style={styles.fieldLabel}>No. SJ IMCI (opsional, khusus IMCI)</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={sjImci}
+                    onChangeText={setSjImci}
+                    placeholder="100818"
+                    keyboardType="numeric"
+                    placeholderTextColor="#94A3B8"
+                  />
+                  <Text style={styles.hint}>Kosongkan bila bukan IMCI — akan tampil di kolom Note HPP</Text>
                 </View>
               )}
 
