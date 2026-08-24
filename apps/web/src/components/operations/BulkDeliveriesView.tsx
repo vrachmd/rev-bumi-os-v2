@@ -73,7 +73,15 @@ export const BulkDeliveriesView: React.FC = () => {
     };
     const toCreate: any[] = [];
     const errs: string[] = [];
-    rows.slice(0,50).forEach((r:any, idx:number)=>{
+    // sortir per tanggal → per proyek → per sj_imci A-Z sebelum insert DB
+    const sortedRows = [...rows].slice(0,50).sort((a:any,b:any)=>{
+      const d = (a.tanggal||'').localeCompare(b.tanggal||'');
+      if(d!==0) return d;
+      const p = (a.projectName||'').localeCompare(b.projectName||'');
+      if(p!==0) return p;
+      return (a.raw?.sj_imci||'').localeCompare(b.raw?.sj_imci||'');
+    });
+    sortedRows.forEach((r:any, idx:number)=>{
       let quarry = (app.quarries||[]).find((q:any)=> (q.name||'').toLowerCase().includes((r.quarryName||'').toLowerCase()));
       let product = (app.products||[]).find((p:any)=> (p.name||'').toLowerCase().includes((r.produkName||'').toLowerCase()));
       let vnd = (app.transportVendors||[]).find((v:any)=> (v.name||'').toLowerCase().includes((r.vendorName||'').toLowerCase()));
@@ -104,6 +112,8 @@ export const BulkDeliveriesView: React.FC = () => {
       else if (gross > 0 && tare > 0 && gross > tare) { vol = Number((Math.max(0, (gross - tare) / 1000 / density)).toFixed(2)); w = gross - tare; meas = 'CALCULATED_FROM_WEIGHT'; qInfo = { measurementMethod: 'WEIGHBRIDGE', grossWeightKg: gross, tareWeightKg: tare, netWeightKg: w, densityUsed: density }; }
       else { const m3auto = Number(r.raw?.m3_otomatis || 0); if (m3auto > 0) { vol = Number(m3auto.toFixed(2)); w = Math.round(vol * density * 1000); meas = 'ACTUAL_MEASURED'; qInfo = { measurementMethod: 'TRUCK_BED_VOLUME', truckBedDimensions: null }; } else { vol = 0; w = 0; } }
       if (vol <= 0) { errs.push(`baris ${r.idx}: vol 0 — isi gross/tare atau panjang*lebar*tinggi`); return; }
+      const sjNote = r.raw?.sj_imci ? `SJ IMCI ${r.raw.sj_imci}` : '';
+      const qInfoWithNote = qInfo ? { ...qInfo, notes: sjNote } : sjNote ? { notes: sjNote } : qInfo;
       toCreate.push({
         quarryId: quarry.id,
         productId: product.id,
@@ -113,10 +123,10 @@ export const BulkDeliveriesView: React.FC = () => {
         loadedVolumeM3: Number(vol.toFixed(3)),
         loadedWeightKg: w,
         measurementMode: meas,
-        quarryLoadingInfo: qInfo,
+        quarryLoadingInfo: qInfoWithNote,
         driverName: r.raw?.supir || 'Supir Vendor Armada',
         plateNumber: r.plat,
-        notes: r.raw?.sj_imci ? `SJ IMCI ${r.raw.sj_imci}` : '',
+        notes: sjNote,
         status: r.statusRaw === 'DELIVERED' ? 'DELIVERED' : 'SCHEDULED',
       });
     });
