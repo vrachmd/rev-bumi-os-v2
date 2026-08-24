@@ -185,7 +185,8 @@ export const HppFinanceView: React.FC = () => {
           const vendor = transportVendors.find((v: any) => v.id === d.transportVendorId);
           const cust = customers.find((c: any) => c.id === contracts.find((co: any) => co.id === d.contractId)?.customerId);
           const proj = projects.find((p: any) => p.id === contracts.find((co: any) => co.id === d.contractId)?.projectId);
-          const sjImci = (d as any).quarry_loading_info?.notes?.replace('SJ IMCI ', '') || (d as any).quarry_loading_info?.sjImci || '';
+          const q = (d as any).quarryLoadingInfo || (d as any).quarry_loading_info;
+          const sjImci = (q?.notes?.replace('SJ IMCI ', '') || (q as any)?.sjImci || '') as string;
           return {
             'NO. SURAT JALAN': d.deliveryNumber,
             'TANGGAL': formatDateDMY(d.scheduledDate),
@@ -420,11 +421,12 @@ export const HppFinanceView: React.FC = () => {
                         {projectAlias(proj)}
                       </span>
                     </TableCell>
-                    <TableCell className="py-2.5 px-2.5 font-mono text-[10px] text-slate-500" title={(d as any).quarry_loading_info?.notes || ''}>
+                    <TableCell className="py-2.5 px-2.5 font-mono text-[10px] text-slate-500" title={((d as any).quarryLoadingInfo || (d as any).quarry_loading_info)?.notes || ''}>
                       {(() => {
-                        const n = (d as any).quarry_loading_info?.notes || '';
-                        const m = n.match(/SJ IMCI\s*(\S+)/);
-                        return m ? m[1] : n ? n.slice(0, 20) : '-';
+                        const q = (d as any).quarryLoadingInfo || (d as any).quarry_loading_info;
+                        const n = q?.notes || (q as any)?.sjImci || '';
+                        const m = typeof n === 'string' ? n.match(/SJ IMCI\s*(\S+)/) : null;
+                        return m ? m[1] : n ? String(n).slice(0, 20) : '-';
                       })()}
                     </TableCell>
                     <TableCell className="py-2.5 px-2.5 text-right font-mono text-slate-600 text-[11px]">
