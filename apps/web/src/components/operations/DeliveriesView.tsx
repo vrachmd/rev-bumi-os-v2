@@ -307,6 +307,7 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
                 <TableHead className="text-[11px] uppercase tracking-wider font-semibold">No. Surat Jalan</TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Status</TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Pelanggan / Proyek</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Note</TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider font-semibold whitespace-nowrap min-w-[130px]">Plat Nomor</TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Loaded (m³)</TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Received (m³)</TableHead>
@@ -374,6 +375,16 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({ onNavigateToReco
                       <p className="text-[11px] text-muted-foreground truncate max-w-[170px]">
                         {project?.name}
                       </p>
+                    </TableCell>
+
+                    {/* Note / SJ IMCI */}
+                    <TableCell className="font-mono text-[11px] text-slate-500 max-w-[120px] truncate" title={(d as any).quarryLoadingInfo?.notes || (d as any).quarry_loading_info?.notes || ''}>
+                      {(() => {
+                        const q = (d as any).quarryLoadingInfo || (d as any).quarry_loading_info;
+                        const n = q?.notes || '';
+                        const m = typeof n === 'string' ? n.match(/SJ IMCI\s*(\S+)/) : null;
+                        return m ? m[1] : n ? String(n).slice(0, 15) : '-';
+                      })()}
                     </TableCell>
 
                     {/* Plat Nomor */}
