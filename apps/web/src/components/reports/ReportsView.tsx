@@ -78,6 +78,40 @@ export const ReportsView: React.FC = () => {
     }
   }, [deliveries.length]);
 
+  // Alias helpers — sinkron HPP & Laba Kotor: TGL dd/mm/yyyy, Proyek KBS, Vendor VND-YDH
+  const PROJECT_ALIAS_FIN: Record<string, string> = {
+    'proj-04': 'KBS Sunter',
+    'proj-05': 'KBS Legok',
+    'proj-06': 'KBS Pluit',
+    'proj-07': 'KBS Dadap',
+    'proj-08': 'KBS Bogor',
+  };
+  function projectAliasFin(proj: any) {
+    if (!proj) return '-';
+    if (PROJECT_ALIAS_FIN[proj.id]) return PROJECT_ALIAS_FIN[proj.id];
+    if (proj.name?.includes('Plant Karya Beton')) return proj.name.replace('Plant Karya Beton', 'KBS').trim();
+    return proj.code || proj.project_number || proj.name?.slice(0, 12) || '-';
+  }
+  const VENDOR_ALIAS_FIN: Record<string, string> = { 'vendor-05': 'VND-IVN', 'vendor-06': 'VND-YDH' };
+  function vendorAliasFin(v: any) {
+    if (!v) return '-';
+    if (VENDOR_ALIAS_FIN[v.id]) return VENDOR_ALIAS_FIN[v.id];
+    return v.code || v.name?.split(' ')[0] || '-';
+  }
+  function formatDateDMYFin(s: string) {
+    if (!s) return '-';
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yy = d.getFullYear();
+      return `${dd}/${mm}/${yy}`;
+    }
+    const p = s.split('-');
+    if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+    return s;
+  }
+
   // Filtered deliveries based on criteria
   const filteredDeliveries = deliveries.filter((d) => {
     const contract = contracts.find((c) => c.id === d.contractId);
@@ -212,15 +246,15 @@ export const ReportsView: React.FC = () => {
             const proj = projects.find((p: any) => p.id === contracts.find((co: any) => co.id === d.contractId)?.projectId);
             return {
               'NO. SURAT JALAN': d.deliveryNumber,
-              'TANGGAL': d.scheduledDate,
+              'TANGGAL': formatDateDMYFin(d.scheduledDate),
               'JENIS MATERIAL': products.find((p: any) => p.id === d.productId)?.name || '',
               'PELANGGAN': cust?.name || '',
-              'TUJUAN PROYEK': proj?.name || '',
+              'TUJUAN PROYEK': projectAliasFin(proj),
               'VOL LOADING (m³)': (d as any).loadedVolumeM3,
               'VOL (M³)': (d as any).approvedVolumeM3,
               'SUMBER QUARRY': quarry?.name || '',
               'PLAT NOMOR': vehicle?.plateNumber || (d as any).driverName || '',
-              'VENDOR ARMADA': vendor?.name || '',
+              'VENDOR ARMADA': vendorAliasFin(vendor),
               'PENDAPATAN JUAL (IDR)': (cr as any).recognizedRevenueIdr,
               'BIAYA MATERIAL (IDR)': (cr as any).totalMaterialCostIdr,
               'ONGKOS ANGKUT (IDR)': (cr as any).totalFreightCostIdr,
@@ -593,7 +627,7 @@ export const ReportsView: React.FC = () => {
                       <TableCell className="py-2.5 px-2.5 font-mono font-bold text-slate-900 text-[11px]">
                         {d.deliveryNumber}
                       </TableCell>
-                      <TableCell className="py-2.5 px-2.5 font-mono text-[10px]">{formatDate(d.scheduledDate)}</TableCell>
+                      <TableCell className="py-2.5 px-2.5 font-mono text-[10px]">{formatDateDMYFin(d.scheduledDate)}</TableCell>
                       <TableCell className="py-2.5 px-2.5" title={prod?.name || ''}>
                         <span className="font-mono font-bold text-[11px] px-1.5 py-0.5 rounded bg-slate-100 border text-slate-700">
                           {prod?.code || prod?.name?.slice(0, 8) || '-'}
@@ -606,7 +640,7 @@ export const ReportsView: React.FC = () => {
                       </TableCell>
                       <TableCell className="py-2.5 px-2.5" title={proj?.name || ''}>
                         <span className="font-medium text-[11px] px-1.5 py-0.5 rounded bg-sky-50 border border-sky-200 text-sky-800">
-                          {proj?.code || proj?.name?.slice(0, 12) || '-'}
+                          {projectAliasFin(proj)}
                         </span>
                       </TableCell>
                       <TableCell className="py-2.5 px-2.5 text-right font-mono text-slate-600 text-[11px]">
@@ -623,7 +657,7 @@ export const ReportsView: React.FC = () => {
                       <TableCell className="py-2.5 px-2.5 font-mono font-bold text-[11px]">{vehicle?.plateNumber || (d as any).driverName || '-'}</TableCell>
                       <TableCell className="py-2.5 px-2.5" title={vendor?.name || ''}>
                         <span className="font-medium text-[11px] px-1.5 py-0.5 rounded bg-slate-100 border text-slate-700">
-                          {vendor?.code || vendor?.name?.split(' ')[0] || '-'}
+                          {vendorAliasFin(vendor)}
                         </span>
                       </TableCell>
                       <TableCell className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
