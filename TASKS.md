@@ -1,8 +1,8 @@
 # TASKS.md — Status Pekerjaan REV Bumi OS
 
-> Terakhir diperbarui: 2026-08-23
+> Terakhir diperbarui: 2026-08-24
 > Repo: https://github.com/vrachmd/rev-bumi-os-v2 (branch `main`)
-> Tag checkpoint: `checkpoint-20260820-golive` (@8ee51b2), `checkpoint-20260821-finance` (@67c0519), `checkpoint-20260822-invoice` (@88e207e), `checkpoint-20260823-bulk` (@f8bd64e)
+> Tag checkpoint: `checkpoint-20260820-golive` (@8ee51b2), `checkpoint-20260821-finance` (@67c0519), `checkpoint-20260822-invoice` (@88e207e), `checkpoint-20260823-bulk` (@f8bd64e), `checkpoint-20260824-hpp-sync` (@a2d4e3f)
 
 ---
 
@@ -77,7 +77,10 @@
 - [x] CRUD Pelanggan & Proyek: `CustomersProjectsView.tsx` dropdown Template Faktur + tombol Pencil/Trash, `AppContext` `saveCustomer/saveProject/deleteCustomer/deleteProject` + `syncMaster/syncMasterDelete` + guard dependensi + audit, sync Supabase.
 - [x] CRUD Pembayaran & Piutang: `PaymentsView.tsx` kolom Aksi Pencil/Trash, modal reuse edit (invoice disabled saat edit), `AppContext` `updatePayment/deletePayment` sync `payments` + `invoices` (`total_paid/outstanding/status` recalc) + audit.
 - [x] Auto-push produksi: `AGENTS.md#7` + `.git/hooks/post-commit` push `origin/main` tiap lolos check-types+lint, Vercel auto-deploy `rev-bumi-os-v2-web` (Root `apps/web`).
-- [x] **Bulk Ritase Massal (web + mobile 10)** — `docs/plan/bulk-ritase.md`, migration `0011_bulk_batch_id` + `0012_vehicles_bulk_rls` (QUARRY_CHECKER/DISPATCHER boleh upsert vehicles/drivers), `supabaseBulk.ts` chunk 50 + fallback per-row, `AppContext bulkCreateDeliveries` + audit `BULK_CREATE`, `BulkDeliveriesView.tsx` drag-drop CSV/XLSX preview 20 valid/error 6 model (ALL_IN hijau/PER_TRIP biru), template download, `BulkQuarryScreen.tsx` 10 baris (max 20) + `store bulkAddRitase` + `QuarryStack Bulk 10` offline queue reuse, E2E `e2e_bulk.js 20/20 PASS`, `e2e_mobile_full 50/50 PASS` setelah patch threshold. Deploy `81d3eb8→f8bd64e`.
+ - [x] **Bulk Ritase Massal (web + mobile 10)** — `docs/plan/bulk-ritase.md`, migration `0011_bulk_batch_id` + `0012_vehicles_bulk_rls` (QUARRY_CHECKER/DISPATCHER boleh upsert vehicles/drivers), `supabaseBulk.ts` chunk 50 + fallback per-row, `AppContext bulkCreateDeliveries` + audit `BULK_CREATE`, `BulkDeliveriesView.tsx` drag-drop CSV/XLSX preview 20 valid/error 6 model (ALL_IN hijau/PER_TRIP biru), template download, `BulkQuarryScreen.tsx` 10 baris (max 20) + `store bulkAddRitase` + `QuarryStack Bulk 10` offline queue reuse, E2E `e2e_bulk.js 20/20 PASS`, `e2e_mobile_full 50/50 PASS` setelah patch threshold. Deploy `81d3eb8→f8bd64e`.
+ - [x] **Fase 3.5 UI shadcn (web)** — `docs/plan/ui-shadcn-roadmap.md` Fase 0-3 selesai: `fa79aa6` init New York Tailwind v4 Inter `#003C16`, `e01c1f9` 14 primitives + Deliveries pilot, `0512245` Sidebar Sheet + Navbar Breadcrumb + Pagination, `785c988` Reconciliation, `dd16af0` Invoices, `4491727` Payments, `04614dc` Customers/Projects, `590648c` Bulk, `8b0e139` Contracts template, `1d9aa2d` Reports + `851c378` Audit + `4fb6175` screenshots Playwright. `check-types 7/7 PASS`, `lint 0`, `build PASS`.
+ - [x] **Harga per Quarry×Produk + HPP Laporan sinkron Tarif** — migration `0013_quarry_cost_history.sql` (`quarry_material_costs.quarry_id,product_id,effective_date` unique + `effective_date` + RLS), `supabaseMaster quarryMaterialCosts` + `lib/quarryCost resolveQuarryCost()`, `MasterDataView` grid Quarry→Produk + dialog edit efektif, hapus `Katalog Produk` (`d2a4296`), `freightRates resolveFreightRate + finance loadedVolume` untuk non-ALL_IN (`6fc8b40`, `4be52fc`), backfill 511 `cost_records` (`qmc 225→230k` + `frate-14 PER_TRIP 2.8M` → freight tetap). Deploy `99a0d47→32bc9c8`.
+ - [x] **HPP & Laba Kotor ↔ Laporan HPP Profitabilitas sinkron 15 kolom** — `ReportsView` + `HppFinanceView` `15 kolom` alias `No SJ/Tgl/Mat/Cust/Proyek/Vol Load/Vol App/Quarry/Plat/Vendor/Pendapatan/Mat/Angkut/HPP/Laba/Margin` (`e540728→5f81fc4→49ffcc3`), `getDynamicCost()` dinamis (`freightRates + quarryMaterialCosts`) sinkron KPI & Table (`4be52fc`, `d562ed7`), `a2d4e3f` HPP Ledger samakan Laporan (KPI filter `approved>0`, `handleExport` 15 kolom). Polish `airy KPI p-4 rounded-xl backdrop-blur + striped even:bg-muted/20 hover:bg-muted/40`. Verifikasi `turbo check-types PASS`, `build PASS`, screenshots `6e98eaf`.
 
 ---
 
@@ -86,10 +89,11 @@
 ### Aktif — prioritas tinggi
 - [x] **Polish faktur PDF jsPDF agar identik pratinjau HTML** — ✅ selesai 2026-08-22 (mirror HTML, tema hijau `#003C16`, footer y=255, agregat IMCI group, pagination 20 baris) — verifikasi user `INV/RBN/20260821/004.pdf` approve.
 - [x] **Bulk Ritase Massal** — ✅ selesai 2026-08-23 (web CSV 50 chunk + mobile 10 baris max 20, 6 model ALL_IN/PER_TRIP primary, RLS patch 0012, E2E 20/20 + 50/50; SJ global NNN, bulk status DELIVERED, SJ/RBN murni tanpa suffix).
-- [ ] **UI shadcn — UI-Only Fase (2026-08-23 → selesai)** — 🔒 hanya ubah `apps/web` UI (`components/ui/*`, `components/layout/*`, `components/operations/*`, `components/finance/*`, `app/globals.css`, `lib/utils.ts`). DILARANG ubah `context/*`, `engine/*`, `lib/supabase*.ts`, `supabase/migrations/*`, `packages/*`, `types/*` (AGENTS.md #8, `docs/plan/ui-shadcn-roadmap.md`). Progress: roadmap + MD sinkron done, setup `shadcn init` next.
-- [ ] UAT manual 3-role (quarry→site→admin) + bulk verifikasi langsung di `app.revbuminusantara.biz.id` — **siap dijalankan, checklist di `docs/UAT-20260823-bulk.md`** — konfirmasi user belum masuk.
-- [ ] Lengkapi Fase B UI kontrak `ContractsView.tsx` dropdown Template Faktur (backend `contracts.template_id` sudah siap via `0010`, pelanggan sudah dropdown, tinggal kontrak) — **tunda sampai Fase UI selesai, hanya UI**.
-- [ ] Verifikasi end-to-end multi-template: IMCI vs Standard Per-Rit — **tunda, hanya verifikasi visual setelah Fase UI**.
+- [x] **UI shadcn — UI-Only Fase (2026-08-23 → 2026-08-24)** — ✅ Fase 0-3 selesai (`fa79aa6→851c378`), polish HPP 15 kolom & audit/reports shadcn done; sisa Fase 4 polish responsive/a11y/skeleton (estimasi 1 hari, tidak blokir operasional).
+- [x] **Harga Quarry×Produk + HPP sinkron** — ✅ selesai 2026-08-24 (`0013` + `a2d4e3f`, HPP Ledger = Laporan 15 kolom alias dinamis).
+- [ ] UAT manual 3-role (quarry→site→admin) + bulk + HPP verifikasi langsung di `app.revbuminusantara.biz.id` — **siap dijalankan, checklist di `docs/UAT-20260823-bulk.md` + verifikasi HPP 15 kolom vs clean CSV** — konfirmasi user belum masuk.
+- [ ] Lengkapi Fase B UI kontrak `ContractsView.tsx` dropdown Template Faktur (backend `contracts.template_id` sudah siap via `0010`, pelanggan sudah dropdown, tinggal kontrak) — **hanya UI, next setelah UAT**.
+- [ ] Verifikasi end-to-end multi-template: IMCI vs Standard Per-Rit — **hanya verifikasi visual setelah Fase UI polish**.
 
 ### Menunggu / prioritas sedang
 - [ ] Build APK native Android: `eas build --platform android` (user pilih APK native, bukan PWA) + siapkan OTA `eas update`.
@@ -108,25 +112,36 @@
 ### Sedang diubah (aktif)
 | File | Status |
 |---|---|
-| `apps/web/src/components/commercial/ContractsView.tsx` | **Aktif** — tambah dropdown Template Faktur per-kontrak (backend `0010` siap) |
-| `apps/web/src/components/finance/PaymentsView.tsx` | **Selesai 88e207e** — edit/hapus pembayaran Piutang sync DB — stabil |
+| `apps/web/src/components/finance/HppFinanceView.tsx` | **Selesai a2d4e3f** — sinkron Laporan HPP 15 kolom alias + getDynamicCost — stabil |
+| `apps/web/src/components/reports/ReportsView.tsx` | **Selesai a2d4e3f** — finance 15 kolom alias + getDynamicCost dinamis — stabil |
+| `apps/web/src/components/master/MasterDataView.tsx` | **Selesai 32bc9c8** — Quarry×Produk effective_date dialog — stabil |
 | `docs/UAT-20260823-bulk.md` | **Baru** — checklist UAT web bulk 50 + mobile 10 (3-role + metode ALL_IN/PER_TRIP) |
 
 ### Sudah diubah (stabil, ter-commit)
 **Web (`apps/web/src`)**
-- `context/AppContext.tsx` — createInvoice items extended, deleteInvoice (SUPER_ADMIN PAID), updateInvoiceNotes/updateInvoiceKwitansi, recordPayment/updatePayment/deletePayment, saveCustomer/saveProject/deleteCustomer/deleteProject, syncMaster/syncMasterDelete, format SJ `SJ/RBN/YYYYMM/NNN`
+- `context/AppContext.tsx` — createInvoice items extended, deleteInvoice (SUPER_ADMIN PAID), updateInvoiceNotes/updateInvoiceKwitansi, recordPayment/updatePayment/deletePayment, saveCustomer/saveProject/deleteCustomer/deleteProject, syncMaster/syncMasterDelete, bulkCreateDeliveries, format SJ `SJ/RBN/YYYYMM/NNN`
 - `types/index.ts` — `InvoiceTemplateId`, `Customer.invoiceTemplateId`, `Contract.templateId`, `Invoice.kwitansiPhotoUrl`, `InvoiceItem {deliveryDate?, sjImci?, plateNumber?}`, QuarryLoadingInfo/SiteUnloadingInfo kanonik
 - `components/finance/InvoicesView.tsx` — faktur polish mirror PDF/HTML, agregat group, KBS alias, hill-hapus Alamat bill-to, foto kwitansi hal 2, filter kandidat `!invoicedDeliveryIds`
+- `components/finance/HppFinanceView.tsx` — sinkron Laporan HPP 15 kolom alias + getDynamicCost dinamis + handleExport 15 kolom + airy KPI/striped
+- `components/reports/ReportsView.tsx` — HPP 15 kolom alias + getDynamicCost (freightRates+quarryMaterialCosts) + Reset Filter + handleExport
+- `components/master/MasterDataView.tsx` — Quarry×Produk effective_date + hapus Katalog Produk
 - `components/finance/PaymentsView.tsx` — Piutang kolom Aksi edit/hapus, modal reuse
 - `components/commercial/CustomersProjectsView.tsx` — CRUD pelanggan/proyek + Template dropdown + sync DB
+- `components/commercial/ContractsView.tsx` — templateId IMCI-AGREGAT/STANDARD-PER-RIT + shadcn
 - `components/finance/invoice-templates/{ImciAgregatTemplate,StandardPerRitTemplate,index}.ts` — multi-template registry Fase A+B
-- `components/operations/DeliveriesView.tsx` — tabel kolom baru, modal detail, input/edit SJ IMCI
+- `components/operations/DeliveriesView.tsx` — shadcn Table Card Badge Dialog Pagination + kolom baru, modal detail, input/edit SJ IMCI
+- `engine/finance.engine.ts` — `loadedVolumeM3` + `volumeForMaterial=isAllIn?approved:loaded` (Quarry×loading non ALL_IN)
+- `lib/quarryCost.ts` — `resolveQuarryCost()` history effective_date
+- `lib/freightRate.ts` — `resolveFreightRate()` per vendor/project/quarry/date
 - `lib/supabaseFinance.ts` — `InvoiceDbRow.kwitansi_photo_url`, `InvoiceItemDbRow delivery_date/sj_imci/plate_number`, `mapInvoiceItem`, `upsertInvoice/deleteInvoice`, `recordPayment/updatePayment/deletePayment`
-- `lib/supabaseMaster.ts` — `mapCustomer/mapContract invoice_template_id/template_id`, upsert/delete
+- `lib/supabaseMaster.ts` — `quarry_material_costs` upsert `quarry_id,product_id,effective_date`, `mapCustomer/mapContract invoice_template_id/template_id`, upsert/delete
 - `lib/supabaseAudit.ts` — insertAuditLog/fetchAuditLogs/verifyDeliveryGps
 - `data/seedData.ts` — `initialCompany` CV REV BUMI NUSANTARA Cigudeg
 - `lib/supabase.ts` — bucket `kwitansi` (kompresi 1280px jpeg, upsert)
+- `lib/utils.ts` — `cn()` + shadcn primitives `components/ui/*`
+- `app/globals.css` — `slate` + `primary #003C16 oklch 0.22 0.08 142.5` + radial bg
 - `next.config.js` — transpilePackages jspdf/jspdf-autotable (fix Vercel build)
+- `components.json` — New York slate cssVariables Inter radius 0.75
 
 **Mobile (`apps/mobile/src`)**
 - `screens/FinanceScreen.tsx`, `RekonsilScreen.tsx`, `DashboardScreen.tsx`, `ProfileScreen.tsx` (baru), `QuarryScreen.tsx`, `SiteScreen.tsx`, `LoginScreen.tsx`
@@ -138,10 +153,11 @@
 - `packages/shared-types/src/index.ts` — VarianceReason, APPROVED_ADJUSTMENT
 
 **Infra & Data**
-- `supabase/migrations/0005_audit_and_gps.sql`, `0006_quarry_density.sql`, `0007_timestamp_check.sql`, `0008_invoice_item_details.sql`, `0009_company_update.sql`, `0010_invoice_template.sql`, `0011_bulk_batch_id.sql`, `0012_vehicles_bulk_rls.sql`
+- `supabase/migrations/0005_audit_and_gps.sql`, `0006_quarry_density.sql`, `0007_timestamp_check.sql`, `0008_invoice_item_details.sql`, `0009_company_update.sql`, `0010_invoice_template.sql`, `0011_bulk_batch_id.sql`, `0012_vehicles_bulk_rls.sql`, `0013_quarry_cost_history.sql` (quarry×product effective_date unique)
 - `.github/workflows/ci.yml`, root `package.json` (packageManager), `AGENTS.md` (rule icon §7.6 + auto-push §7.7), `.git/hooks/post-commit`
-- `rawdata/clean/rekap_clean.csv|truk_clean.csv|harga_clean.csv`, `backups/20260821-pre-staging/*.json`
-- `docs/DATA-CLEAN-AUDIT.md`, `docs/DATA-CLEAN-REPORT-FINAL.md`, `docs/DATA-ENGINEERING-REPORT.md`, `docs/plan/multi-template-invoice.md`, `docs/plan/bulk-ritase.md`, `docs/UAT-20260823-bulk.md`
+- `rawdata/clean/rekap_clean.csv|truk_clean.csv|harga_clean.csv`, `backups/20260821-pre-staging/*.json` + `backups/20260823-bulk/*.json`
+- `docs/DATA-CLEAN-AUDIT.md`, `docs/DATA-CLEAN-REPORT-FINAL.md`, `docs/DATA-ENGINEERING-REPORT.md`, `docs/plan/multi-template-invoice.md`, `docs/plan/bulk-ritase.md`, `docs/plan/ui-shadcn-roadmap.md`, `docs/UAT-20260823-bulk.md`
+- `docs/screenshots/shadcn-*.png` + `scripts/screenshot-views.mjs` (Playwright)
 
 ---
 
@@ -149,11 +165,12 @@
 
 1. ✅ **Polish faktur PDF** selesai di `88e207e` — Vercel auto-deploy → verifikasi `app.revbuminusantara.biz.id` approve `INV/RBN/20260821/004.pdf` (20 baris, footer tidak mentok).
 2. ✅ **Bulk Ritase** selesai di `f8bd64e` — `e2e_bulk 20/20 + e2e_mobile_full 50/50`, RLS 0012, web `Ritase Massal` CSV chunk 50 + mobile `Bulk 10` (max 20).
-3. **UAT bulk** (siap): jalankan `docs/UAT-20260823-bulk.md` — web bulk 10 CSV (ALL_IN vs PER_TRIP + error.csv) + mobile bulk 10 offline → `quarry@revbumi.co.id` timbang/dispatch → `site@revbumi.co.id` arrive/unload/POD → admin `DELIVERED` → faktur 2 template.
-4. **Sisa faktur**: lengkapi dropdown Template di `ContractsView.tsx` + UAT faktur 2 template (IMCI agregat hijau vs Standard Per-Rit).
-5. Setup EAS: `npm i -g eas-cli && eas login`, konfigurasi `eas.json` (buildProfile APK), `eas build -p android`, dokumentasikan proses di runbook.
-6. Buat `docs/runbook.md`: backup harian (pg_dump/JSON export), restore dari `backups/20260821-pre-staging/`, rollback checklist.
-7. Tag baru `checkpoint-20260823-bulk` (@f8bd64e) — selanjutnya `checkpoint-20260824-go-uat` setelah UAT lapangan bulk lulus.
+3. ✅ **Quarry×Produk + HPP sinkron** selesai di `a2d4e3f` — `0013` history + HPP Ledger = Laporan 15 kolom alias dinamis, `check-types PASS`.
+4. **UAT bulk+HPP** (siap): jalankan `docs/UAT-20260823-bulk.md` + verifikasi HPP 15 kolom (KPI 4.5B/4.17B/419M) vs `rawdata/clean/rekap_clean.csv` (499 rows, 100% match audit_rekap) → `quarry@` timbang/dispatch → `site@` POD → admin faktur 2 template.
+5. **Sisa faktur**: lengkapi dropdown Template di `ContractsView.tsx` jika perlu variasi per-kontrak (backend 0010 siap, hanya UI) + UAT faktur 2 template (IMCI agregat hijau vs Standard Per-Rit).
+6. Setup EAS: `npm i -g eas-cli && eas login`, konfigurasi `eas.json` (buildProfile APK), `eas build -p android`, dokumentasikan proses di runbook.
+7. Buat `docs/runbook.md`: backup harian (pg_dump/JSON export), restore dari `backups/20260821-pre-staging/`, rollback checklist.
+8. Tag baru `checkpoint-20260824-hpp-sync` (@a2d4e3f) — selanjutnya `checkpoint-20260825-go-uat` setelah UAT lapangan bulk+HPP lulus.
 
 ---
 

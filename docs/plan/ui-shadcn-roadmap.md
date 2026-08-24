@@ -42,23 +42,23 @@ File baru: `apps/web/components.json`, `apps/web/components/ui/*` (button, card,
 
 ## 4. Fase Pengerjaan (urutan, per-phase 1 PR)
 
-### Fase 0 — Setup (0.5 hari)
-- `npx shadcn@latest init` di `apps/web` (pilih New York, Tailwind v4, cssVariables, Inter, radius 0.75).
+### Fase 0 — Setup (0.5 hari) ✅ `fa79aa6`
+- `npx shadcn@latest init` di `apps/web` (pilih New York, Tailwind v4, cssVariables, Inter, radius 0.75) — done `components.json` `lib/utils cn()` `globals.css oklch 0.22 0.08 142.5`.
 - Verifikasi `build + lint` hijau; `globals.css` dengan `hsl(--primary 142 76% 10%)` untuk `#003C16`.
 
-### Fase 1 — Primitives Pilot (1 hari)
-- Install `button, card, dialog, table, input, select, badge, tabs, sheet, dropdown-menu, form, sonner, skeleton`.
+### Fase 1 — Primitives Pilot (1 hari) ✅ `e01c1f9`
+- Install `button, card, dialog, table, input, select, badge, tabs, sheet, dropdown-menu, form, sonner, skeleton` — 14 done.
 - Pilot 1 page: `DeliveriesView` table → `shadcn Table` + `BulkDeliveriesView` modal → `Dialog` shadcn (error boundary tetap).
 
-### Fase 2 — Layout & Navigation (1 hari)
-- `Sidebar` → `shadcn Sidebar` collapsible + `Sheet` mobile, `Navbar` → `header` + `Breadcrumb`, filter `DeliveriesView` → `Select` shadcn, `Pagination` shadcn.
+### Fase 2 — Layout & Navigation (1 hari) ✅ `0512245`
+- `Sidebar` → `shadcn Sidebar` collapsible + `Sheet` mobile, `Navbar` → `header` + `Breadcrumb`, filter `DeliveriesView` → `Select` shadcn, `Pagination` shadcn — done.
 
-### Fase 3 — Operasi & Keuangan (2 hari)
-- `ReconciliationView`, `InvoicesView` (preview tetap, table ganti), `PaymentsView` kolom Aksi `Pencil/Trash` → `Button` shadcn, `CustomersProjectsView` form → `Form + zod`, `BulkDeliveriesView` drag-drop → `Card` + `toast`.
-- Tidak ubah `freightRates`, `invoice templates`, `finance engine`.
+### Fase 3 — Operasi & Keuangan (2 hari) ✅ `785c988→a2d4e3f`
+- `ReconciliationView`, `InvoicesView` (preview tetap, table ganti), `PaymentsView` kolom Aksi `Pencil/Trash` → `Button` shadcn, `CustomersProjectsView` form → `Form + zod`, `BulkDeliveriesView` drag-drop → `Card` + `toast` — done.
+- Tidak ubah `freightRates`, `invoice templates`, `finance engine` — patuh; tambahan HPP `15 kolom alias` `getDynamicCost` sinkron (`a2d4e3f`) tetap UI-Only (logic di `lib/*` tidak diubah, hanya consumed).
 
-### Fase 4 — Polish & A11y (1 hari)
-- `Responsive` (iPhone XR 414), `Focus` Radix, `Skeleton` loading, `Toasts` untuk bulk/invoice, hapus custom CSS sisa, screenshot before/after per view, `turbo check-types` 7/7 PASS.
+### Fase 4 — Polish & A11y (1 hari) — ⏳ sisa 0.5 hari (striped/airy `49ffcc3` done, responsive `414` + focus + skeleton + screenshot `4fb6175→6e98eaf` done)
+- `Responsive` (iPhone XR 414), `Focus` Radix, `Skeleton` loading, `Toasts` untuk bulk/invoice, hapus custom CSS sisa, screenshot before/after per view, `turbo check-types` 7/7 PASS — `check-types PASS` & `build PASS` sudah hijau.
 
 ### Fase 5 — (Opsional, setelah web stabil) Mobile Token Sync
 - `nativewind` + primitives RN mirip shadcn (`Button/Card` RN) agar token `#003C16` sama — bukan blocker v1.
@@ -77,11 +77,11 @@ File baru: `apps/web/components.json`, `apps/web/components/ui/*` (button, card,
 
 ---
 
-## 6. Kriteria Selesai (Exit)
+## 6. Kriteria Selesai (Exit) — ✅ 2026-08-24 hampir penuh
 
-- Semua view utama (`Deliveries, Bulk, Invoices, Payments, Customers, Reconciliation`) pakai primitives shadcn, brand `#003C16` konsisten, dark mode token ada.
-- `lint 0 error`, `check-types PASS`, `build PASS`, Vercel `Ready`.
-- Screenshot before/after di `docs/screenshots/shadcn-*.png` + checklist di `TASKS.md`.
+- Semua view utama (`Deliveries, Bulk, Invoices, Payments, Customers, Reconciliation, Reports, Audit`) pakai primitives shadcn, brand `#003C16` konsisten, dark mode token ada — ✅ `fa79aa6→851c378`.
+- `lint 0 error`, `check-types PASS`, `build PASS`, Vercel `Ready` `a2d4e3f` — ✅.
+- Screenshot before/after di `docs/screenshots/shadcn-*.png` + checklist di `TASKS.md` — ✅ `4fb6175` + `6e98eaf`.
 
 ---
 

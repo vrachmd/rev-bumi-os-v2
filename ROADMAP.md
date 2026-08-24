@@ -86,6 +86,7 @@ Deliverable:
    - ✅ **Checkpoint** `checkpoint-20260820-golive` di `8ee51b2` + `F3-mobile-finance-analytics` plan + `FinanceScreen` `MANAGEMENT` OTA.
    - ✅ **Finance polish 2026-08-22** `checkpoint-20260822-invoice` di `88e207e`: PDF faktur mirror preview HTML (header 12×12, bill-to `bg-green-50`, totals box, footer fixed `y=255`, agregat group IMCI 4-kolom + Standard per-rit 5-kolom), `CV REV BUMI NUSANTARA` Cigudeg + BCA 6044884563, multi-template registry Fase A+B (`0008`/`0010` + bucket `kwitansi` 5MB, kompresi 1280px, hal 2 preview/PDF), CRUD pelanggan/proyek + pembayaran/piutang sync DB, auto-push `AGENTS.md#7`.
    - ✅ **Bulk Ritase Massal 2026-08-23** `checkpoint-20260823-bulk` di `f8bd64e`: `0011 bulk_batch_id` + `0012 vehicles/drivers RLS QUARRY_CHECKER`, web `BulkDeliveriesView` CSV 10/50 chunk valid/error 6 model + template, mobile `BulkQuarryScreen` 10 baris (max 20) + `store bulkAddRitase` + offline queue, E2E `e2e_bulk 20/20` + `e2e_mobile_full 50/50`, UAT checklist `docs/UAT-20260823-bulk.md`.
+   - ✅ **UI shadcn + Quarry×Produk + HPP sinkron 2026-08-24** `checkpoint-20260824-hpp-sync` di `a2d4e3f`: shadcn Fase 0-3 (`fa79aa6→851c378` + `4fb6175` screenshots), `0013 quarry_cost_history` (`quarry_material_costs.effective_date` unique `quarry_id,product_id,effective_date` + RLS) + `resolveQuarryCost` + Master grid Quarry→Produk & hapus Katalog Produk (`99a0d47→32bc9c8`), `finance.loadedVolume` non-ALL_IN + `resolveFreightRate` + backfill 511 cost (`6fc8b40→4be52fc`), HPP `ReportsView` + `HppFinanceView` `15 kolom alias` (`No SJ/Tgl/Mat/Cust/Proyek/Vol Load/Vol App/Quarry/Plat/Vendor/Pendapatan/Mat/Angkut/HPP/Laba/Margin`) `getDynamicCost()` dinamis sinkron KPI & `handleExport` (`e540728→a2d4e3f`, polish `airy KPI + striped 49ffcc3`).
 
 ### Fase 0.5 — Persiapan Migrasi Cloud (sejalan dengan Fase 0-1)
 Deliverable:
@@ -118,19 +119,19 @@ Deliverable:
 - Skema migrasi/versioning data (pattern migrations).
 **Exit criteria:** semua engine lolos unit test; PR tidak bisa merge bila lint/test gagal; upgrade skema tidak merusak data.
 
-### Fase 3 — Go-Live & Operasional 🚀 — ✅ LIVE di `https://app.revbuminusantara.biz.id` + `https://rev-bumi-os-v2-web.vercel.app` (`119de1a→f8bd64e Ready`, `Vercel` `Root apps/web` `turbo`, `NEXT_PUBLIC_SUPABASE_*`, `checkpoint-20260823-bulk`)
-### Fase 3.5 — UI shadcn (Web) 🎨 — 🔒 UI-Only (2026-08-23 → selesai)
+### Fase 3 — Go-Live & Operasional 🚀 — ✅ LIVE di `https://app.revbuminusantara.biz.id` + `https://rev-bumi-os-v2-web.vercel.app` (`119de1a→a2d4e3f Ready`, `Vercel` `Root apps/web` `turbo`, `NEXT_PUBLIC_SUPABASE_*`, `checkpoint-20260824-hpp-sync`)
+### Fase 3.5 — UI shadcn (Web) 🎨 — ✅ Fase 0-3 selesai (`fa79aa6→a2d4e3f`), sisa Polish 1 hari — 🔒 UI-Only (2026-08-23 → 2026-08-24)
 - Scope: migrasi `apps/web` ke **shadcn/ui** (New York, Tailwind v4, cssVariables, Inter, radius 0.75, primary `#003C16`) — hanya `components/ui/*`, `components/layout/*`, `components/operations/*`, `components/finance/*`, `components/commercial/*`, `app/globals.css`, `lib/utils.ts`.
 - Larangan: **jangan ubah** `context/*`, `engine/*`, `lib/supabase*.ts`, `supabase/migrations/*`, `packages/*`, `types/*` (AGENTS.md #8). Pelanggaran = rollback.
-- Fase: 0 Setup (init) → 1 Primitives (button/card/dialog/table) → 2 Layout (Sidebar/Navbar) → 3 Operasi/Keuangan (Deliveries/Bulk/Invoices) → 4 Polish (responsive, a11y, dark, toast).
+- Fase: 0 Setup (init) ✅ → 1 Primitives (button/card/dialog/table) ✅ → 2 Layout (Sidebar/Navbar) ✅ → 3 Operasi/Keuangan (Deliveries/Bulk/Invoices) ✅ + HPP 15 kolom `a2d4e3f` → 4 Polish (responsive, a11y, dark, toast) — sisa 1 hari (striped/airy `49ffcc3` done).
 - Exit: semua view utama pakai primitives shadcn, brand `#003C16` konsisten, `lint/build` hijau. Detail: `docs/plan/ui-shadcn-roadmap.md`.
 Deliverable:
 - Deploy tahap awal (gratis): **Supabase Free + Vercel** (web + PWA), domain & SSL — ✅ `web` `Ready` `33s`, `quarry@` login ok, `demo` hapus wajib RLS.
-- Seed data master riil (quarry, vendor, kontrak, densitas) + onboarding — ✅ `quarry_material_costs` 15 baris `0006`.
-- UAT lapangan (quarry & site) + pelatihan petugas — ✅ E2E 50/50 + 27 unit test + `e2e_mobile_full` `verify_delivery_gps` 500/1000m.
+- Seed data master riil (quarry, vendor, kontrak, densitas) + onboarding — ✅ `quarry_material_costs` 15 baris `0006` + `0013` history `effective_date` per Quarry×Produk.
+- UAT lapangan (quarry & site) + pelatihan petugas — ✅ E2E 50/50 + 27 unit test + `e2e_mobile_full` `verify_delivery_gps` 500/1000m + `e2e_bulk 20/20` + audit `rawdata/clean 499 rows 100% match`.
 - Monitoring, backup harian, runbook pemulihan — ⏳ `pg_dump` cron + runbook `docs/runbook.md` next.
 - **Mitigasi free tier**: pantau pause Supabase (1 minggu idle), kuota egress storage (bucket `kwitansi` 5MB/file, public), dan kuota fungsi.
-**Exit criteria:** sistem dipakai operasional harian multi-user, backup terverifikasi, SLA internal disepakati — ⏳ UAT lapangan final + `FinanceScreen` OTA `eas update` + verifikasi multi-template 2 faktur uji next.
+**Exit criteria:** sistem dipakai operasional harian multi-user, backup terverifikasi, SLA internal disepakati — ⏳ UAT lapangan final bulk+HPP + `FinanceScreen` OTA `eas update` + verifikasi multi-template 2 faktur uji next.
 
 ### Fase 4 — Migrasi Penuh ke Cloud (GCP / Alibaba Cloud) 🏢
 Tujuan: deployment production-grade di cloud publik sesuai target akhir, sambil **mempertahankan fungsi yang sudah berjalan** (tanpa tulis ulang besar).
