@@ -2,7 +2,7 @@ name: keepalive-supabase
 
 on:
   schedule:
-    - cron: "0 3 */6 * *" # tiap 6 hari 03:00 UTC anti-pause 7 hari
+    - cron: "0 3 * * *" # tiap hari 03:00 UTC anti-pause 7 hari (daily, aman)
   workflow_dispatch:
 
 jobs:
