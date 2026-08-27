@@ -1,0 +1,18 @@
+name: keepalive-supabase
+
+on:
+  schedule:
+    - cron: "0 3 */6 * *" # tiap 6 hari 03:00 UTC anti-pause 7 hari
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase (prevent 7-day pause)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          curl -s -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY" "$SUPABASE_URL/rest/v1/deliveries?select=id&limit=1" | head -c 200
+          echo " keepalive ok $(date -u +%Y-%m-%dT%H:%M:%SZ)"
