@@ -17,13 +17,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useAppStore, NewRitaseInput } from '../store/useAppStore';
 import { useSwipeBack } from '../hooks/useSwipeBack';
-import { Truck } from 'lucide-react-native';
+import { Truck, Layers } from 'lucide-react-native';
 import { KpiCard } from '../components/KpiCard';
 import { StatusBadge } from '../components/StatusBadge';
 import { ProfileScreen } from './ProfileScreen';
 import { Select } from '../components/Select';
 import { VehiclePlateInput } from '../components/VehiclePlateInput';
 import { EvidenceViewer } from '../components/EvidenceViewer';
+import { BulkQuarryScreen } from './BulkQuarryScreen';
 import { formatClock, formatDateShort, formatVolume, formatRupiah, labelFrom } from '../utils/format';
 import { calculateEta, formatDistance, formatDuration, getRouteWithFallback } from '../utils/osrm';
 import type { DeliveryItem, MobileRole, FreightRateItem } from '../types';
@@ -364,6 +365,15 @@ React.useEffect(() => {
   };
 
   const [showProfile, setShowProfile] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  if (bulkOpen) {
+    return (
+      <SafeAreaView style={[styles.safe, { backgroundColor: '#003C16' }]} edges={['top', 'left', 'right']}>
+        <StatusBar style="light" />
+        <BulkQuarryScreen onBack={() => setBulkOpen(false)} />
+      </SafeAreaView>
+    );
+  }
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: '#003C16' }]} edges={['top', 'left', 'right']} {...(showForm ? panHandlers : {})}>
       <StatusBar style="light" />
@@ -603,9 +613,16 @@ React.useEffect(() => {
             </View>
           ) : (
             canAddRitase && (
-              <Pressable style={styles.addBtn} onPress={openAdd}>
-                <Text style={styles.addBtnText}>+ Tambah Ritase Baru</Text>
-              </Pressable>
+              <>
+                <Pressable style={styles.addBtn} onPress={openAdd}>
+                  <Text style={styles.addBtnText}>+ Tambah Ritase Baru</Text>
+                </Pressable>
+                <Pressable style={[styles.addBtn, { backgroundColor: '#0F172A', marginTop: 8, flexDirection: 'row', justifyContent: 'center', gap: 8 }]} onPress={() => setBulkOpen(true)}>
+                  <Layers size={14} color="#FFFFFF" />
+                  <Text style={styles.addBtnText}>Bulk 10 Ritase</Text>
+                </Pressable>
+                <Text style={{ fontSize: 10, color: '#64748B', textAlign: 'center', marginTop: 4, marginBottom: 8 }}>Isi 10 baris sekaligus — valid baris saja yang tersimpan, offline antri</Text>
+              </>
             )
           )}
 
