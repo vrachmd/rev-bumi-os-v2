@@ -196,7 +196,7 @@ export const SiteDetailView: React.FC<SiteDetailViewProps> = ({ id, onBack }) =>
 
           {delivery.photoUri ? (
             <View style={styles.evidenceCard}>
-              <Text style={styles.evidenceTitle}> Bukti Loading Quarry</Text>
+              <Text style={styles.evidenceTitle}>Bukti Loading Quarry</Text>
               <Pressable
                 onPress={() =>
                   setViewer({
@@ -217,8 +217,7 @@ export const SiteDetailView: React.FC<SiteDetailViewProps> = ({ id, onBack }) =>
               {delivery.evidencePlace ? (
                 <Text style={styles.evidenceMeta}> {delivery.evidencePlace}</Text>
               ) : null}
-              <Text style={styles.evidenceHint}>
-                Verifikasi muatan quarry vs pengukuran di site — tap foto untuk perbesar.
+              <Text style={styles.evidenceHint}>Verifikasi muatan quarry vs pengukuran di site — tap foto untuk perbesar.
               </Text>
             </View>
           ) : null}
@@ -231,7 +230,7 @@ export const SiteDetailView: React.FC<SiteDetailViewProps> = ({ id, onBack }) =>
                 onPress={lockGps}
               >
                 <Text style={styles.btnPrimaryText}>
-                  {gpsLocked ? ' GPS Terkunci' : ' Kunci GPS & Konfirmasi Tiba'}
+                  {gpsLocked ? 'GPS Terkunci' : 'Kunci GPS & Konfirmasi Tiba'}
                 </Text>
               </Pressable>
               <Text style={styles.hint}>Posisi: {siteGps.lat.toFixed(4)}, {siteGps.lng.toFixed(4)}</Text>
@@ -313,7 +312,7 @@ export const SiteDetailView: React.FC<SiteDetailViewProps> = ({ id, onBack }) =>
                   onPress={() => setSignatureSite(`TTD-S-${Date.now()}`)}
                 >
                   <Text style={[styles.signText, signatureSite && styles.signTextDone]}>
-                    {signatureSite ? ' Tanda tangan tercatat' : 'Tandatangani sekarang'}
+                    {signatureSite ? 'Tanda tangan tercatat' : 'Tandatangani sekarang'}
                   </Text>
                 </Pressable>
               </View>
@@ -347,7 +346,7 @@ export const SiteDetailView: React.FC<SiteDetailViewProps> = ({ id, onBack }) =>
                   onPress={() => setSignatureDriver(`TTD-D-${Date.now()}`)}
                 >
                   <Text style={[styles.signText, signatureDriver && styles.signTextDone]}>
-                    {signatureDriver ? ' Tanda tangan driver tercatat' : 'Tandatangani driver'}
+                    {signatureDriver ? 'Tanda tangan driver tercatat' : 'Tandatangani driver'}
                   </Text>
                 </Pressable>
               </View>

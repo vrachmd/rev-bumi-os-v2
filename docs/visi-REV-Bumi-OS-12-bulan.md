@@ -1,4 +1,4 @@
-# Visi REV Bumi OS 12 Bulan — dari Aplikasi ke OS Rantai Pasok
+# Visi REV Bumi OS 12 Bulan — dari Aplikasi ke Sistem Operasional dan Management
 
 > Arsitek-only. Sumber: `AGENTS.md:1` 3 pilar + 8 role, `ROADMAP.md:4`, `engine/*`, `supabase/migrations/0001-0006`.
 

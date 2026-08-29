@@ -28,7 +28,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({ variant = 'full', classNam
             </span>
           </div>
           <span className="text-[10px] text-slate-500 font-medium tracking-wide mt-0.5">
-            PT REV Bumi Nusantara Perkasa
+            REV BUMI NUSANTARA
           </span>
         </div>
       )}

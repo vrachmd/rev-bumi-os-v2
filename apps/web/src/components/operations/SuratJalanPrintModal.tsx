@@ -288,7 +288,7 @@ export const SuratJalanPrintModal: React.FC<SuratJalanPrintModalProps> = ({
 
           {/* Document Footer */}
           <div className="mt-6 pt-3 border-t border-slate-200 flex items-center justify-between text-[10px] text-slate-500">
-            <span>REV Bumi OS — Dokumen Operasional Sah PT REV Bumi Nusantara Perkasa</span>
+            <span>REV Bumi OS — Dokumen Operasional Sah REV BUMI NUSANTARA</span>
             <span>Dicetak Otomatis pada {new Date().toLocaleString('id-ID')}</span>
           </div>
         </div>

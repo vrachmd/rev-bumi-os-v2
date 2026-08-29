@@ -1,6 +1,6 @@
 # ROADMAP — REV Bumi OS menuju Produksi
 
-> Tujuan akhir: **sistem operasional produksi** untuk rantai pasok agregat PT REV Bumi Nusantara Perkasa.
+> Tujuan akhir: **sistem operasional dan management** untuk REV BUMI NUSANTARA.
 > Status: prototype/demo → **produksi**. Dokumen ini menjadi acuan prioritas kerja seluruh tim/agen berikutnya.
 > Keputusan backend: **Supabase (free tier) sekarang → deployment penuh di cloud GCP / Alibaba Cloud** (lihat §3, §4-Fase 4, §5).
 

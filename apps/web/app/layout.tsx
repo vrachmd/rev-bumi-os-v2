@@ -9,9 +9,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "REV Bumi OS",
+  title: "REV Bumi OS — REV BUMI NUSANTARA",
   description:
-    "Sistem Operasi Rantai Pasok Material Agregat PT REV Bumi Nusantara Perkasa",
+    "Sistem Operasional dan Management (Agregat Batu Split, Base Course, Pasir Cor, Abu Batu, Makadam) — REV BUMI NUSANTARA",
 };
 
 export default function RootLayout({

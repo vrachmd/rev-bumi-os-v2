@@ -95,8 +95,8 @@ export const LoginScreen: React.FC<{ onDone: () => void }> = ({ onDone }) => {
               <Mountain size={28} color="#FFFFFF" />
             </View>
             <Text style={styles.title}>REV Bumi OS</Text>
-            <Text style={styles.subtitle}>Sistem Operasi Rantai Pasok Agregat</Text>
-            <Text style={styles.version}>PT REV Bumi Nusantara Perkasa</Text>
+            <Text style={styles.subtitle}>Sistem Operasional dan Management Agregat</Text>
+            <Text style={styles.version}>REV BUMI NUSANTARA</Text>
           </View>
 
           <View style={styles.card}>

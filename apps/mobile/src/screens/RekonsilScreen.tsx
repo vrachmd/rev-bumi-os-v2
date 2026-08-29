@@ -186,7 +186,7 @@ export const RekonsilScreen: React.FC = () => {
               <View style={[styles.badge, ok ? styles.badgeOk : styles.badgeAlert]}>
                 <Text style={[styles.badgeText, ok ? styles.badgeTextOk : styles.badgeTextAlert]}>
                   {ok
-                    ? ' WITHIN TOLERANCE'
+                    ? 'WITHIN TOLERANCE'
                     : ` ABOVE TOLERANCE (${percent.toFixed(2)}% > 2%) — Investigasi deviasi`}
                 </Text>
               </View>
@@ -203,14 +203,14 @@ export const RekonsilScreen: React.FC = () => {
                     })
                   }
                 >
-                  <Text style={styles.evidenceBtnText}> Lihat Bukti Pengiriman</Text>
+                  <Text style={styles.evidenceBtnText}>Lihat Bukti Pengiriman</Text>
                 </Pressable>
               )}
 
               {isManager && (item.status === 'POD_SUBMITTED' || item.status === 'POD_VERIFIED') && (
                 <Pressable style={styles.resolveBtn} onPress={() => advancePod(item.id)}>
                   <Text style={styles.resolveBtnText}>
-                    {item.status === 'POD_SUBMITTED' ? ' Verifikasi e-POD' : ' Selesaikan Delivery'}
+                    {item.status === 'POD_SUBMITTED' ? 'Verifikasi e-POD' : 'Selesaikan Delivery'}
                   </Text>
                 </Pressable>
               )}

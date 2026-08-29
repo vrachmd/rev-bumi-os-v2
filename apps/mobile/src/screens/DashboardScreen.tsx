@@ -381,7 +381,7 @@ React.useEffect(() => {
           </Pressable>
           <View style={{ flex: 1 }}>
             <Text style={styles.brand}>{profile.name}</Text>
-            <Text style={styles.headerSub}>{ROLE_NAMES[profile.role]} • Sistem Operasional REV Bumi Nusantara</Text>
+            <Text style={styles.headerSub}>{ROLE_NAMES[profile.role]} • Sistem Operasional dan Management</Text>
           </View>
         </View>
       </View>
@@ -480,8 +480,7 @@ React.useEffect(() => {
                     )}
                   </>
                 ) : (
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#DC2626' }}>
-                     Vendor belum punya tarif untuk rute ini — atur tarif di web sebelum terbitkan
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#DC2626' }}>Vendor belum punya tarif untuk rute ini — atur tarif di web sebelum terbitkan
                   </Text>
                 )}
               </View>
@@ -663,7 +662,7 @@ React.useEffect(() => {
                         style={[styles.actionBtn, styles.actionEdit]}
                         onPress={() => openEdit(item)}
                       >
-                        <Text style={styles.actionText}> Edit</Text>
+                        <Text style={styles.actionText}>Edit</Text>
                       </Pressable>
                       <Pressable
                         style={[styles.actionBtn, styles.actionDelete]}
@@ -672,7 +671,7 @@ React.useEffect(() => {
                           setDeleteReason('');
                         }}
                       >
-                        <Text style={styles.actionText}> Hapus</Text>
+                        <Text style={styles.actionText}>Hapus</Text>
                       </Pressable>
                     </View>
                   )}
@@ -792,9 +791,9 @@ React.useEffect(() => {
                   <>
                     <Text style={styles.cardMain}>{product} · {quarry}</Text>
                     <Text style={styles.cardSub}>{d.plateNumber} · {d.driverName} · {vendor}</Text>
-                    <Text style={styles.cardSub}> {d.driverPhone || '-'}</Text>
+                    <Text style={styles.cardSub}>{d.driverPhone || '-'}</Text>
                     <Text style={styles.cardDate}>
-                       Jadwal: {formatDateShort(d.scheduledAt)} {formatClock(d.scheduledAt)}
+                      Jadwal: {formatDateShort(d.scheduledAt)} {formatClock(d.scheduledAt)}
                     </Text>
 
                     <View style={styles.detailRow}>
@@ -830,7 +829,7 @@ React.useEffect(() => {
 
                     {d.photoUri ? (
                       <>
-                        <Text style={styles.detailPhotoLabel}> Bukti Loading Quarry</Text>
+                        <Text style={styles.detailPhotoLabel}>Bukti Loading Quarry</Text>
                         <Pressable
                           onPress={() =>
                             setViewer({

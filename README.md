@@ -1,6 +1,6 @@
 # REV Bumi OS — Material Supply & Quantity Reconciliation Operating System
 
-Sistem Operasi Rantai Pasok Material Agregat Konstruksi, Rekonsiliasi Kubikasi, Logistik & Keuangan untuk **PT REV Bumi Nusantara Perkasa**.
+Sistem Operasional dan Management - Material Agregat, Rekonsiliasi Kubikasi, Logistik & Keuangan untuk **REV BUMI NUSANTARA**.
 
 ---
 

@@ -16,7 +16,7 @@ interface NavbarProps {
 const TAB_TITLES: Record<NavTab, { title: string; subtitle: string }> = {
   dashboard: {
     title: 'Operational & Commercial Cockpit',
-    subtitle: 'PT REV Bumi Nusantara Perkasa — Status Operasional & Ringkasan Bisnis',
+    subtitle: 'REV BUMI NUSANTARA — Status Operasional & Ringkasan Bisnis',
   },
   'field-handover': {
     title: 'Kontrol Lapangan Terintegrasi (Quarry & Site)',

@@ -8,7 +8,7 @@
 
 ## 1. Konteks Project
 
-**REV Bumi OS** — Sistem Operasi Rantai Pasok Material Konstruksi (agregat: batu split, base course, pasir cor, abu batu, makadam) untuk **PT REV Bumi Nusantara Perkasa**.
+**REV Bumi OS** — **Sistem Operasional dan Management** (Agregat Batu Split, Base Course, Pasir Cor, Abu Batu, Makadam) untuk **REV BUMI NUSANTARA**.
 
 - **Monorepo**: `rev-bumi-os/` (`apps/web` Next.js cockpit desktop, `apps/mobile` Expo React Native PWA lapangan, `packages/*` shared engine/types).
 - **Backend**: Supabase (PostgreSQL + Auth + RLS + Storage + Edge Functions), ref `kspgtupzjzdskeonnvvu`.
@@ -50,7 +50,7 @@
 ### Mobile Field App (Expo)
 - [x] Finance tab khusus MANAGEMENT: KPI real (Pendapatan = vol × contract price per proyek, HPP ALL_IN = rate armada / terpisah = qmc + freight), Laba Hari Ini.
 - [x] Rekonsil: chart variance per quarry + filter compact (Select proyek scrollable maxHeight 220, tanggal DD-MM-YYYY, status chip) di bawah chart.
-- [x] Dashboard: header presisi (avatar kiri, nama+role, subtitle "Sistem Operasional REV Bumi Nusantara", online dot), Ringkasan 3-3 MANAGEMENT, Ritase Hari Ini filter tanggal benar, empty state Truck icon.
+- [x] Dashboard: header presisi (avatar kiri, nama+role, subtitle "Sistem Operasional dan Management", online dot), Ringkasan 3-3 MANAGEMENT, Ritase Hari Ini filter tanggal benar, empty state Truck icon.
 - [x] Profile screen baru: avatar dari galeri/kamera, logout, swipe back.
 - [x] Animasi: tab spring scale, stack slide 220ms bezier(0.2,0,0,1).
 - [x] Full icon lucide-react-native (MainTabs, Finance, Quarry, Rekonsil) — emoji dihapus dari UI.

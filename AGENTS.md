@@ -5,7 +5,7 @@ Dokumen ini merupakan panduan arsitektur, domain operasional, aturan bisnis, dan
 ---
 
 ## 1. Ringkasan Sistem & Domain Bisnis
-**REV Bumi OS** adalah Sistem Operasi Rantai Pasok Material Konstruksi (Agregat Batu Split, Base Course, Pasir Cor, Abu Batu, Makadam) terintegrasi untuk **PT REV Bumi Nusantara Perkasa**.
+**REV Bumi OS** adalah **Sistem Operasional dan Management** (Agregat Batu Split, Base Course, Pasir Cor, Abu Batu, Makadam) terintegrasi untuk **REV BUMI NUSANTARA**.
 
 Sistem ini menjembatani 3 pilar operasional agregat:
 1. **Operasional Quarry & Pengaturan Armada**: Pemuatan agregat di quarry (Rumpin, Sudamanik, Bojonegara), pencatatan vendor angkutan, penimbangan jembatan timbang/dimensi bak truk, dan penerbitan Surat Jalan.

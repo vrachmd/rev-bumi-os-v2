@@ -381,7 +381,7 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
                   onPress={takeEvidence}
                 >
                   <Text style={[styles.signText, photoUri && styles.signTextDone]}>
-                    {photoUri ? ' Foto bukti dengan watermark' : ' Ambil Foto Bukti Muatan'}
+                    {photoUri ? 'Foto bukti dengan watermark' : ' Ambil Foto Bukti Muatan'}
                   </Text>
                 </Pressable>
                 {photoUri ? (
@@ -445,7 +445,7 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
                   onPress={() => setSignature(`TTD-Q-${Date.now()}`)}
                 >
                   <Text style={[styles.signText, signature && styles.signTextDone]}>
-                    {signature ? ' Tanda tangan tercatat' : 'Tandatangani sekarang'}
+                    {signature ? 'Tanda tangan tercatat' : 'Tandatangani sekarang'}
                   </Text>
                 </Pressable>
               </View>
@@ -476,7 +476,7 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
                   >
                     <Image source={{ uri: delivery.photoUri }} style={styles.evidencePhoto} />
                   </Pressable>
-                  <Text style={styles.infoMain}> Bukti Dokumentasi</Text>
+                  <Text style={styles.infoMain}>Bukti Dokumentasi</Text>
                   {delivery.evidenceAt ? (
                     <Text style={styles.infoSub}>
                        {formatDateLong(delivery.evidenceAt)} · {formatClockSeconds(delivery.evidenceAt)}
@@ -498,12 +498,12 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
                   onPress={() => setSignatureDriver(`TTD-DR-Q-${Date.now()}`)}
                 >
                   <Text style={[styles.signText, signatureDriver && styles.signTextDone]}>
-                    {signatureDriver ? ' Tanda tangan supir tercatat' : 'Tandatangani supir (opsional)'}
+                    {signatureDriver ? 'Tanda tangan supir tercatat' : 'Tandatangani supir (opsional)'}
                   </Text>
                 </Pressable>
               </View>
               <Pressable style={styles.btnPrimary} onPress={dispatch}>
-                <Text style={styles.btnPrimaryText}> Berangkatkan Truk (In-Transit)</Text>
+                <Text style={styles.btnPrimaryText}>Berangkatkan Truk (In-Transit)</Text>
               </Pressable>
             </>
           )}

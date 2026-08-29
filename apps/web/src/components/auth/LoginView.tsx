@@ -47,7 +47,7 @@ export const LoginView: React.FC<LoginViewProps> = () => {
                   REV BUMI OS
                 </h1>
                 <p className="text-emerald-200 text-xs mt-1 font-medium">
-                  PT REV Bumi Nusantara Perkasa
+                  REV BUMI NUSANTARA
                 </p>
               </div>
             </div>
