@@ -112,7 +112,7 @@ export async function fetchMobileMasterFromSupabase(): Promise<MobileMasterBundl
       supabase.from('contracts').select('*').eq('status', 'ACTIVE'),
       supabase.from('projects').select('*'),
       supabase.from('freight_rates').select('*').eq('is_active', true),
-      supabase.from('quarry_material_costs').select('quarry_id, product_id, density, cost_per_m3'),
+      supabase.from('quarry_material_costs').select('quarry_id, product_id, density, cost_per_m3, effective_date'),
     ]);
 
   if (prodRes.error) throw prodRes.error;
@@ -172,7 +172,7 @@ export async function fetchMobileMasterFromSupabase(): Promise<MobileMasterBundl
     };
   });
 
-  // Tarif berbasis projectId (kanonik web/DB: freight_rates.project_id).
+  // Tarif berbasis projectId (kanonik web/DB: freight_rates.project_id) + history effective_date.
   const freightRates: FreightRateItem[] = (freightRes.data ?? []).map((r) => ({
     id: r.id,
     vendorId: r.transport_vendor_id,
@@ -183,6 +183,8 @@ export async function fetchMobileMasterFromSupabase(): Promise<MobileMasterBundl
     tollFee: r.toll_fee != null ? Number(r.toll_fee) : undefined,
     loadingFee: r.loading_fee != null ? Number(r.loading_fee) : undefined,
     unloadingFee: r.unloading_fee != null ? Number(r.unloading_fee) : undefined,
+    effectiveDate: r.effective_date ?? undefined,
+    isActive: r.is_active ?? true,
   }));
 
   const quarryMaterialCosts = (qmcRes.data ?? []).map((r: any) => ({
@@ -190,6 +192,7 @@ export async function fetchMobileMasterFromSupabase(): Promise<MobileMasterBundl
     productId: r.product_id as string,
     density: r.density != null ? Number(r.density) : null,
     costPerM3: Number(r.cost_per_m3),
+    effectiveDate: r.effective_date ?? undefined,
   }));
 
   return { products, quarries, vendors, vehicles, contracts, freightRates, quarryMaterialCosts };
@@ -197,15 +200,16 @@ export async function fetchMobileMasterFromSupabase(): Promise<MobileMasterBundl
 
 /**
  * Ambil seluruh ritase dari Supabase dalam bentuk DeliveryItem mobile.
- * Plate number di-resolve dari tabel vehicles.
+ * Plate number di-resolve dari tabel vehicles. Cost_records di-join sebagai ledger (parity web 08cbde3).
  */
 export async function fetchMobileDeliveriesFromSupabase(): Promise<DeliveryItem[]> {
-  const [deliveryRes, vehicleRes, wbRes, podRes, recRes] = await Promise.all([
+  const [deliveryRes, vehicleRes, wbRes, podRes, recRes, costRes] = await Promise.all([
     supabase.from('deliveries').select('*').order('created_at', { ascending: false }),
     supabase.from('vehicles').select('id, plate_number'),
     supabase.from('weighbridge_records').select('*'),
     supabase.from('delivery_pods').select('*'),
     supabase.from('quantity_reconciliations').select('*'),
+    supabase.from('cost_records').select('*'),
   ]);
 
   if (deliveryRes.error) throw deliveryRes.error;
@@ -218,6 +222,8 @@ export async function fetchMobileDeliveriesFromSupabase(): Promise<DeliveryItem[
   (podRes.data ?? []).forEach((r) => podByDelivery.set(r.delivery_id, r as Record<string, unknown>));
   const recByDelivery = new Map<string, ReconciliationDbRow>();
   (recRes.data ?? []).forEach((r) => recByDelivery.set(r.delivery_id, r as ReconciliationDbRow));
+  const costByDelivery = new Map<string, Record<string, unknown>>();
+  (costRes.data ?? []).forEach((r) => costByDelivery.set((r as Record<string, unknown>).delivery_id as string, r as Record<string, unknown>));
 
   return (deliveryRes.data ?? []).map((d) => {
     const row = d as DeliveryDbRow;
@@ -227,6 +233,7 @@ export async function fetchMobileDeliveriesFromSupabase(): Promise<DeliveryItem[
     const pod = podByDelivery.get(row.id);
     const rec = recByDelivery.get(row.id);
 
+    const costRaw = costByDelivery.get(row.id) as Record<string, unknown> | undefined;
     const item: DeliveryItem = {
       id: row.id,
       deliveryNumber: row.delivery_number,
@@ -253,6 +260,21 @@ export async function fetchMobileDeliveriesFromSupabase(): Promise<DeliveryItem[
       deliveredAt: row.delivered_at ?? undefined,
       varianceM3: rec ? Number(rec.physical_variance_m3) : undefined,
       variancePercent: rec ? Number(rec.variance_percentage) : undefined,
+      costRecord: costRaw ? {
+        deliveryId: row.id,
+        billableQuantityM3: Number(costRaw.billable_quantity_m3),
+        sellingPricePerM3: Number(costRaw.selling_price_per_m3),
+        recognizedRevenueIdr: Number(costRaw.recognized_revenue_idr),
+        materialCostPerM3: Number(costRaw.material_cost_per_m3),
+        totalMaterialCostIdr: Number(costRaw.total_material_cost_idr),
+        freightRatePerUnit: Number(costRaw.freight_rate_per_unit),
+        freightPricingModel: ((costRaw.freight_pricing_model as string) ?? 'PER_M3') as DeliveryItem['costRecord'] extends { freightPricingModel: infer T } ? T : never,
+        totalFreightCostIdr: Number(costRaw.total_freight_cost_idr),
+        otherOperationalCostIdr: Number(costRaw.other_operational_cost_idr),
+        totalHppIdr: Number(costRaw.total_hpp_idr),
+        grossProfitIdr: Number(costRaw.gross_profit_idr),
+        grossMarginPercent: Number(costRaw.gross_margin_percent),
+      } : undefined,
     };
 
     // quarry_loading_info kanonik web: measurementMethod + grossWeightKg/tareWeightKg/quarryPhotoUrl/signatureUrl/loadedAt/notes/truckBedDimensions.
@@ -516,6 +538,8 @@ export function subscribeMobileDeliveryChanges(onChange: () => void): () => void
     .on('postgres_changes', { event: '*', schema: 'public', table: 'deliveries' }, onChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'weighbridge_records' }, onChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'delivery_pods' }, onChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'quantity_reconciliations' }, onChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'cost_records' }, onChange)
     .subscribe();
   return () => {
     supabase.removeChannel(channel);

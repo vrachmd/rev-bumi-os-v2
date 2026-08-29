@@ -48,6 +48,24 @@ export interface FreightRateItem {
   tollFee?: number;
   loadingFee?: number;
   unloadingFee?: number;
+  effectiveDate?: string;
+  isActive?: boolean;
+}
+
+export interface CostRecordMobile {
+  deliveryId: string;
+  billableQuantityM3: number;
+  sellingPricePerM3: number;
+  recognizedRevenueIdr: number;
+  materialCostPerM3: number;
+  totalMaterialCostIdr: number;
+  freightRatePerUnit: number;
+  freightPricingModel: MobileFreightPricingModel;
+  totalFreightCostIdr: number;
+  otherOperationalCostIdr: number;
+  totalHppIdr: number;
+  grossProfitIdr: number;
+  grossMarginPercent: number;
 }
 
 export interface DeliveryItem {
@@ -95,6 +113,7 @@ export interface DeliveryItem {
 
   varianceM3?: number;
   variancePercent?: number;
+  costRecord?: CostRecordMobile;
 }
 
 export type QuarryLoadingInput =
@@ -154,6 +173,7 @@ export interface QuarryMaterialCost {
   productId: string;
   density: number | null;
   costPerM3: number;
+  effectiveDate?: string;
 }
 
 export interface MobileMasterBundle {

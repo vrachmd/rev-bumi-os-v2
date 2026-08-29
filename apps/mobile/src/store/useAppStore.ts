@@ -69,7 +69,9 @@ interface AppState {
   refreshQueueStatus: () => Promise<void>;
   hydrateMaster: (bundle: MobileMasterBundle) => void;
   hydrateDeliveries: (deliveries: DeliveryItem[]) => void;
-  getDensity: (productId: string, quarryId: string) => number;
+  getDensity: (productId: string, quarryId: string, asOfDate?: string) => number;
+  resolveQuarryCost: (quarryId: string, productId: string, asOfDate: string) => QuarryMaterialCost | undefined;
+  resolveFreightRate: (vendorId: string, quarryId: string, projectId: string, asOfDate: string) => FreightRateItem | undefined;
   addVendor: (name: string, detail?: string, supplyType?: MobileVendorSupplyType) => string;
   addVehicle: (transportVendorId: string, name: string, detail?: string) => string;
   addRitase: (input: NewRitaseInput) => void;
@@ -280,10 +282,36 @@ export const useAppStore = create<AppState>((set, get) => ({
     void AsyncStorage.setItem(KEY_LAST_DELIVERIES, JSON.stringify(deliveries));
   },
 
-  getDensity: (productId, quarryId) => {
+  // history-aware: pilih cost dengan effectiveDate <= asOfDate paling dekat (parity web resolveQuarryCost)
+  resolveQuarryCost: (quarryId, productId, asOfDate) => {
     const state = get();
-    const override = state.quarryMaterialCosts.find((x) => x.productId === productId && x.quarryId === quarryId);
-    if (override?.density != null) return override.density;
+    const candidates = state.quarryMaterialCosts.filter((x) => x.quarryId === quarryId && x.productId === productId);
+    if (candidates.length === 0) return undefined;
+    const as = asOfDate.slice(0, 10);
+    const eligible = candidates.filter((c) => !c.effectiveDate || c.effectiveDate.slice(0, 10) <= as);
+    const pick = (eligible.length > 0 ? eligible : candidates).sort((a, b) => (b.effectiveDate ?? '').localeCompare(a.effectiveDate ?? ''))[0];
+    return pick;
+  },
+
+  resolveFreightRate: (vendorId, quarryId, projectId, asOfDate) => {
+    const state = get();
+    const candidates = state.freightRates.filter((r) => r.vendorId === vendorId && r.quarryId === quarryId && r.projectId === projectId);
+    if (candidates.length === 0) return undefined;
+    const as = asOfDate.slice(0, 10);
+    const eligible = candidates.filter((r) => !r.effectiveDate || r.effectiveDate.slice(0, 10) <= as);
+    const pick = (eligible.length > 0 ? eligible : candidates).sort((a, b) => (b.effectiveDate ?? '').localeCompare(a.effectiveDate ?? ''))[0];
+    return pick;
+  },
+
+  getDensity: (productId, quarryId, asOfDate) => {
+    const state = get();
+    if (asOfDate) {
+      const picked = get().resolveQuarryCost(quarryId, productId, asOfDate);
+      if (picked?.density != null) return picked.density;
+    } else {
+      const override = state.quarryMaterialCosts.find((x) => x.productId === productId && x.quarryId === quarryId);
+      if (override?.density != null) return override.density;
+    }
     return densityByProduct(productId);
   },
 
@@ -440,7 +468,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     let loadedVolumeM3 = 0;
     let loadedWeightKg = 0;
-    let densityApplied = input.method === 'WEIGHBRIDGE' ? input.densityTonPerM3 : state.getDensity(delivery.productId, delivery.quarryId);
+    // history-aware density (effective_date) — pakai tanggal muat evidenceAt
+    const asOf = (input as unknown as { evidenceAt?: string }).evidenceAt ?? new Date().toISOString();
+    let densityApplied = input.method === 'WEIGHBRIDGE' ? input.densityTonPerM3 : state.getDensity(delivery.productId, delivery.quarryId, asOf);
     const base: Partial<DeliveryItem> = { status: 'LOADING', densityApplied, quarryCheckerName: state.profile.name };
 
     if (input.method === 'WEIGHBRIDGE') {

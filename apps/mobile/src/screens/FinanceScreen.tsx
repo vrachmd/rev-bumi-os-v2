@@ -14,7 +14,8 @@ const formatIDRShort = (n: number) => {
 const formatPct = (n: number) => `${n.toFixed(1)}%`;
 
 export const FinanceScreen: React.FC = () => {
-  const { profile, deliveries, contracts, quarryMaterialCosts, freightRates, quarries } = useAppStore();
+  const { profile, deliveries, contracts } = useAppStore();
+  const store = useAppStore();
 
   if (profile.role !== 'MANAGEMENT') {
     return (
@@ -36,22 +37,43 @@ export const FinanceScreen: React.FC = () => {
   const delivered = useMemo(() => deliveries.filter((d) => d.status === 'DELIVERED'), [deliveries]);
 
   const stats = useMemo(() => {
-    let revenue = 0, materialCost = 0, freightCost = 0, approvedM3 = 0;
+    let revenue = 0, materialCost = 0, freightCost = 0, otherCost = 0, approvedM3 = 0;
     const byProject = new Map<string, { vol: number; rev: number; hpp: number; count: number }>();
+    // other per-rit per plant (parity web 80dc48e): Sunter/Pluit 100K, Legok/Dadap/Bogor 150K
+    const otherPerRit = (pid: string) => (pid === 'proj-04' || pid === 'proj-06' ? 100000 : pid === 'proj-05' || pid === 'proj-07' || pid === 'proj-08' ? 150000 : 100000);
+    const resolveQmc = (quarryId: string, productId: string, asOf: string) => store.resolveQuarryCost(quarryId, productId, asOf);
+    const resolveRate = (vendorId: string, quarryId: string, projectId: string, asOf: string) => store.resolveFreightRate(vendorId, quarryId, projectId, asOf);
     for (const d of delivered) {
+      // ledger priority (parity web 08cbde3): pakai cost_records tersimpan bila ada
+      if (d.costRecord) {
+        revenue += d.costRecord.recognizedRevenueIdr;
+        materialCost += d.costRecord.totalMaterialCostIdr;
+        freightCost += d.costRecord.totalFreightCostIdr;
+        otherCost += d.costRecord.otherOperationalCostIdr;
+        const vol = d.costRecord.billableQuantityM3 ?? d.approvedVolumeM3 ?? 0;
+        approvedM3 += vol;
+        const contract = contracts.find((c) => c.id === d.contractId);
+        if (contract) {
+          const cur = byProject.get(contract.projectId) ?? { vol: 0, rev: 0, hpp: 0, count: 0 };
+          cur.vol += vol; cur.rev += d.costRecord.recognizedRevenueIdr; cur.hpp += d.costRecord.totalHppIdr; cur.count += 1;
+          byProject.set(contract.projectId, cur);
+        }
+        continue;
+      }
       const contract = contracts.find((c) => c.id === d.contractId);
       const vol = d.approvedVolumeM3 ?? d.receivedVolumeM3 ?? d.loadedVolumeM3 ?? 0;
       approvedM3 += vol;
       if (!contract) continue;
+      const asOf = d.scheduledAt.slice(0, 10);
       const unitPrice = contract.unitPricePerM3 || 175000;
       const rev = vol * unitPrice;
       revenue += rev;
-      const qmc = quarryMaterialCosts.find((x) => x.productId === d.productId && x.quarryId === d.quarryId);
-      const rate = freightRates.find((r) => r.quarryId === d.quarryId && r.projectId === contract.projectId);
+      const qmc = resolveQmc(d.quarryId, d.productId, asOf);
+      const rate = resolveRate(d.transportVendorId, d.quarryId, contract.projectId, asOf);
       const isAllIn = rate?.pricingModel === 'ALL_IN';
       let mat = 0, fr = 0;
       if (isAllIn) {
-        fr = vol * rate!.ratePerUnit; // ALL_IN sudah include material+angkut
+        fr = vol * rate!.ratePerUnit;
       } else {
         mat = vol * (qmc?.costPerM3 ?? 95000);
         if (rate) {
@@ -60,18 +82,20 @@ export const FinanceScreen: React.FC = () => {
           else if (rate.pricingModel === 'PER_TON') fr = vol * (qmc?.density ?? 1.6) * rate.ratePerUnit;
         }
       }
+      const oth = otherPerRit(contract.projectId);
       materialCost += mat;
       freightCost += fr;
+      otherCost += oth;
       const key = contract.projectId;
       const cur = byProject.get(key) ?? { vol: 0, rev: 0, hpp: 0, count: 0 };
-      cur.vol += vol; cur.rev += rev; cur.hpp += mat + fr; cur.count += 1;
+      cur.vol += vol; cur.rev += rev; cur.hpp += mat + fr + oth; cur.count += 1;
       byProject.set(key, cur);
     }
-    const hpp = materialCost + freightCost;
+    const hpp = materialCost + freightCost + otherCost;
     const gross = revenue - hpp;
     const margin = revenue > 0 ? (gross / revenue) * 100 : 0;
-    return { revenue, materialCost, freightCost, hpp, gross, margin, approvedM3, count: delivered.length, byProject };
-  }, [delivered, contracts, quarryMaterialCosts, freightRates]);
+    return { revenue, materialCost, freightCost, otherCost, hpp, gross, margin, approvedM3, count: delivered.length, byProject };
+  }, [delivered, contracts, store]);
 
   const heroMarginColor = stats.margin >= 25 ? '#10B981' : stats.margin >= 15 ? '#F59E0B' : '#EF4444';
   const heroMarginLabel = stats.margin >= 25 ? 'Sehat' : stats.margin >= 15 ? 'Waspada' : 'Kritis';
@@ -121,19 +145,19 @@ export const FinanceScreen: React.FC = () => {
             <View style={[styles.kpiIconWrap, { backgroundColor: '#EDE9FE' }]}><Mountain size={14} color="#8B5CF6" /></View>
             <Text style={styles.kpiLabel}>Material</Text>
             <Text style={styles.kpiValue} numberOfLines={1} adjustsFontSizeToFit>{formatIDRShort(stats.materialCost)}</Text>
-            <Text style={styles.kpiSub}>qmc cost/m³</Text>
+            <Text style={styles.kpiSub}>qmc history-aware</Text>
           </View>
           <View style={[styles.kpiCard, { borderLeftColor: '#F59E0B' }]}>
             <View style={[styles.kpiIconWrap, { backgroundColor: '#FEF3C7' }]}><Truck size={14} color="#F59E0B" /></View>
             <Text style={styles.kpiLabel}>Freight</Text>
             <Text style={styles.kpiValue} numberOfLines={1} adjustsFontSizeToFit>{formatIDRShort(stats.freightCost)}</Text>
-            <Text style={styles.kpiSub}>per m³/trip/ton</Text>
+            <Text style={styles.kpiSub}>history + ledger</Text>
           </View>
           <View style={[styles.kpiCard, { borderLeftColor: '#10B981' }]}>
             <View style={[styles.kpiIconWrap, { backgroundColor: '#D1FAE5' }]}><FileText size={14} color="#10B981" /></View>
             <Text style={styles.kpiLabel}>HPP Total</Text>
             <Text style={styles.kpiValue} numberOfLines={1} adjustsFontSizeToFit>{formatIDRShort(stats.hpp)}</Text>
-            <Text style={styles.kpiSub}>material + freight</Text>
+            <Text style={styles.kpiSub}>+ other {formatIDRShort(stats.otherCost)}</Text>
           </View>
         </View>
 
@@ -171,9 +195,9 @@ export const FinanceScreen: React.FC = () => {
         {/* Insight */}
         <View style={styles.insightCard}>
           <Text style={styles.insightTitle}>Sumber & Catatan</Text>
-          <Text style={styles.insightText}><Text style={styles.insightBold}>Density & cost</Text> per quarry×product dari `quarry_material_costs` (fallback `products.density 1.6`).</Text>
-          <Text style={styles.insightText}><Text style={styles.insightBold}>Freight</Text> `frate-01..13` per `projectId` — `ALL_IN` sudah include material.</Text>
-          <Text style={styles.insightText}><Text style={styles.insightBold}>Approved</Text> = `min(loaded, received)` toleransi 2% — update OTA `eas update` tanpa APK baru.</Text>
+          <Text style={styles.insightText}><Text style={styles.insightBold}>Ledger</Text> `cost_records` (499 rit) prioritas — sinkron web `08cbde3`.</Text>
+          <Text style={styles.insightText}><Text style={styles.insightBold}>Fallback</Text> history-aware `effective_date` (`quarry_material_costs` + `freight_rates`) + other per-rit 100K/150K per plant.</Text>
+          <Text style={styles.insightText}><Text style={styles.insightBold}>Approved</Text> `billable_quantity` toleransi 2% — OTA `eas update` tanpa APK baru.</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
