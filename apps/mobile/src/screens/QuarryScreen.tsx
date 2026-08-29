@@ -11,8 +11,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { StatusBar as RNStatusBar } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { captureRef } from 'react-native-view-shot';
@@ -39,22 +40,25 @@ interface QuarryListViewProps {
 
 export const QuarryListView: React.FC<QuarryListViewProps> = ({ onSelect }) => {
   const { deliveries, products, quarries, vendors, contracts } = useAppStore();
+  const insets = useSafeAreaInsets();
 
   const quarryList = deliveries.filter((d) => d.status === 'SCHEDULED' || d.status === 'LOADING');
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: '#003C16' }]} edges={['top', 'left', 'right']}>
-      <StatusBar style="light" />
-      <View style={styles.header}>
-        <Text style={styles.title}>1 · Quarry Loading</Text>
-        <Text style={styles.subtitle}>Pilih ritase untuk proses pemuatan & timbang</Text>
-      </View>
+    <View style={{ flex: 1, backgroundColor: '#003C16' }}>
+      <RNStatusBar barStyle="light-content" backgroundColor="#003C16" translucent={false} />
+      <SafeAreaView style={[styles.safe, { backgroundColor: '#003C16' }]} edges={['top', 'left', 'right']}>
+        <StatusBar style="light" />
+        <View style={[styles.header, { paddingTop: Math.max(12, insets.top > 0 ? 12 : (RNStatusBar.currentHeight ?? 24) + 8) }]}>
+          <Text style={styles.title}>1 · Quarry Loading</Text>
+          <Text style={styles.subtitle}>Pilih ritase untuk proses pemuatan & timbang</Text>
+        </View>
       <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
-      <FlatList
-        data={quarryList}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={<Text style={styles.empty}>Tidak ada ritase untuk diproses di quarry.</Text>}
+        <FlatList
+          data={quarryList}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={<Text style={styles.empty}>Tidak ada ritase untuk diproses di quarry.</Text>}
         renderItem={({ item }) => {
           const product = labelFrom(products, item.productId);
           const quarry = labelFrom(quarries, item.quarryId);
@@ -75,9 +79,10 @@ export const QuarryListView: React.FC<QuarryListViewProps> = ({ onSelect }) => {
             </Pressable>
           );
         }}
-      />
-      </View>
-    </SafeAreaView>
+        />
+        </View>
+      </SafeAreaView>
+    </View>
   );
 };
 
@@ -141,6 +146,7 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
   }, [rawUri, evidenceGps, evidencePlace, wmReady, photoUri]);
 
   const panHandlers = useSwipeBack(onBack);
+  const insets = useSafeAreaInsets();
 
   const delivery = deliveries.find((d) => d.id === id);
   const density = delivery ? getDensity(delivery.productId, delivery.quarryId) : 1.6;
@@ -256,10 +262,12 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: '#003C16' }]} edges={['top', 'left', 'right']} {...panHandlers}>
-      <StatusBar style="light" />
-      <View style={styles.header}>
-        <Text style={styles.title}>Loading Quarry</Text>
+    <View style={{ flex: 1, backgroundColor: '#003C16' }}>
+      <RNStatusBar barStyle="light-content" backgroundColor="#003C16" translucent={false} />
+      <SafeAreaView style={[styles.safe, { backgroundColor: '#003C16' }]} edges={['top', 'left', 'right']} {...panHandlers}>
+        <StatusBar style="light" />
+        <View style={[styles.header, { paddingTop: Math.max(12, insets.top > 0 ? 12 : (RNStatusBar.currentHeight ?? 24) + 8) }]}>
+          <Text style={styles.title}>Loading Quarry</Text>
         <Text style={styles.subtitle}>
           {delivery.deliveryNumber} · {quarry}
         </Text>
@@ -521,7 +529,8 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
         label="Bukti Loading Quarry"
         onClose={() => setViewer(null)}
       />
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
