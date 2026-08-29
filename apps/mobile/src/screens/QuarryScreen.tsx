@@ -40,19 +40,16 @@ interface QuarryListViewProps {
 
 export const QuarryListView: React.FC<QuarryListViewProps> = ({ onSelect }) => {
   const { deliveries, products, quarries, vendors, contracts } = useAppStore();
-  const insets = useSafeAreaInsets();
 
   const quarryList = deliveries.filter((d) => d.status === 'SCHEDULED' || d.status === 'LOADING');
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#003C16' }}>
-      <RNStatusBar barStyle="light-content" backgroundColor="#003C16" translucent={false} />
-      <SafeAreaView style={[styles.safe, { backgroundColor: '#003C16' }]} edges={['top', 'left', 'right']}>
-        <StatusBar style="light" />
-        <View style={[styles.header, { paddingTop: Math.max(12, insets.top > 0 ? 12 : (RNStatusBar.currentHeight ?? 24) + 8) }]}>
-          <Text style={styles.title}>1 · Quarry Loading</Text>
-          <Text style={styles.subtitle}>Pilih ritase untuk proses pemuatan & timbang</Text>
-        </View>
+    <SafeAreaView style={[styles.safe, { backgroundColor: '#F8FAFC' }]} edges={['left', 'right', 'bottom']}>
+      <StatusBar style="light" />
+      <View style={styles.header}>
+        <Text style={styles.title}>1 · Quarry Loading</Text>
+        <Text style={styles.subtitle}>Pilih ritase untuk proses pemuatan & timbang</Text>
+      </View>
       <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
         <FlatList
           data={quarryList}
@@ -82,7 +79,6 @@ export const QuarryListView: React.FC<QuarryListViewProps> = ({ onSelect }) => {
         />
         </View>
       </SafeAreaView>
-    </View>
   );
 };
 

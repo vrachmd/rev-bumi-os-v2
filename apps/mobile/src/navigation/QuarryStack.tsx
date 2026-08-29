@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, View, TouchableOpacity, Text } from 'react-native';
+import { Animated, Easing, View, TouchableOpacity, Text, StatusBar as RNStatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { QuarryListView, QuarryDetailView } from '../screens/QuarryScreen';
 import { BulkQuarryScreen } from '../screens/BulkQuarryScreen';
 
 export const QuarryStack: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const insets = useSafeAreaInsets();
   const slide = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -29,8 +31,10 @@ export const QuarryStack: React.FC = () => {
     );
   }
   return (
-    <View style={{ flex: 1 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 8, backgroundColor: '#F8FAFC' }}>
+    <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+      <RNStatusBar barStyle="light-content" backgroundColor="#003C16" translucent={false} />
+      <View style={{ height: insets.top > 0 ? insets.top : (RNStatusBar.currentHeight ?? 24), backgroundColor: '#003C16' }} />
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 8, backgroundColor: '#F8FAFC', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }}>
         <TouchableOpacity onPress={() => setBulkOpen(true)} style={{ backgroundColor: '#003C16', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 }}>
           <Text style={{ color: 'white', fontWeight: '800', fontSize: 12 }}>+ Bulk 10 Ritase</Text>
         </TouchableOpacity>
