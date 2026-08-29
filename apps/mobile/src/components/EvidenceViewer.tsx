@@ -1,6 +1,8 @@
 import React from 'react';
 import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Clock3, MapPin } from 'lucide-react-native';
 import { formatClockSeconds, formatDateLong } from '../utils/format';
+import { colors, font } from '../theme/tokens';
 
 const LOGO = require('../../assets/logo.png');
 
@@ -38,14 +40,21 @@ export const EvidenceViewer: React.FC<EvidenceViewerProps> = ({
         </View>
         {label ? <Text style={styles.metaLabel}>{label}</Text> : null}
         {timestamp ? (
-          <Text style={styles.metaText}>
-            🕐 {formatDateLong(timestamp)} · {formatClockSeconds(timestamp)}
-          </Text>
+          <View style={styles.metaRow}>
+            <Clock3 size={12} color="#FFFFFF" />
+            <Text style={styles.metaText}> {formatDateLong(timestamp)} · {formatClockSeconds(timestamp)}</Text>
+          </View>
         ) : null}
         {place ? (
-          <Text style={styles.metaText}>📍 {place}</Text>
+          <View style={styles.metaRow}>
+            <MapPin size={12} color="#FFFFFF" />
+            <Text style={styles.metaText}> {place}</Text>
+          </View>
         ) : gps ? (
-          <Text style={styles.metaText}>📍 {gps.lat.toFixed(5)}, {gps.lng.toFixed(5)}</Text>
+          <View style={styles.metaRow}>
+            <MapPin size={12} color="#FFFFFF" />
+            <Text style={styles.metaText}> {gps.lat.toFixed(5)}, {gps.lng.toFixed(5)}</Text>
+          </View>
         ) : null}
         <Pressable style={styles.closeBtn} onPress={onClose}>
           <Text style={styles.closeText}>Tutup</Text>
@@ -76,7 +85,7 @@ const styles = StyleSheet.create({
   metaLabel: {
     color: '#A7D7B6',
     fontSize: 11,
-    fontWeight: '800',
+    fontFamily: font.extraBold,
     textTransform: 'uppercase',
     marginBottom: 4,
   },
@@ -85,16 +94,17 @@ const styles = StyleSheet.create({
   brandText: {
     color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: '900',
+    fontFamily: font.black,
     letterSpacing: 0.5,
   },
-  metaText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600', marginTop: 2 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2, justifyContent: 'center' },
+  metaText: { color: '#FFFFFF', fontSize: 12, fontFamily: font.semiBold, marginTop: 0 },
   closeBtn: {
     marginTop: 12,
-    backgroundColor: '#003C16',
+    backgroundColor: colors.primary,
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 28,
   },
-  closeText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
+  closeText: { color: '#FFFFFF', fontSize: 13, fontFamily: font.extraBold },
 });

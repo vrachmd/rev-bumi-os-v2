@@ -481,7 +481,7 @@ React.useEffect(() => {
                   </>
                 ) : (
                   <Text style={{ fontSize: 11, fontWeight: '700', color: '#DC2626' }}>
-                    ⚠ Vendor belum punya tarif untuk rute ini — atur tarif di web sebelum terbitkan
+                     Vendor belum punya tarif untuk rute ini — atur tarif di web sebelum terbitkan
                   </Text>
                 )}
               </View>
@@ -663,7 +663,7 @@ React.useEffect(() => {
                         style={[styles.actionBtn, styles.actionEdit]}
                         onPress={() => openEdit(item)}
                       >
-                        <Text style={styles.actionText}>✏️ Edit</Text>
+                        <Text style={styles.actionText}> Edit</Text>
                       </Pressable>
                       <Pressable
                         style={[styles.actionBtn, styles.actionDelete]}
@@ -672,7 +672,7 @@ React.useEffect(() => {
                           setDeleteReason('');
                         }}
                       >
-                        <Text style={styles.actionText}>🗑️ Hapus</Text>
+                        <Text style={styles.actionText}> Hapus</Text>
                       </Pressable>
                     </View>
                   )}
@@ -740,7 +740,7 @@ React.useEffect(() => {
                 </View>
                 {etaData && detailTarget?.status === 'IN_TRANSIT' && (
                   <View style={styles.etaCard}>
-                    <Text style={styles.etaTitle}>🚚 Perkiraan Tiba (ETA)</Text>
+                    <Text style={styles.etaTitle}> Perkiraan Tiba (ETA)</Text>
                     {etaData.loading ? (
                       <Text style={styles.etaLoading}>Menghitung rute...</Text>
                     ) : etaData.error ? (
@@ -792,9 +792,9 @@ React.useEffect(() => {
                   <>
                     <Text style={styles.cardMain}>{product} · {quarry}</Text>
                     <Text style={styles.cardSub}>{d.plateNumber} · {d.driverName} · {vendor}</Text>
-                    <Text style={styles.cardSub}>📞 {d.driverPhone || '-'}</Text>
+                    <Text style={styles.cardSub}> {d.driverPhone || '-'}</Text>
                     <Text style={styles.cardDate}>
-                      📅 Jadwal: {formatDateShort(d.scheduledAt)} {formatClock(d.scheduledAt)}
+                       Jadwal: {formatDateShort(d.scheduledAt)} {formatClock(d.scheduledAt)}
                     </Text>
 
                     <View style={styles.detailRow}>
@@ -830,7 +830,7 @@ React.useEffect(() => {
 
                     {d.photoUri ? (
                       <>
-                        <Text style={styles.detailPhotoLabel}>📸 Bukti Loading Quarry</Text>
+                        <Text style={styles.detailPhotoLabel}> Bukti Loading Quarry</Text>
                         <Pressable
                           onPress={() =>
                             setViewer({

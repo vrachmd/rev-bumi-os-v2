@@ -14,6 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { supabase, isSupabaseConfigured } from '../utils/supabase';
 import { useAppStore } from '../store/useAppStore';
+import { Mountain, Lock, Mail, KeyRound } from 'lucide-react-native';
+import { colors, font, radius } from '../theme/tokens';
 import type { MobileRole } from '../types';
 
 const ROLE_FROM_DB: Record<string, MobileRole> = {
@@ -90,14 +92,18 @@ export const LoginScreen: React.FC<{ onDone: () => void }> = ({ onDone }) => {
         >
           <View style={styles.brand}>
             <View style={styles.logoBadge}>
-              <Text style={styles.logoText}>⛰️</Text>
+              <Mountain size={28} color="#FFFFFF" />
             </View>
             <Text style={styles.title}>REV Bumi OS</Text>
-            <Text style={styles.subtitle}>Sistem Operasi Rantai Pasok Material Konstruksi</Text>
+            <Text style={styles.subtitle}>Sistem Operasi Rantai Pasok Agregat</Text>
+            <Text style={styles.version}>PT REV Bumi Nusantara Perkasa</Text>
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Masuk Akun Lapangan</Text>
+            <View style={styles.cardHeader}>
+              <Lock size={16} color={colors.primary} />
+              <Text style={styles.cardTitle}>Masuk Akun Lapangan</Text>
+            </View>
 
             {!configured && (
               <View style={styles.infoBox}>
@@ -105,24 +111,30 @@ export const LoginScreen: React.FC<{ onDone: () => void }> = ({ onDone }) => {
               </View>
             )}
 
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="#94A3B8"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              autoComplete="email"
-              keyboardType="email-address"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#94A3B8"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+            <View style={styles.inputWrap}>
+              <Mail size={16} color={colors.muted} style={styles.inputIcon} />
+              <TextInput
+                style={styles.inputWithIcon}
+                placeholder="Email"
+                placeholderTextColor={colors.mutedLight}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                autoComplete="email"
+                keyboardType="email-address"
+              />
+            </View>
+            <View style={styles.inputWrap}>
+              <KeyRound size={16} color={colors.muted} style={styles.inputIcon} />
+              <TextInput
+                style={styles.inputWithIcon}
+                placeholder="Password"
+                placeholderTextColor={colors.mutedLight}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
 
             {error && <Text style={styles.error}>{error}</Text>}
 
@@ -151,7 +163,7 @@ export const LoginScreen: React.FC<{ onDone: () => void }> = ({ onDone }) => {
 };
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#003C16' },
+  safe: { flex: 1, backgroundColor: colors.primary },
   flex: { flex: 1 },
   container: {
     flexGrow: 1,
@@ -162,57 +174,82 @@ const styles = StyleSheet.create({
   logoBadge: {
     width: 64,
     height: 64,
-    borderRadius: 16,
+    borderRadius: radius.xxl,
     backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
   },
-  logoText: { fontSize: 30 },
-  title: { color: '#fff', fontSize: 24, fontWeight: '800', letterSpacing: 0.5 },
-  subtitle: { color: 'rgba(255,255,255,0.75)', fontSize: 12, marginTop: 4, textAlign: 'center' },
+  title: { color: '#fff', fontSize: 24, fontFamily: font.black, letterSpacing: 0.5 },
+  subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 12, fontFamily: font.semiBold, marginTop: 4, textAlign: 'center' },
+  version: { color: 'rgba(255,255,255,0.6)', fontSize: 10, fontFamily: font.regular, marginTop: 2 },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderRadius: radius.xl,
     padding: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A', marginBottom: 14 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
+  cardTitle: { fontSize: 15, fontFamily: font.bold, color: colors.text },
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.borderInput,
+    borderRadius: radius.md,
+    backgroundColor: '#F8FAFC',
+    marginBottom: 12,
+    paddingHorizontal: 12,
+  },
+  inputIcon: { marginRight: 8 },
+  inputWithIcon: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 14,
+    fontFamily: font.regular,
+    color: colors.text,
+  },
   input: {
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 10,
+    borderColor: colors.borderInput,
+    borderRadius: radius.md,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 14,
-    color: '#0F172A',
+    fontFamily: font.regular,
+    color: colors.text,
     marginBottom: 12,
+    backgroundColor: '#F8FAFC',
   },
   infoBox: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
+    backgroundColor: colors.warnBg,
+    borderColor: colors.warnBorder,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: radius.md,
     padding: 12,
     marginBottom: 12,
   },
-  infoText: { color: '#92400E', fontSize: 12, lineHeight: 18 },
-  error: { color: '#DC2626', fontSize: 12, marginBottom: 10 },
+  infoText: { color: '#92400E', fontSize: 12, fontFamily: font.regular, lineHeight: 18 },
+  error: { color: colors.danger, fontSize: 12, fontFamily: font.medium, marginBottom: 10 },
   primaryButton: {
-    backgroundColor: '#003C16',
-    borderRadius: 10,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  primaryButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  primaryButtonText: { color: '#fff', fontSize: 15, fontFamily: font.bold },
   demoButton: {
     marginTop: 10,
-    borderRadius: 10,
+    borderRadius: radius.md,
     paddingVertical: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#003C16',
+    borderColor: colors.primary,
   },
-  demoButtonText: { color: '#003C16', fontSize: 13, fontWeight: '600' },
+  demoButtonText: { color: colors.primary, fontSize: 13, fontFamily: font.semiBold },
   buttonDisabled: { opacity: 0.5 },
   buttonPressed: { opacity: 0.8 },
 });

@@ -1,6 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as SplashScreen from 'expo-splash-screen';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+  Inter_900Black,
+} from '@expo-google-fonts/inter';
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 import { MainTabs } from './src/navigation/MainTabs';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { supabase, isSupabaseConfigured } from './src/utils/supabase';
@@ -26,6 +38,17 @@ const ROLE_FROM_DB: Record<string, MobileRole> = {
 export default function App() {
   const [session, setSession] = useState<boolean>(!isSupabaseConfigured());
   const [ready, setReady] = useState<boolean>(!isSupabaseConfigured());
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+    Inter_900Black,
+  });
+  const onLayoutRoot = useCallback(async () => {
+    if (fontsLoaded) await SplashScreen.hideAsync().catch(() => {});
+  }, [fontsLoaded]);
   const setProfile = useAppStore((s) => s.setProfile);
   const hydrateMaster = useAppStore((s) => s.hydrateMaster);
   const hydrateDeliveries = useAppStore((s) => s.hydrateDeliveries);
@@ -119,10 +142,10 @@ export default function App() {
     };
   }, [setProfile, hydrateMaster, hydrateDeliveries, setOnline]);
 
-  if (!ready) return null;
+  if (!ready || !fontsLoaded) return null;
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider onLayout={onLayoutRoot}>
       {session ? (
         <NavigationContainer>
           <MainTabs />

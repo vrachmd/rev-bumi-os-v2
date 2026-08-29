@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { TrendingUp, Mountain, Truck, FileText, Wallet, Lock } from 'lucide-react-native';
 import { useAppStore } from '../store/useAppStore';
+import { colors, font, radius } from '../theme/tokens';
 
 const formatIDR = (n: number) => `Rp ${Math.round(n).toLocaleString('id-ID')}`;
 const formatIDRShort = (n: number) => {
@@ -205,26 +206,26 @@ export const FinanceScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F1F5F9' },
-  hero: { backgroundColor: '#003C16', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 },
+  safe: { flex: 1, backgroundColor: colors.background },
+  hero: { backgroundColor: colors.primary, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 },
   heroTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  heroEyebrow: { color: '#A7F3D0', fontSize: 9, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase' },
+  heroEyebrow: { color: '#A7F3D0', fontSize: 9, fontFamily: font.extraBold, letterSpacing: 1, textTransform: 'uppercase' },
   heroTitleRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
-  heroTitle: { color: '#FFFFFF', fontSize: 22, fontWeight: '900' },
-  heroSub: { color: '#A7F3D0', fontSize: 11, marginTop: 2 },
+  heroTitle: { color: '#FFFFFF', fontSize: 22, fontFamily: font.black },
+  heroSub: { color: '#A7F3D0', fontSize: 11, fontFamily: font.regular, marginTop: 2 },
   heroDateBadge: { backgroundColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
   heroDateText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' },
   heroCard: { marginTop: 14, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12, elevation: 6 },
   heroLeft: { flex: 1 },
-  heroLabel: { fontSize: 9, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
-  heroValue: { fontSize: 22, fontWeight: '900', color: '#0F172A', marginTop: 2 },
-  heroSubValue: { fontSize: 10, color: '#64748B', marginTop: 2 },
+  heroLabel: { fontSize: 9, fontFamily: font.extraBold, color: colors.muted, letterSpacing: 0.5 },
+  heroValue: { fontSize: 22, fontFamily: font.black, color: '#0F172A', marginTop: 2 },
+  heroSubValue: { fontSize: 10, fontFamily: font.regular, color: colors.muted, marginTop: 2 },
   heroTrendRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
   heroTrendDot: { width: 6, height: 6, borderRadius: 3 },
-  heroTrendText: { fontSize: 10, fontWeight: '800', marginLeft: 6 },
+  heroTrendText: { fontSize: 10, fontFamily: font.extraBold, marginLeft: 6 },
   heroBadge: { width: 68, height: 68, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginLeft: 12 },
-  heroBadgeText: { color: '#FFFFFF', fontSize: 17, fontWeight: '900' },
-  heroBadgeSub: { color: '#FFFFFF', fontSize: 9, fontWeight: '700', opacity: 0.9 },
+  heroBadgeText: { color: '#FFFFFF', fontSize: 17, fontFamily: font.black },
+  heroBadgeSub: { color: '#FFFFFF', fontSize: 9, fontFamily: font.bold, opacity: 0.9 },
   content: { padding: 16, paddingBottom: 32 },
   kpiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   kpiCard: { width: '48%', backgroundColor: '#FFFFFF', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: '#E2E8F0', borderLeftWidth: 4, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 3 },
