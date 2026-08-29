@@ -39,12 +39,13 @@ export const SiteListView: React.FC<SiteListViewProps> = ({ onSelect }) => {
   );
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: '#003C16' }]} edges={['top', 'left', 'right']}>
       <StatusBar style="light" />
       <View style={styles.header}>
         <Text style={styles.title}>2 · Site Project</Text>
         <Text style={styles.subtitle}>Penerimaan truk di lokasi proyek & e-POD</Text>
       </View>
+      <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
       <FlatList
         data={siteList}
         keyExtractor={(item) => item.id}
@@ -75,6 +76,7 @@ export const SiteListView: React.FC<SiteListViewProps> = ({ onSelect }) => {
           );
         }}
       />
+      </View>
     </SafeAreaView>
   );
 };
@@ -149,7 +151,7 @@ export const SiteDetailView: React.FC<SiteDetailViewProps> = ({ id, onBack }) =>
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']} {...panHandlers}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: '#003C16' }]} edges={['top', 'left', 'right']} {...panHandlers}>
       <StatusBar style="light" />
       <View style={styles.header}>
         <Text style={styles.title}>2 · Site Unloading</Text>
@@ -160,7 +162,7 @@ export const SiteDetailView: React.FC<SiteDetailViewProps> = ({ id, onBack }) =>
       </View>
 
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: "#F8FAFC" }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView

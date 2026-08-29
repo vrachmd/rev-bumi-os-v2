@@ -102,7 +102,7 @@ export const FinanceScreen: React.FC = () => {
   const heroMarginLabel = stats.margin >= 25 ? 'Sehat' : stats.margin >= 15 ? 'Waspada' : 'Kritis';
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: '#003C16' }]} edges={['top', 'left', 'right']}>
       <StatusBar style="light" />
       {/* Hero */}
       <View style={styles.hero}>
@@ -133,6 +133,7 @@ export const FinanceScreen: React.FC = () => {
         </View>
       </View>
 
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* KPI 2x2 */}
         <View style={styles.kpiGrid}>
@@ -201,6 +202,7 @@ export const FinanceScreen: React.FC = () => {
           <Text style={styles.insightText}><Text style={styles.insightBold}>Approved</Text> `billable_quantity` toleransi 2% — OTA `eas update` tanpa APK baru.</Text>
         </View>
       </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };

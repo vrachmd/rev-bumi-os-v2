@@ -50,13 +50,14 @@ export const RekonsilScreen: React.FC = () => {
   const totalM3 = rekon.reduce((s, d) => s + (d.receivedVolumeM3 ?? 0), 0);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: '#003C16' }]} edges={['top', 'left', 'right']}>
       <StatusBar style="light" />
       <View style={styles.header}>
         <Text style={styles.title}>Rekonsiliasi</Text>
         <Text style={styles.subtitle}>Kubikasi muat vs terima & ambang toleransi 2%</Text>
       </View>
 
+      <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
       <View style={styles.summary}>
         <View style={styles.sumCell}>
           <Text style={styles.sumValue}>{rekon.length}</Text>
@@ -227,6 +228,7 @@ export const RekonsilScreen: React.FC = () => {
         label="Bukti Pengiriman"
         onClose={() => setViewer(null)}
       />
+      </View>
     </SafeAreaView>
   );
 };

@@ -43,12 +43,13 @@ export const QuarryListView: React.FC<QuarryListViewProps> = ({ onSelect }) => {
   const quarryList = deliveries.filter((d) => d.status === 'SCHEDULED' || d.status === 'LOADING');
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: '#003C16' }]} edges={['top', 'left', 'right']}>
       <StatusBar style="light" />
       <View style={styles.header}>
         <Text style={styles.title}>1 · Quarry Loading</Text>
         <Text style={styles.subtitle}>Pilih ritase untuk proses pemuatan & timbang</Text>
       </View>
+      <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
       <FlatList
         data={quarryList}
         keyExtractor={(item) => item.id}
@@ -75,6 +76,7 @@ export const QuarryListView: React.FC<QuarryListViewProps> = ({ onSelect }) => {
           );
         }}
       />
+      </View>
     </SafeAreaView>
   );
 };
@@ -254,7 +256,7 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']} {...panHandlers}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: '#003C16' }]} edges={['top', 'left', 'right']} {...panHandlers}>
       <StatusBar style="light" />
       <View style={styles.header}>
         <Text style={styles.title}>Loading Quarry</Text>
@@ -265,7 +267,7 @@ export const QuarryDetailView: React.FC<QuarryDetailViewProps> = ({ id, onBack }
       </View>
 
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: "#F8FAFC" }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView

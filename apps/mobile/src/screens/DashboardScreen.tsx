@@ -22,6 +22,7 @@ import { KpiCard } from '../components/KpiCard';
 import { StatusBadge } from '../components/StatusBadge';
 import { ProfileScreen } from './ProfileScreen';
 import { Select } from '../components/Select';
+import { VehiclePlateInput } from '../components/VehiclePlateInput';
 import { EvidenceViewer } from '../components/EvidenceViewer';
 import { formatClock, formatDateShort, formatVolume, formatRupiah, labelFrom } from '../utils/format';
 import { calculateEta, formatDistance, formatDuration, getRouteWithFallback } from '../utils/osrm';
@@ -364,7 +365,7 @@ React.useEffect(() => {
 
   const [showProfile, setShowProfile] = useState(false);
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']} {...(showForm ? panHandlers : {})}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: '#003C16' }]} edges={['top', 'left', 'right']} {...(showForm ? panHandlers : {})}>
       <StatusBar style="light" />
       <View style={styles.header}>
         <View style={styles.headerTopRow}>
@@ -391,6 +392,7 @@ React.useEffect(() => {
         </View>
       )}
 
+      <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
       {!isOnline && (
         <View style={styles.offlineBanner}>
           <Text style={styles.offlineBannerText}>
@@ -529,9 +531,18 @@ React.useEffect(() => {
                   </Pressable>
                 </View>
               )}
-              <Select label="Armada Truk" value={form.vehicleId} options={vehicles.filter((v) => v.vendorId === form.transportVendorId)} onSelect={(id) => set('vehicleId', id)} />
+              <VehiclePlateInput
+                vendorId={form.transportVendorId}
+                vehicles={vehicles as any}
+                value={form.vehicleId}
+                onSelect={(id) => set('vehicleId', id)}
+                onCreateFromPlate={(plate) => {
+                  const id = addVehicle(form.transportVendorId, plate, 'Truk lapangan');
+                  set('vehicleId', id);
+                }}
+              />
               <Pressable style={styles.quickAddLink} onPress={() => setShowNewVehicle((v) => !v)}>
-                <Text style={styles.quickAddText}>{showNewVehicle ? '− Batal tambah armada' : '+ Tambah armada baru'}</Text>
+                <Text style={styles.quickAddText}>{showNewVehicle ? '− Batal tambah armada manual' : '+ Tambah armada manual'}</Text>
               </Pressable>
               {showNewVehicle && (
                 <View style={styles.quickAddBox}>
@@ -869,6 +880,7 @@ React.useEffect(() => {
         label="Bukti Loading Quarry"
         onClose={() => setViewer(null)}
       />
+      </View>
     </SafeAreaView>
   );
 };
