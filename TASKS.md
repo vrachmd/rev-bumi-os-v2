@@ -89,10 +89,13 @@
 
 ### Aktif — prioritas tinggi
 - [x] **Polish faktur PDF jsPDF agar identik pratinjau HTML** — ✅ selesai 2026-08-22 (mirror HTML, tema hijau `#003C16`, footer y=255, agregat IMCI group, pagination 20 baris) — verifikasi user `INV/RBN/20260821/004.pdf` approve.
-- [x] **Bulk Ritase Massal** — ✅ selesai 2026-08-23 (web CSV 50 chunk + mobile 10 baris max 20, 6 model ALL_IN/PER_TRIP primary, RLS patch 0012, E2E 20/20 + 50/50; SJ global NNN, bulk status DELIVERED, SJ/RBN murni tanpa suffix) — polish 2026-08-29: template 15 kolom hapus m3_otomatis, cm 2 des, plat normalisasi, sorting A-Z, other per-rit plant.
+- [x] **Bulk Ritase Massal** — ✅ selesai 2026-08-23 (web CSV 50 chunk + mobile 10 baris max 20, 6 model ALL_IN/PER_TRIP primary, RLS patch 0012, E2E 20/20 + 50/50; SJ global NNN, bulk status DELIVERED, SJ/RBN murni tanpa suffix) — polish 2026-08-29: template 15 kolom hapus m3_otomatis, cm 2 des, plat normalisasi, sorting A-Z, other per-rit plant — polish 2026-08-30 `5b6f35b` mobile Bulk searchable `VehiclePlateInput` header dark.
 - [x] **UI shadcn — UI-Only Fase (2026-08-23 → 2026-08-24)** — ✅ Fase 0-3 selesai (`fa79aa6→851c378`), polish HPP 15 kolom & audit/reports shadcn done; sisa Fase 4 polish responsive/a11y/skeleton (estimasi 1 hari, tidak blokir operasional) — lewat, tidak blokir.
 - [x] **Harga Quarry×Produk + HPP sinkron** — ✅ selesai 2026-08-24 (`0013` + `a2d4e3f`, HPP Ledger = Laporan 15 kolom alias dinamis) — fix ledger 2026-08-29 pakai cost_records `08cbde3`.
-- [x] **Keepalive Supabase anti-pause** — ✅ `3303638→13ae88c` cron `0 3 * * * UTC` daily + workflow `keepalive-supabase` Success 9s (29/08 manual run).
+- [x] **Keepalive Supabase anti-pause** — ✅ `3303638→13ae88c` cron `0 3 * * * UTC` daily + workflow `keepalive-supabase` Success 9s (29/08 manual run), manual ping 11 tabel `2026-08-29T17:17Z`.
+- [x] **Rebranding** — ✅ `a25c556` `PT REV Bumi Nusantara Perkasa → REV BUMI NUSANTARA` + tagline `Sistem Operasional dan Management` di 16 file (AGENTS/ROADMAP/TASKS/README/layout/Brand/Navbar/Dashboard/Login).
+- [x] **Mobile polish Inter + header/status bar** — ✅ `4279e62` Inter `expo-font`, `KpiCard` `EvidenceViewer Clock/MapPin`, `4912044` `83da3a1` Quarry header viewport spacer dark + `77d5412` Bulk pindah Dashboard `QUARRY_CHECKER+MANAGEMENT`.
+- [ ] **Skema KBS Internal 1 Kontrak 2 Harga + Bulk** — ⏳ plan `.md` only `docs/plan/kbs-internal-1kontrak-2harga.md` dibuat 2026-08-30 (belum ubah aplikasi). Scope: `vendor-07 KBS-INT` + 5 `freight INTERNAL_KBS 0` + 10 `vehicles B 9xxx KBS` + `contracts unit_price_internal_m3 nullable` + `Bulk 15 kolom/10→20 baris` support internal. Harga fix menyusul fallback eksternal. Eksekusi 1 hari setelah approved.
 - [ ] UAT manual 3-role (quarry→site→admin) + bulk + HPP verifikasi langsung di `app.revbuminusantara.biz.id` — **siap dijalankan, checklist di `docs/UAT-20260823-bulk.md` + verifikasi HPP 15 kolom + Note SJ IMCI + pengeluaran per-rit** — konfirmasi user belum masuk.
 - [ ] Lengkapi Fase B UI kontrak `ContractsView.tsx` dropdown Template Faktur (backend `contracts.template_id` sudah siap via `0010`, pelanggan sudah dropdown, tinggal kontrak) — **hanya UI, next setelah UAT**.
 - [ ] Verifikasi end-to-end multi-template: IMCI vs Standard Per-Rit — **hanya verifikasi visual setelah Fase UI polish**.
@@ -114,13 +117,12 @@
 ### Sedang diubah (aktif)
 | File | Status |
 |---|---|
-| `apps/web/src/components/finance/HppFinanceView.tsx` | **Stabil 13ae88c** — 15 kolom + Note SJ IMCI + alias KBS/VND-YDH + dd/mm/yyyy + costRecord ledger |
-| `apps/web/src/components/reports/ReportsView.tsx` | **Stabil 13ae88c** — 15 kolom + Note + alias + costRecord |
-| `apps/web/src/components/operations/BulkDeliveriesView.tsx` | **Stabil 13ae88c** — 15 kolom, cm, plat normalize, sort A-Z, Note preview |
-| `apps/web/src/components/operations/DeliveriesView.tsx` | **Stabil 13ae88c** — kolom Note SJ IMCI samping Pelanggan/Proyek |
-| `.github/workflows/keepalive.yml` | **Stabil 13ae88c** — cron daily `0 3 * * * UTC` Success |
+| `docs/plan/kbs-internal-1kontrak-2harga.md` | **Baru 2026-08-30** — 1 kontrak 2 harga + vendor KBS-INT + bulk 15 kolom/10→20 (hanya .md, belum ubah app) |
+| `apps/mobile/src/screens/BulkQuarryScreen.tsx` | **Stabil 5b6f35b** — Select + VehiclePlateInput searchable header dark |
+| `apps/mobile/src/navigation/QuarryStack.tsx` | **Stabil 77d5412** — Bulk pindah Dashboard, spacer dark statusbar fix |
+| `apps/mobile/src/screens/DashboardScreen.tsx` | **Stabil 77d5412** — Bulk 10 Ritase di bawah Tambah Ritase Baru `QUARRY_CHECKER+MANAGEMENT` |
 | `docs/UAT-20260823-bulk.md` | **Baru** — checklist UAT web bulk 50 + mobile 10 (3-role + metode ALL_IN/PER_TRIP) + addendum 2026-08-29 |
-| `ROADMAP.md` / `TASKS.md` | **Update 2026-08-29** — sinkron 15 commit setelah `a2d4e3f` |
+| `ROADMAP.md` / `TASKS.md` | **Update 2026-08-30** — rebranding + bulk internal plan (hanya .md) |
 
 ### Sudah diubah (stabil, ter-commit)
 **Web (`apps/web/src`)**

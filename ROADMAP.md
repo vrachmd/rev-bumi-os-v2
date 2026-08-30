@@ -119,8 +119,9 @@ Deliverable:
 - Skema migrasi/versioning data (pattern migrations).
 **Exit criteria:** semua engine lolos unit test; PR tidak bisa merge bila lint/test gagal; upgrade skema tidak merusak data.
 
-### Fase 3 — Go-Live & Operasional 🚀 — ✅ LIVE di `https://app.revbuminusantara.biz.id` + `https://rev-bumi-os-v2-web.vercel.app` (`119de1a→13ae88c Ready`, `Vercel` `Root apps/web` `turbo`, `NEXT_PUBLIC_SUPABASE_*`, `checkpoint-20260829-polish`)
+### Fase 3 — Go-Live & Operasional 🚀 — ✅ LIVE di `https://app.revbuminusantara.biz.id` + `https://rev-bumi-os-v2-web.vercel.app` (`119de1a→13ae88c Ready`, `Vercel` `Root apps/web` `turbo`, `NEXT_PUBLIC_SUPABASE_*`, `checkpoint-20260830-bulk-internal-plan`)
 ### Fase 3.5 — UI shadcn (Web) 🎨 — ✅ Fase 0-3 selesai (`fa79aa6→a2d4e3f`), polish 2026-08-29 done — 🔒 UI-Only (2026-08-23 → 2026-08-24, lewat)
+### Fase 3.6 — Skema KBS Internal 1 Kontrak 2 Harga (Plan .md only) 📋 — ⏳ `docs/plan/kbs-internal-1kontrak-2harga.md` 2026-08-30 (belum ubah app) — vendor `KBS-INT` + `INTERNAL_KBS 0` + `vehicles B 9xxx KBS` + `contracts unit_price_internal_m3` + bulk 15 kolom/10→20 support internal; faktur sama; harga fix menyusul.
 - Scope: migrasi `apps/web` ke **shadcn/ui** (New York, Tailwind v4, cssVariables, Inter, radius 0.75, primary `#003C16`) — hanya `components/ui/*`, `components/layout/*`, `components/operations/*`, `components/finance/*`, `components/commercial/*`, `app/globals.css`, `lib/utils.ts`.
 - Larangan: **jangan ubah** `context/*`, `engine/*`, `lib/supabase*.ts`, `supabase/migrations/*`, `packages/*`, `types/*` (AGENTS.md #8). Pelanggaran = rollback.
 - Fase: 0 Setup (init) ✅ → 1 Primitives (button/card/dialog/table) ✅ → 2 Layout (Sidebar/Navbar) ✅ → 3 Operasi/Keuangan (Deliveries/Bulk/Invoices) ✅ + HPP 15 kolom `a2d4e3f` → 4 Polish (responsive, a11y, dark, toast) ✅ striped/airy `49ffcc3` + HPP ledger fix `08cbde3` + alias/bulk polish `e826fe8→13ae88c`.
@@ -128,8 +129,8 @@ Deliverable:
 Deliverable:
 - Deploy tahap awal (gratis): **Supabase Free + Vercel** (web + PWA), domain & SSL — ✅ `web` `Ready` `33s`, `quarry@` login ok, `demo` hapus wajib RLS.
 - Seed data master riil (quarry, vendor, kontrak, densitas) + onboarding — ✅ `quarry_material_costs` 15 baris `0006` + `0013` history `effective_date` per Quarry×Produk + alias `KBS`/`VND-YDH`.
-- UAT lapangan (quarry & site) + pelatihan petugas — ✅ E2E 50/50 + 27 unit test + `e2e_mobile_full` `verify_delivery_gps` 500/1000m + `e2e_bulk 20/20` + audit `rawdata/clean 499 rows 100% match` + bulk 15 kolom `B 9945 TYT` sort A-Z.
-- Monitoring, backup harian, runbook pemulihan — ✅ keepalive daily `0 3 * * * UTC` `.github/workflows/keepalive.yml` `13ae88c Success 29/08`; ⏳ `pg_dump` cron + runbook `docs/runbook.md` next.
+ - UAT lapangan (quarry & site) + pelatihan petugas — ✅ E2E 50/50 + 27 unit test + `e2e_mobile_full` `verify_delivery_gps` 500/1000m + `e2e_bulk 20/20` + audit `rawdata/clean 499 rows 100% match` + bulk 15 kolom `B 9945 TYT` sort A-Z + `BulkQuarryScreen` searchable `5b6f35b`.
+ - Monitoring, backup harian, runbook pemulihan — ✅ keepalive daily `0 3 * * * UTC` `.github/workflows/keepalive.yml` `13ae88c Success 29/08` + manual ping 11 tabel `17:17Z`; ⏳ `pg_dump` cron + runbook `docs/runbook.md` next.
 - **Mitigasi free tier**: ✅ keepalive anti-pause 7 hari; kuota egress storage (bucket `kwitansi` 5MB/file, public), dan kuota fungsi.
 **Exit criteria:** sistem dipakai operasional harian multi-user, backup terverifikasi, SLA internal disepakati — ⏳ UAT lapangan final bulk+HPP+Note SJ IMCI + `FinanceScreen` OTA `eas update` + verifikasi multi-template 2 faktur uji next.
 
