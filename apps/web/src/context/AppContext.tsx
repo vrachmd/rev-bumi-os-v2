@@ -25,6 +25,7 @@ import { roundCurrency, roundVolume } from '../lib/decimal';
 import { resolveFreightRate } from '../lib/freightRate';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { insertAuditLogToSupabase } from '../lib/supabaseAudit';
+import { fetchClosedPeriods, isDateInClosedPeriod, ClosedPeriod } from '../lib/supabaseClosedPeriod';
 import {
   fetchDeliveriesFromSupabase,
   upsertDeliveryToSupabase,
@@ -204,6 +205,10 @@ interface AppContextType {
   // Audit & Correction
   submitCorrectionRequest: (targetType: 'DELIVERY' | 'INVOICE' | 'RECONCILIATION', targetId: string, targetNumber: string, reason: string, proposedChanges: any) => void;
   reviewCorrectionRequest: (requestId: string, status: 'APPROVED' | 'REJECTED', notes?: string) => void;
+
+  // Closing Period
+  closedPeriods: ClosedPeriod[];
+  refreshClosedPeriods: () => Promise<void>;
 
   // CSV Exporter
   exportToCsv: (datasetName: string) => void;
@@ -391,6 +396,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSupabaseAuthed]);
 
+  // Closing periods — fetch untuk guard pencatatan bisnis
+  const refreshClosedPeriods = async () => {
+    try {
+      const data = await fetchClosedPeriods();
+      setClosedPeriods(data);
+    } catch {
+      // ignore
+    }
+  };
+  useEffect(() => {
+    if (!isSupabaseAuthed) return;
+    refreshClosedPeriods();
+  }, [isSupabaseAuthed]);
+
   // Reset cache localStorage bila seed version berubah (mis. penambahan data batching plant IMCI).
   useState<boolean>(() => {
     applySeedVersion();
@@ -412,6 +431,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [payments, setPayments] = useState<Payment[]>(() => safeLoad('rev_payments', initialPayments));
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => safeLoad('rev_audit_logs', initialAuditLogs));
   const [correctionRequests, setCorrectionRequests] = useState<CorrectionRequest[]>(() => safeLoad('rev_corrections', initialCorrectionRequests));
+  const [closedPeriods, setClosedPeriods] = useState<ClosedPeriod[]>([]);
 
   // Local storage persistence
   useEffect(() => {
@@ -1197,7 +1217,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { success: true };
   };
 
-  // Create Invoice
+  // Create Invoice — guard closing periode (invoice_date)
   const createInvoice = (
     customerId: string,
     projectId: string,
@@ -1206,6 +1226,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     taxRatePercent: number = 11.0,
     notes?: string
   ) => {
+    const invoiceDate = new Date().toISOString().slice(0, 10);
+    if (isDateInClosedPeriod(invoiceDate, closedPeriods)) {
+      const d = new Date(invoiceDate);
+      return { success: false, error: `Periode ${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} sudah tutup — hubungi SUPER_ADMIN untuk unlock` };
+    }
     const contract = contracts.find((c) => c.id === contractId);
     const validDeliveries = deliveries.filter(
       (d) => deliveryIds.includes(d.id) && (d.status === 'DELIVERED' || d.approvedVolumeM3 > 0)
@@ -1312,8 +1337,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { success: true };
   };
 
-  // Record Payment
+  // Record Payment — guard closing periode (payment_date)
   const recordPayment = (invoiceId: string, amount: number, bankRef: string, method: string, notes?: string) => {
+    const paymentDate = new Date().toISOString().slice(0, 10);
+    if (isDateInClosedPeriod(paymentDate, closedPeriods)) {
+      const d = new Date(paymentDate);
+      return { success: false, error: `Periode ${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} sudah tutup — hubungi SUPER_ADMIN untuk unlock` };
+    }
     const invoice = invoices.find((inv) => inv.id === invoiceId);
     if (!invoice) return { success: false, error: 'Invoice not found' };
 
@@ -1905,7 +1935,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         submitCorrectionRequest,
         reviewCorrectionRequest,
         exportToCsv,
-      }}
+        closedPeriods,
+        refreshClosedPeriods,
+      } as any}
     >
       {children}
     </AppContext.Provider>

@@ -30,6 +30,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { ClosedPeriodManager } from '../finance/ClosedPeriodManager';
 
 export const AuditAdminView: React.FC = () => {
   const {
@@ -162,6 +163,9 @@ export const AuditAdminView: React.FC = () => {
 
   return (
     <div className="space-y-4 pb-12">
+      {/* Closing Periode — hanya SUPER_ADMIN bisa tutup/buka */}
+      <ClosedPeriodManager />
+
       {/* Tab Switcher & Action — shadcn Tabs + Card + Button */}
       <Card className="py-3">
         <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-3 p-0 px-4">
