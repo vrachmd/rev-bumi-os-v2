@@ -3,9 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, Filter } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { formatIDR, formatVolumeM3 } from '../../lib/formatters';
-import { calculateDeliveryFinance } from '../../engine/finance.engine';
-import { resolveFreightRate } from '../../lib/freightRate';
-import { resolveQuarryCost } from '../../lib/quarryCost';
+import { getDynamicCost as getDynamicCostLib, aggregateFinance, getOtherPerRit } from '../../lib/financeReport';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -107,68 +105,13 @@ export const HppFinanceView: React.FC = () => {
     return matchesCustomer && matchesQuarry && matchesProduct && matchesDate;
   });
 
-  // Dynamic HPP — sinkron dengan Vendor & Tarif terbaru (identik Laporan Komprehensif)
+  // DRY — pakai lib/financeReport single source
   function getDynamicCost(d: any) {
-    const contract = contracts.find((c: any) => c.id === d.contractId);
-    const product = products.find((p: any) => p.id === d.productId);
-    const vendor = transportVendors.find((v: any) => v.id === d.transportVendorId);
-    if (!contract || !product || !d.approvedVolumeM3) return d.costRecord;
-    const rate = resolveFreightRate(freightRates as any, {
-      transportVendorId: d.transportVendorId,
-      projectId: contract.projectId,
-      quarryId: d.quarryId,
-      onDate: d.scheduledDate,
-    });
-    if (!rate) return d.costRecord;
-    const qmc = resolveQuarryCost(quarryMaterialCosts as any, d.quarryId, d.productId, d.scheduledDate);
-    const materialCostPerM3 = qmc?.costPerM3 ?? (product as any).defaultMaterialCost;
-    const isAllIn = (rate as any).pricingModel === 'ALL_IN';
-    const OTHER_PER_RIT: Record<string, number> = { 'proj-04': 100000, 'proj-06': 100000, 'proj-05': 150000, 'proj-07': 150000, 'proj-08': 150000 };
-    const otherPerRit = OTHER_PER_RIT[(contract as any).projectId] ?? 100000;
-    try {
-      let res = calculateDeliveryFinance({
-        deliveryId: d.id,
-        approvedVolumeM3: d.approvedVolumeM3,
-        loadedVolumeM3: d.loadedVolumeM3,
-        approvedWeightKg: d.approvedWeightKg,
-        sellingPricePerM3: (contract as any).unitPricePerM3,
-        materialCostPerM3,
-        freightPricingModel: isAllIn ? 'ALL_IN' : (((vendor as any)?.defaultPricingModel as any) || (rate as any).pricingModel as any),
-        freightRatePerUnit: (rate as any).ratePerUnit,
-        allInPricePerM3: isAllIn ? (rate as any).ratePerUnit : undefined,
-        allInVolumeBasis: isAllIn ? 'PER_M3_RECEIVED' : undefined,
-        otherOperationalCostPerM3: 0,
-        tollFee: isAllIn ? 0 : ((rate as any).tollFee as any) || 0,
-        loadingFee: isAllIn ? 0 : ((rate as any).loadingFee as any) || 0,
-        unloadingFee: isAllIn ? 0 : ((rate as any).unloadingFee as any) || 0,
-        isActualFinalized: true,
-      });
-      res.costRecord.otherOperationalCostIdr = otherPerRit;
-      res.costRecord.totalHppIdr = res.costRecord.totalMaterialCostIdr + res.costRecord.totalFreightCostIdr + otherPerRit;
-      res.costRecord.grossProfitIdr = res.costRecord.recognizedRevenueIdr - res.costRecord.totalHppIdr;
-      res.costRecord.grossMarginPercent = res.costRecord.recognizedRevenueIdr > 0 ? Number(((res.costRecord.grossProfitIdr / res.costRecord.recognizedRevenueIdr) * 100).toFixed(2)) : 0;
-      return res.costRecord;
-    } catch {
-      return d.costRecord;
-    }
+    return getDynamicCostLib(d, { contracts, products, transportVendors, freightRates, quarryMaterialCosts } as any);
   }
 
-  // Aggregations — pakai costRecord tersimpan (sesuai Dashboard) agar sinkron 100% dengan rawdata
-  const totalApprovedVol = filteredDeliveries.reduce(
-    (sum, d) => sum + (d.approvedVolumeM3 || 0),
-    0
-  );
-  const totalNetWeightTons =
-    filteredDeliveries.reduce((sum, d) => sum + (d.approvedWeightKg || 0), 0) / 1000;
-
-  const totalRevenue = filteredDeliveries.reduce((sum, d) => sum + (d.costRecord?.recognizedRevenueIdr || 0), 0);
-  const totalHpp = filteredDeliveries.reduce((sum, d) => sum + (d.costRecord?.totalHppIdr || 0), 0);
-  const totalGrossProfit = totalRevenue - totalHpp;
-  const avgGrossMargin = totalRevenue > 0 ? (totalGrossProfit / totalRevenue) * 100 : 0;
-
-  const varianceExceededCount = filteredDeliveries.filter(
-    (d) => d.reconciliation?.varianceStatus === 'ABOVE_TOLERANCE'
-  ).length;
+  // Aggregations — DRY via financeReport
+  const { totalApprovedVol, totalNetWeightTons, totalRevenue, totalHpp, totalGrossProfit, avgGrossMargin, varianceExceededCount } = aggregateFinance(filteredDeliveries);
 
   // Export CSV — pakai costRecord tersimpan (sinkron Dashboard)
   const handleExport = () => {

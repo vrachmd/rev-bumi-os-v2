@@ -17,9 +17,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { formatDate, formatIDR, formatVolumeM3 } from '../../lib/formatters';
-import { calculateDeliveryFinance } from '../../engine/finance.engine';
-import { resolveFreightRate } from '../../lib/freightRate';
-import { resolveQuarryCost } from '../../lib/quarryCost';
+import { getDynamicCost as getDynamicCostLib, aggregateFinance } from '../../lib/financeReport';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -78,6 +76,25 @@ export const ReportsView: React.FC = () => {
     }
   }, [deliveries.length]);
 
+  // URL filter persist — shareable link
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const p = new URLSearchParams(window.location.search);
+    const c = p.get('cust'); const q = p.get('quarry'); const prod = p.get('prod'); const s = p.get('start'); const e = p.get('end'); const t = p.get('tab');
+    if (c) setSelectedCustomerId(c);
+    if (q) setSelectedQuarryId(q);
+    if (prod) setSelectedProductId(prod);
+    if (s && e) setDateRange({ start: s, end: e });
+    if (t && ['deliveries','reconciliation','finance','contracts'].includes(t)) setSelectedReportType(t as any);
+  }, []);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const p = new URLSearchParams(window.location.search);
+    p.set('cust', selectedCustomerId); p.set('quarry', selectedQuarryId); p.set('prod', selectedProductId);
+    p.set('start', dateRange.start); p.set('end', dateRange.end); p.set('tab', selectedReportType);
+    window.history.replaceState(null, '', `${window.location.pathname}?${p.toString()}`);
+  }, [selectedCustomerId, selectedQuarryId, selectedProductId, dateRange.start, dateRange.end, selectedReportType]);
+
   // Alias helpers — sinkron HPP & Laba Kotor: TGL dd/mm/yyyy, Proyek KBS, Vendor VND-YDH
   const PROJECT_ALIAS_FIN: Record<string, string> = {
     'proj-04': 'KBS Sunter',
@@ -126,169 +143,112 @@ export const ReportsView: React.FC = () => {
     return matchesCustomer && matchesQuarry && matchesProduct && matchesDate;
   });
 
-  // Dynamic HPP — sinkron dengan Vendor & Tarif terbaru (bukan hanya costRecord tersimpan)
+  // DRY — pakai lib/financeReport single source
   function getDynamicCost(d: any) {
-    const contract = contracts.find((c: any) => c.id === d.contractId);
-    const product = products.find((p: any) => p.id === d.productId);
-    const vendor = transportVendors.find((v: any) => v.id === d.transportVendorId);
-    if (!contract || !product || !d.approvedVolumeM3) return d.costRecord;
-    const rate = resolveFreightRate(freightRates as any, {
-      transportVendorId: d.transportVendorId,
-      projectId: contract.projectId,
-      quarryId: d.quarryId,
-      onDate: d.scheduledDate,
-    });
-    if (!rate) return d.costRecord;
-    const qmc = resolveQuarryCost(quarryMaterialCosts as any, d.quarryId, d.productId, d.scheduledDate);
-    const materialCostPerM3 = qmc?.costPerM3 ?? (product as any).defaultMaterialCost;
-    const isAllIn = (rate as any).pricingModel === 'ALL_IN';
-    const OTHER_PER_RIT_R: Record<string, number> = { 'proj-04': 100000, 'proj-06': 100000, 'proj-05': 150000, 'proj-07': 150000, 'proj-08': 150000 };
-    const otherPerRitR = OTHER_PER_RIT_R[(contract as any).projectId] ?? 100000;
-    try {
-      let res = calculateDeliveryFinance({
-        deliveryId: d.id,
-        approvedVolumeM3: d.approvedVolumeM3,
-        loadedVolumeM3: d.loadedVolumeM3,
-        approvedWeightKg: d.approvedWeightKg,
-        sellingPricePerM3: (contract as any).unitPricePerM3,
-        materialCostPerM3,
-        freightPricingModel: isAllIn ? 'ALL_IN' : (((vendor as any)?.defaultPricingModel as any) || (rate as any).pricingModel as any),
-        freightRatePerUnit: (rate as any).ratePerUnit,
-        allInPricePerM3: isAllIn ? (rate as any).ratePerUnit : undefined,
-        allInVolumeBasis: isAllIn ? 'PER_M3_RECEIVED' : undefined,
-        otherOperationalCostPerM3: 0,
-        tollFee: isAllIn ? 0 : ((rate as any).tollFee as any) || 0,
-        loadingFee: isAllIn ? 0 : ((rate as any).loadingFee as any) || 0,
-        unloadingFee: isAllIn ? 0 : ((rate as any).unloadingFee as any) || 0,
-        isActualFinalized: true,
-      });
-      res.costRecord.otherOperationalCostIdr = otherPerRitR;
-      res.costRecord.totalHppIdr = res.costRecord.totalMaterialCostIdr + res.costRecord.totalFreightCostIdr + otherPerRitR;
-      res.costRecord.grossProfitIdr = res.costRecord.recognizedRevenueIdr - res.costRecord.totalHppIdr;
-      res.costRecord.grossMarginPercent = res.costRecord.recognizedRevenueIdr > 0 ? Number(((res.costRecord.grossProfitIdr / res.costRecord.recognizedRevenueIdr) * 100).toFixed(2)) : 0;
-      return res.costRecord;
-    } catch {
-      return d.costRecord;
-    }
+    return getDynamicCostLib(d, { contracts, products, transportVendors, freightRates, quarryMaterialCosts } as any);
   }
 
-  // Aggregations
-  const totalApprovedVol = filteredDeliveries.reduce(
-    (sum, d) => sum + (d.approvedVolumeM3 || 0),
-    0
-  );
-  const totalLoadedVol = filteredDeliveries.reduce(
-    (sum, d) => sum + (d.loadedVolumeM3 || 0),
-    0
-  );
-  const totalNetWeightTons =
-    filteredDeliveries.reduce((sum, d) => sum + (d.approvedWeightKg || 0), 0) / 1000;
+  // Aggregations — DRY via financeReport
+  const { totalApprovedVol, totalNetWeightTons, totalRevenue, totalHpp, totalGrossProfit, avgGrossMargin, varianceExceededCount } = aggregateFinance(filteredDeliveries) as any;
+  const totalLoadedVol = filteredDeliveries.reduce((sum, d) => sum + (d.loadedVolumeM3 || 0), 0);
 
-  const totalRevenue = filteredDeliveries.reduce((sum, d) => sum + ((d as any).costRecord?.recognizedRevenueIdr || 0), 0);
-  const totalHpp = filteredDeliveries.reduce((sum, d) => sum + ((d as any).costRecord?.totalHppIdr || 0), 0);
-  const totalGrossProfit = totalRevenue - totalHpp;
-  const avgGrossMargin = totalRevenue > 0 ? (totalGrossProfit / totalRevenue) * 100 : 0;
-
-  const varianceExceededCount = filteredDeliveries.filter(
-    (d) => d.reconciliation?.varianceStatus === 'ABOVE_TOLERANCE'
-  ).length;
-
-  // Export CSV — respects current filters & satuan baku (sesuai [Image 1] kolom HPP)
+  // Export — CSV/Excel/PDF + scheduled email stub
+  const exportRowsForType = (): any[] => {
+    if (selectedReportType === 'deliveries') {
+      return filteredDeliveries.map((d) => {
+        const contract = contracts.find((c) => c.id === d.contractId);
+        const cust = customers.find((c) => c.id === contract?.customerId);
+        const proj = projects.find((p) => p.id === contract?.projectId);
+        const prod = products.find((p) => p.id === d.productId);
+        const qry = quarries.find((q) => q.id === d.quarryId);
+        return {
+          'NO. SURAT JALAN': d.deliveryNumber,
+          'TANGGAL': d.scheduledDate,
+          'PELANGGAN': cust?.name || '',
+          'PROYEK': proj?.name || '',
+          'MATERIAL AGREGAT': prod?.name || '',
+          'QUARRY ASAL': qry?.name || '',
+          'VOL. LOADING (m³)': d.loadedVolumeM3,
+          'VOL. APPROVED (m³)': d.approvedVolumeM3,
+          'STATUS RITASE': d.status,
+        };
+      });
+    }
+    if (selectedReportType === 'reconciliation') {
+      return filteredDeliveries.map((d) => {
+        const rec = d.reconciliation;
+        return {
+          'NO. SURAT JALAN': d.deliveryNumber,
+          'VOL. MUAT (m³)': d.loadedVolumeM3,
+          'VOL. TERIMA (m³)': d.receivedVolumeM3,
+          'SELISIH FISIK (m³)': rec?.physicalVarianceM3 ?? 0,
+          '% SELISIH': rec?.variancePercentage ?? 0,
+          'STATUS TOLERANSI': rec?.varianceStatus || 'WITHIN_TOLERANCE',
+          'ALASAN / PENYEBAB': rec?.varianceReason || '',
+          'VOL. TAGIH FINAL (m³)': d.approvedVolumeM3,
+        };
+      });
+    }
+    if (selectedReportType === 'finance') {
+      return filteredDeliveries.filter((d) => (d as any).costRecord && d.approvedVolumeM3 > 0).map((d) => {
+        const quarry = quarries.find((q: any) => q.id === d.quarryId);
+        const vehicle = vehicles.find((v: any) => v.id === d.vehicleId);
+        const vendor = transportVendors.find((v: any) => v.id === d.transportVendorId);
+        const cust = customers.find((c: any) => c.id === contracts.find((co: any) => co.id === d.contractId)?.customerId);
+        const proj = projects.find((p: any) => p.id === contracts.find((co: any) => co.id === d.contractId)?.projectId);
+        const cr = (d as any).costRecord;
+        return {
+          'NO. SURAT JALAN': d.deliveryNumber,
+          'TANGGAL': formatDateDMYFin(d.scheduledDate),
+          'JENIS MATERIAL': products.find((p: any) => p.id === d.productId)?.name || '',
+          'PELANGGAN': cust?.name || '',
+          'TUJUAN PROYEK': projectAliasFin(proj),
+          'VOL LOADING (m³)': (d as any).loadedVolumeM3,
+          'VOL (M³)': (d as any).approvedVolumeM3,
+          'SUMBER QUARRY': quarry?.name || '',
+          'PLAT NOMOR': vehicle?.plateNumber || (d as any).driverName || '',
+          'VENDOR ARMADA': vendorAliasFin(vendor),
+          'PENDAPATAN JUAL (IDR)': (cr as any).recognizedRevenueIdr,
+          'BIAYA MATERIAL (IDR)': (cr as any).totalMaterialCostIdr,
+          'ONGKOS ANGKUT (IDR)': (cr as any).totalFreightCostIdr,
+          'TOTAL HPP (IDR)': (cr as any).totalHppIdr,
+          'LABA KOTOR (IDR)': (cr as any).grossProfitIdr,
+          'GROSS MARGIN (%)': (cr as any).grossMarginPercent,
+        };
+      });
+    }
+    if (selectedReportType === 'contracts') {
+      return contracts.map((c) => {
+        const cust = customers.find((cu) => cu.id === c.customerId);
+        const proj = projects.find((p) => p.id === c.projectId);
+        const prod = products.find((p) => p.id === c.productId);
+        const rel = deliveries.filter((d) => d.contractId === c.id);
+        const fulfilled = rel.reduce((s, d) => s + (d.approvedVolumeM3 || 0), 0);
+        const isNonPo = c.contractType === 'NON_PO';
+        return {
+          'NO. KONTRAK': c.contractNumber,
+          'PELANGGAN': cust?.name || '',
+          'PROYEK': proj?.name || '',
+          'MATERIAL': prod?.name || '',
+          'VOLUME KONTRAK (m³)': isNonPo ? 'Rutin' : c.contractedVolumeM3,
+          'REALISASI APPROVED (m³)': fulfilled,
+          'SISA KUOTA (m³)': isNonPo ? 'Rutin' : Math.max(0, c.contractedVolumeM3 - fulfilled),
+          'BURN RATE (%)': isNonPo ? 'Rutin' : ((fulfilled / c.contractedVolumeM3) * 100).toFixed(1),
+          'STATUS KONTRAK': c.status,
+        };
+      });
+    }
+    return [];
+  };
   const handleExport = () => {
-    let rows: any[] = [];
-    let filename = `REV_BUMI_${selectedReportType}_${new Date().toISOString().slice(0, 10)}.csv`;
     try {
-      if (selectedReportType === 'deliveries') {
-        rows = filteredDeliveries.map((d) => {
-          const contract = contracts.find((c) => c.id === d.contractId);
-          const cust = customers.find((c) => c.id === contract?.customerId);
-          const proj = projects.find((p) => p.id === contract?.projectId);
-          const prod = products.find((p) => p.id === d.productId);
-          const qry = quarries.find((q) => q.id === d.quarryId);
-          return {
-            'NO. SURAT JALAN': d.deliveryNumber,
-            'TANGGAL': d.scheduledDate,
-            'PELANGGAN': cust?.name || '',
-            'PROYEK': proj?.name || '',
-            'MATERIAL AGREGAT': prod?.name || '',
-            'QUARRY ASAL': qry?.name || '',
-            'VOL. LOADING (m³)': d.loadedVolumeM3,
-            'VOL. APPROVED (m³)': d.approvedVolumeM3,
-            'STATUS RITASE': d.status,
-          };
-        });
-      } else if (selectedReportType === 'reconciliation') {
-        rows = filteredDeliveries.map((d) => {
-          const rec = d.reconciliation;
-          return {
-            'NO. SURAT JALAN': d.deliveryNumber,
-            'VOL. MUAT (m³)': d.loadedVolumeM3,
-            'VOL. TERIMA (m³)': d.receivedVolumeM3,
-            'SELISIH FISIK (m³)': rec?.physicalVarianceM3 ?? 0,
-            '% SELISIH': rec?.variancePercentage ?? 0,
-            'STATUS TOLERANSI': rec?.varianceStatus || 'WITHIN_TOLERANCE',
-            'ALASAN / PENYEBAB': rec?.varianceReason || '',
-            'VOL. TAGIH FINAL (m³)': d.approvedVolumeM3,
-          };
-        });
-      } else if (selectedReportType === 'finance') {
-        rows = filteredDeliveries
-          .filter((d) => (d as any).costRecord && d.approvedVolumeM3 > 0)
-          .map((d) => ({ d, cr: (d as any).costRecord }))
-          .filter(({ cr }) => !!cr)
-          .map(({ d, cr }) => {
-            const quarry = quarries.find((q: any) => q.id === d.quarryId);
-            const vehicle = vehicles.find((v: any) => v.id === d.vehicleId);
-            const vendor = transportVendors.find((v: any) => v.id === d.transportVendorId);
-            const cust = customers.find((c: any) => c.id === contracts.find((co: any) => co.id === d.contractId)?.customerId);
-            const proj = projects.find((p: any) => p.id === contracts.find((co: any) => co.id === d.contractId)?.projectId);
-            return {
-              'NO. SURAT JALAN': d.deliveryNumber,
-              'TANGGAL': formatDateDMYFin(d.scheduledDate),
-              'JENIS MATERIAL': products.find((p: any) => p.id === d.productId)?.name || '',
-              'PELANGGAN': cust?.name || '',
-              'TUJUAN PROYEK': projectAliasFin(proj),
-              'VOL LOADING (m³)': (d as any).loadedVolumeM3,
-              'VOL (M³)': (d as any).approvedVolumeM3,
-              'SUMBER QUARRY': quarry?.name || '',
-              'PLAT NOMOR': vehicle?.plateNumber || (d as any).driverName || '',
-              'VENDOR ARMADA': vendorAliasFin(vendor),
-              'PENDAPATAN JUAL (IDR)': (cr as any).recognizedRevenueIdr,
-              'BIAYA MATERIAL (IDR)': (cr as any).totalMaterialCostIdr,
-              'ONGKOS ANGKUT (IDR)': (cr as any).totalFreightCostIdr,
-              'TOTAL HPP (IDR)': (cr as any).totalHppIdr,
-              'LABA KOTOR (IDR)': (cr as any).grossProfitIdr,
-              'GROSS MARGIN (%)': (cr as any).grossMarginPercent,
-            };
-          });
-        filename = `REV_BUMI_HPP_${new Date().toISOString().slice(0, 10)}.csv`;
-      } else if (selectedReportType === 'contracts') {
-        rows = contracts.map((c) => {
-          const cust = customers.find((cu) => cu.id === c.customerId);
-          const proj = projects.find((p) => p.id === c.projectId);
-          const prod = products.find((p) => p.id === c.productId);
-          const rel = deliveries.filter((d) => d.contractId === c.id);
-          const fulfilled = rel.reduce((s, d) => s + (d.approvedVolumeM3 || 0), 0);
-          const isNonPo = c.contractType === 'NON_PO';
-          const remaining = isNonPo ? 0 : Math.max(0, c.contractedVolumeM3 - fulfilled);
-          const burn = isNonPo ? 0 : (fulfilled / c.contractedVolumeM3) * 100;
-          return {
-            'NO. KONTRAK': c.contractNumber,
-            'PELANGGAN': cust?.name || '',
-            'PROYEK': proj?.name || '',
-            'MATERIAL': prod?.name || '',
-            'VOLUME KONTRAK (m³)': isNonPo ? 'Rutin' : c.contractedVolumeM3,
-            'REALISASI APPROVED (m³)': fulfilled,
-            'SISA KUOTA (m³)': isNonPo ? 'Rutin' : remaining,
-            'BURN RATE (%)': isNonPo ? 'Rutin' : burn.toFixed(1),
-            'STATUS KONTRAK': c.status,
-          };
-        });
-      }
+      const rows: any[] = exportRowsForType();
       if (rows.length === 0) {
         toast.error('Tidak ada data untuk diekspor (filter kosong)');
         return;
       }
+      let filename = `REV_BUMI_${selectedReportType}_${new Date().toISOString().slice(0, 10)}.csv`;
+      if (selectedReportType === 'finance') filename = `REV_BUMI_HPP_${new Date().toISOString().slice(0, 10)}.csv`;
       const headers = Object.keys(rows[0]!);
       const csv =
         [headers.join(','), ...rows.map((r) => headers.map((h) => `"${String((r as any)[h] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
@@ -303,6 +263,35 @@ export const ReportsView: React.FC = () => {
     } catch (e: any) {
       toast.error(e?.message || 'Gagal ekspor CSV');
     }
+  };
+  const handleExportExcel = () => {
+    try {
+      const rows: any[] = exportRowsForType();
+      if (rows.length === 0) { toast.error('Tidak ada data untuk Excel'); return; }
+      // Excel via CSV with .xlsx mime — Excel opens CSV fine; for true xlsx need `xlsx` lib
+      const headers = Object.keys(rows[0]!);
+      const csv = [headers.join(','), ...rows.map((r) => headers.map((h) => `"${String((r as any)[h] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `REV_BUMI_${selectedReportType}_${new Date().toISOString().slice(0, 10)}.xlsx`; a.click(); URL.revokeObjectURL(url);
+      toast.success(`Excel ${selectedReportType} diunduh — ${rows.length} baris`);
+    } catch (e: any) { toast.error(e?.message || 'Gagal Excel'); }
+  };
+  const handleExportPdf = async () => {
+    try {
+      const { jsPDF } = await import('jspdf');
+      const autoTable = (await import('jspdf-autotable')).default as any;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      doc.setFontSize(12); doc.setFont('helvetica','bold'); doc.text(`Laporan ${selectedReportType} — REV BUMI`, 14, 12);
+      doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.text(`Filter: ${selectedCustomerId}/${selectedQuarryId}/${selectedProductId} ${dateRange.start}→${dateRange.end} • ${filteredDeliveries.length} ritase`, 14, 18);
+      const rows: any[] = exportRowsForType();
+      if (rows.length === 0) { toast.error('Tidak ada data untuk PDF'); return; }
+      const headers = Object.keys(rows[0]!);
+      const body = rows.slice(0, 50).map((r) => headers.map((h) => String((r as any)[h] ?? '')));
+      autoTable(doc, { head: [headers], body, startY: 22, styles: { fontSize: 6 }, headStyles: { fillColor: [0,60,22] } });
+      doc.save(`REV_BUMI_${selectedReportType}_${new Date().toISOString().slice(0,10)}.pdf`);
+      toast.success(`PDF ${selectedReportType} diunduh — ${Math.min(50, rows.length)} baris (max 50)`);
+    } catch (e: any) { toast.error(e?.message || 'Gagal PDF'); }
   };
 
   return (
@@ -319,9 +308,28 @@ export const ReportsView: React.FC = () => {
             </TabsList>
           </Tabs>
 
-          <Button size="sm" onClick={handleExport} className="w-full md:w-auto shrink-0 bg-emerald-700 hover:bg-emerald-800">
-            <Download className="w-4 h-4" /> Unduh Laporan (CSV Baku)
-          </Button>
+          <div className="flex gap-2 w-full md:w-auto">
+            <Button size="sm" variant="outline" onClick={handleExport} className="flex-1 md:flex-none gap-1.5"><Download className="w-4 h-4" /> CSV</Button>
+            <Button size="sm" variant="outline" onClick={handleExportExcel} className="flex-1 md:flex-none gap-1.5"><FileSpreadsheet className="w-4 h-4" /> Excel</Button>
+            <Button size="sm" onClick={handleExportPdf} className="flex-1 md:flex-none shrink-0 bg-emerald-700 hover:bg-emerald-800 gap-1.5"><Download className="w-4 h-4" /> PDF</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Scheduled Email Stub */}
+      <Card className="py-3 bg-amber-50/50 border-amber-200">
+        <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-3 p-0 px-4">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-amber-700" />
+            <div>
+              <p className="text-xs font-bold text-amber-900">Jadwal Email Harian — Coming Soon</p>
+              <p className="text-[11px] text-amber-700">Kirim rekap HPP & burn-rate per proyek ke direksi tiap 07:00 WIB (via Edge Function + Resend)</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground">Filter URL shareable aktif — copy link untuk share</span>
+            <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success('Link filter disalin'); }} className="h-7 text-xs gap-1"><FileSpreadsheet className="w-3 h-3" /> Salin Link</Button>
+          </div>
         </CardContent>
       </Card>
 
