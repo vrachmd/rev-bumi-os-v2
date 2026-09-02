@@ -88,6 +88,7 @@ const mapCustomer = (r: any): Customer => ({
   paymentTermsDays: num(r.payment_terms_days),
   isActive: r.is_active ?? true,
   invoiceTemplateId: r.invoice_template_id ?? undefined,
+  taxRatePercent: r.tax_rate_percent != null ? num(r.tax_rate_percent) : undefined,
 });
 
 const mapProject = (r: any): Project => ({
@@ -120,6 +121,7 @@ const mapContract = (r: any): Contract => ({
   status: (r.status as Contract['status']) ?? 'ACTIVE',
   notes: r.notes ?? undefined,
   templateId: r.template_id ?? undefined,
+  taxRatePercent: r.tax_rate_percent != null ? num(r.tax_rate_percent) : undefined,
 });
 
 const mapVendor = (r: any): TransportVendor => ({
@@ -300,6 +302,7 @@ export async function upsertMasterToSupabase(bundle: MasterDataBundle): Promise<
       payment_terms_days: c.paymentTermsDays ?? 30,
       is_active: c.isActive ?? true,
       invoice_template_id: (c as any).invoiceTemplateId ?? null,
+      tax_rate_percent: (c as any).taxRatePercent ?? null,
     }))
   ));
 
@@ -338,6 +341,7 @@ export async function upsertMasterToSupabase(bundle: MasterDataBundle): Promise<
       status: c.status ?? 'ACTIVE',
       notes: c.notes ?? null,
       template_id: (c as any).templateId ?? null,
+      tax_rate_percent: (c as any).taxRatePercent ?? 11.0,
     }))
   ));
 

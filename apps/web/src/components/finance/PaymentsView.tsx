@@ -39,10 +39,28 @@ export const PaymentsView: React.FC = () => {
   const [bankRef, setBankRef] = useState('TRF-MDR-2026-088');
   const [notes, setNotes] = useState('Pelunasan termin 1 suplai proyek.');
 
-  // AR Aging Calculation
-  const agingCurrent = invoices
-    .filter((i) => i.status !== 'PAID')
-    .reduce((sum, i) => sum + i.outstandingBalanceIdr, 0);
+  // AR Aging Calculation — real bucket dari dueDate vs today
+  const today = new Date(); today.setHours(0,0,0,0);
+  const buckets = (() => {
+    const b = { current: 0, d1_30: 0, d31_60: 0, d60: 0, totalAR: 0 };
+    for (const inv of invoices.filter((i: any) => i.status !== 'PAID' && i.outstandingBalanceIdr > 0)) {
+      const due = new Date(inv.dueDate); due.setHours(0,0,0,0);
+      const diff = Number.isNaN(due.getTime()) ? -1 : Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
+      b.totalAR += inv.outstandingBalanceIdr;
+      if (diff <= 0) b.current += inv.outstandingBalanceIdr;
+      else if (diff <= 30) b.d1_30 += inv.outstandingBalanceIdr;
+      else if (diff <= 60) b.d31_60 += inv.outstandingBalanceIdr;
+      else b.d60 += inv.outstandingBalanceIdr;
+    }
+    return b;
+  })();
+  const agingCurrent = buckets.current + buckets.d1_30; // 0-30 hari (termasuk belum jatuh tempo)
+  const aging31_60 = buckets.d31_60;
+  const aging60 = buckets.d60;
+  const totalAR = buckets.totalAR;
+  const totalInvoiced = invoices.reduce((s: number, i: any) => s + i.totalInvoiceIdr, 0);
+  const dso = totalInvoiced > 0 && totalAR > 0 ? Math.round((totalAR / (totalInvoiced / 30))) : 0; // rough DSO 30-hari basis
+  const collectionRate = totalInvoiced > 0 ? Number(((1 - totalAR / totalInvoiced) * 100).toFixed(1)) : 0;
 
   const handleRecordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +97,7 @@ export const PaymentsView: React.FC = () => {
 
   return (
     <div className="space-y-4 pb-12">
-      {/* AR Aging Summary Cards — shadcn Card */}
+      {/* AR Aging Summary Cards — shadcn Card — real bucket dari dueDate */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <Card>
           <CardHeader className="pb-2">
@@ -87,27 +105,27 @@ export const PaymentsView: React.FC = () => {
             <CardTitle className="text-xl font-mono">{formatIDR(agingCurrent)}</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <span className="text-[10px] text-emerald-700 font-semibold">Dalam batas jatuh tempo</span>
+            <span className="text-[10px] text-emerald-700 font-semibold">0-30 hari {buckets.d1_30>0 ? `(+${formatIDR(buckets.d1_30)} 1-30)` : '• DSO ' + dso + ' hari'} • {collectionRate}% koleksi</span>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
             <CardDescription className="text-[11px] font-semibold text-amber-600 uppercase">Aging 31 - 60 Hari</CardDescription>
-            <CardTitle className="text-xl font-mono text-amber-900">{formatIDR(45000000)}</CardTitle>
+            <CardTitle className="text-xl font-mono text-amber-900">{formatIDR(aging31_60)}</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <span className="text-[10px] text-amber-700">Perlu reminder billing</span>
+            <span className="text-[10px] text-amber-700">{aging31_60>0 ? 'Perlu reminder billing' : 'Tidak ada 31-60 hari'}</span>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
             <CardDescription className="text-[11px] font-semibold text-destructive uppercase">Aging &gt; 60 Hari (Kritis)</CardDescription>
-            <CardTitle className="text-xl font-mono text-destructive">{formatIDR(0)}</CardTitle>
+            <CardTitle className="text-xl font-mono text-destructive">{formatIDR(aging60)}</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <span className="text-[10px] text-muted-foreground">Tidak ada piutang macet</span>
+            <span className="text-[10px] text-muted-foreground">{aging60>0 ? 'Piutang macet — follow up direksi' : 'Tidak ada piutang macet'}</span>
           </CardContent>
         </Card>
 
@@ -119,7 +137,7 @@ export const PaymentsView: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <span className="text-[10px] text-emerald-100/80">Dari {payments.length} transaksi penerimaan</span>
+            <span className="text-[10px] text-emerald-100/80">Dari {payments.length} transaksi • AR {formatIDR(totalAR)} • DSO {dso}d</span>
           </CardContent>
         </Card>
       </div>

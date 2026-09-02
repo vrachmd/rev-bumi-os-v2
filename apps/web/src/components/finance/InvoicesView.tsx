@@ -73,6 +73,10 @@ export const InvoicesView: React.FC = () => {
   const [ppnIncluded, setPpnIncluded] = useState(true);
   const [notes, setNotes] = useState('Penagihan suplai material agregat proyek konstruksi.');
 
+  const selectedContractForTax = contracts.find((c: any) => c.id === selectedContractId) as any;
+  const selectedCustomerForTax = customers.find((c: any) => c.id === (selectedContractForTax?.customerId || selectedCustomerId)) as any;
+  const effectiveTaxRate = Number(selectedContractForTax?.taxRatePercent ?? selectedCustomerForTax?.taxRatePercent ?? 11.0);
+
   // Unbilled deliveries candidate — hanya yang belum masuk invoice
   const invoicedDeliveryIds = new Set((invoices as any[]).flatMap((inv: any) => (inv.items || []).map((it: any) => it.deliveryId)));
   const candidateDeliveries = deliveries.filter(
@@ -91,7 +95,7 @@ export const InvoicesView: React.FC = () => {
       selectedProjectId,
       selectedContractId,
       selectedDeliveryIds,
-      ppnIncluded ? 11.0 : 0,
+      ppnIncluded ? effectiveTaxRate : 0,
       notes
     );
 
@@ -136,6 +140,41 @@ export const InvoicesView: React.FC = () => {
             <Button variant="outline" size="sm" onClick={() => exportToCsv('invoices')}>
               <Download className="w-4 h-4" /> Ekspor Invoices
             </Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              // e-Faktur CSV: FK, Nomor Faktur, Tanggal, NPWP, Nama, DPP, PPN, Total
+              const rows = filteredInvoices.map((inv: any) => {
+                const cust: any = customers.find((c: any) => c.id === inv.customerId);
+                return {
+                  'FK': 'FK',
+                  'KD_JENIS_TRANSAKSI': '01',
+                  'FG_PENGGANTI': '0',
+                  'NOMOR_FAKTUR': inv.invoiceNumber.replace(/[^0-9]/g, '').slice(-13) || inv.invoiceNumber,
+                  'MASA_PAJAK': new Date(inv.invoiceDate).getMonth() + 1,
+                  'TAHUN_PAJAK': new Date(inv.invoiceDate).getFullYear(),
+                  'TANGGAL_FAKTUR': inv.invoiceDate.split('-').reverse().join('/'),
+                  'NPWP': (cust?.npwp || '').replace(/[^0-9]/g, ''),
+                  'NAMA': cust?.name || '',
+                  'ALAMAT_LENGKAP': cust?.billingAddress || cust?.address || '',
+                  'JUMLAH_DPP': inv.subtotalIdr,
+                  'JUMLAH_PPN': inv.taxAmountIdr,
+                  'JUMLAH_PPNBM': 0,
+                  'ID_KETERANGAN_TAMBAHAN': '',
+                  'FG_UANG_MUKA': 0,
+                  'UANG_MUKA_DPP': 0,
+                  'UANG_MUKA_PPN': 0,
+                  'UANG_MUKA_PPNBM': 0,
+                  'REFERENSI': inv.invoiceNumber,
+                };
+              });
+              if (rows.length === 0) { alert('Tidak ada faktur untuk e-Faktur'); return; }
+              const headers = Object.keys(rows[0]);
+              const csv = [headers.join(','), ...rows.map((r: any) => headers.map((h) => `"${String(r[h] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a'); a.href = url; a.download = `eFaktur_${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
+            }}>
+              <FileText className="w-4 h-4" /> e-Faktur CSV
+            </Button>
             <Button size="sm" onClick={() => setIsCreatingInvoice(true)}>
               <Plus className="w-4 h-4" /> Terbitkan Faktur Baru
             </Button>
@@ -154,7 +193,7 @@ export const InvoicesView: React.FC = () => {
                 <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Pelanggan & Proyek</TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Volume Tagih (m³)</TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Subtotal DPP</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">PPN 11%</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">PPN</TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Total Faktur</TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Sudah Dibayar</TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Sisa Piutang (AR)</TableHead>
@@ -208,7 +247,8 @@ export const InvoicesView: React.FC = () => {
                     </TableCell>
 
                     <TableCell className="text-right font-mono text-muted-foreground">
-                      {formatIDR(inv.taxAmountIdr)}
+                      <span title={`${inv.taxRatePercent}%`}>{formatIDR(inv.taxAmountIdr)}</span>
+                      <span className="ml-1 text-[10px] text-muted-foreground">({inv.taxRatePercent}%)</span>
                     </TableCell>
 
                     <TableCell className="text-right font-mono font-extrabold">
@@ -385,7 +425,7 @@ export const InvoicesView: React.FC = () => {
                     onChange={(e) => setPpnIncluded(e.target.checked)}
                     className="rounded text-[#003C16] focus:ring-[#003C16]"
                   />
-                  <span>Kenakan PPN 11%</span>
+                  <span>Kenakan PPN {effectiveTaxRate}% {selectedContractForTax?.taxRatePercent != null ? '(kontrak)' : selectedCustomerForTax?.taxRatePercent != null ? '(pelanggan)' : '(default 11%)'}</span>
                 </label>
               </div>
 
@@ -572,7 +612,7 @@ export const InvoicesView: React.FC = () => {
                     <span className="font-bold text-slate-900">{formatIDR(selectedInvoiceForPrint.subtotalIdr)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600">PPN (11%):</span>
+                    <span className="text-slate-600">PPN ({selectedInvoiceForPrint.taxRatePercent}%):</span>
                     <span className="font-bold text-slate-900">{formatIDR(selectedInvoiceForPrint.taxAmountIdr)}</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t-2 border-[#003C16] text-sm font-extrabold text-[#003C16]">

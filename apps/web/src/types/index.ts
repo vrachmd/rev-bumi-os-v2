@@ -152,6 +152,7 @@ export interface Customer {
   paymentTermsDays: number;
   isActive: boolean;
   invoiceTemplateId?: InvoiceTemplateId;
+  taxRatePercent?: number;
 }
 
 export interface Project {
@@ -187,6 +188,7 @@ export interface Contract {
   status: 'ACTIVE' | 'COMPLETED' | 'EXPIRED' | 'SUSPENDED';
   notes?: string;
   templateId?: InvoiceTemplateId;
+  taxRatePercent?: number;
 }
 
 export interface TransportVendor {

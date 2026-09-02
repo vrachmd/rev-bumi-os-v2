@@ -44,6 +44,7 @@ export const ContractsView: React.FC = () => {
   const [contractedVolumeM3, setContractedVolumeM3] = useState<number>(10000);
   const [unitPricePerM3, setUnitPricePerM3] = useState<number>(175000);
   const [tolerancePercent, setTolerancePercent] = useState<number>(2.0);
+  const [taxRatePercent, setTaxRatePercent] = useState<number>(11.0);
   const [overDeliveryPolicy, setOverDeliveryPolicy] = useState<OverDeliveryPolicy>('WARNING');
   const [templateId, setTemplateId] = useState<'IMCI-AGREGAT' | 'STANDARD-PER-RIT' | ''>('');
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
@@ -62,6 +63,7 @@ export const ContractsView: React.FC = () => {
     setContractedVolumeM3(10000);
     setUnitPricePerM3(175000);
     setTolerancePercent(2.0);
+    setTaxRatePercent(11.0);
     setOverDeliveryPolicy('WARNING');
     setTemplateId('');
     setStartDate(new Date().toISOString().slice(0, 10));
@@ -90,6 +92,7 @@ export const ContractsView: React.FC = () => {
     setContractedVolumeM3(contract.contractedVolumeM3 || 0);
     setUnitPricePerM3(contract.unitPricePerM3);
     setTolerancePercent(contract.tolerancePercent);
+    setTaxRatePercent((contract as any).taxRatePercent ?? 11.0);
     setOverDeliveryPolicy(contract.overDeliveryPolicy);
     setTemplateId((contract as any).templateId || '');
     setStartDate(contract.startDate);
@@ -125,6 +128,7 @@ export const ContractsView: React.FC = () => {
       contractedVolumeM3: contractType === 'NON_PO' ? 0 : Number(contractedVolumeM3),
       unitPricePerM3: Number(unitPricePerM3),
       tolerancePercent: Number(tolerancePercent),
+      taxRatePercent: Number(taxRatePercent),
       overDeliveryPolicy,
       templateId: templateId || undefined,
       startDate,
@@ -274,7 +278,7 @@ export const ContractsView: React.FC = () => {
               )}
 
               {/* Stats Summary Grid */}
-              <div className="grid grid-cols-3 gap-2 text-center text-xs p-3 rounded-lg bg-slate-50 border border-slate-100 font-mono">
+              <div className="grid grid-cols-4 gap-2 text-center text-xs p-3 rounded-lg bg-slate-50 border border-slate-100 font-mono">
                 <div>
                   <span className="text-[10px] text-slate-500 block">Sisa Volume:</span>
                   <span className="font-bold text-slate-800">
@@ -282,13 +286,19 @@ export const ContractsView: React.FC = () => {
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 block">Toleransi Selisih:</span>
+                  <span className="text-[10px] text-slate-500 block">Toleransi:</span>
                   <span className="font-bold text-slate-800">
                     ±{contract.tolerancePercent.toFixed(1)}%
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 block">Total Revenue:</span>
+                  <span className="text-[10px] text-slate-500 block">PPN:</span>
+                  <span className="font-bold text-slate-800">
+                    {(contract as any).taxRatePercent ?? 11}%
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block">Revenue:</span>
                   <span className="font-bold text-emerald-800">
                     {formatIDR(metrics.totalRevenueRecognizedIdr)}
                   </span>
@@ -475,7 +485,7 @@ export const ContractsView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1">
                     Volume (m³) *
@@ -523,6 +533,21 @@ export const ContractsView: React.FC = () => {
                     onChange={(e) => setTolerancePercent(Number(e.target.value))}
                     className="w-full px-3 py-2 text-xs border border-slate-300 rounded-md focus:ring-2 focus:ring-[#003C16] outline-hidden font-mono"
                   />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    PPN (%) *
+                  </label>
+                  <select
+                    value={String(taxRatePercent)}
+                    onChange={(e) => setTaxRatePercent(Number(e.target.value))}
+                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-md focus:ring-2 focus:ring-[#003C16] outline-hidden"
+                  >
+                    <option value="0">0% (Non-PPN)</option>
+                    <option value="11">11%</option>
+                    <option value="12">12% (2025)</option>
+                  </select>
                 </div>
               </div>
 

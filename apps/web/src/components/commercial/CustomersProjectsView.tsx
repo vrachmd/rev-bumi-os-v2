@@ -41,6 +41,7 @@ export const CustomersProjectsView: React.FC = () => {
   const [cPhone, setCPhone] = useState('');
   const [cEmail, setCEmail] = useState('');
   const [cTerms, setCTerms] = useState(30);
+  const [cTax, setCTax] = useState(11);
   const [cTemplate, setCTemplate] = useState<'IMCI-AGREGAT' | 'STANDARD-PER-RIT' | ''>('');
   const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null);
 
@@ -66,6 +67,7 @@ export const CustomersProjectsView: React.FC = () => {
     setCPhone('');
     setCEmail('');
     setCTerms(30);
+    setCTax(11);
     setCTemplate('');
     setShowCustomerModal(true);
   };
@@ -73,7 +75,7 @@ export const CustomersProjectsView: React.FC = () => {
     setEditingCustomerId(c.id);
     setCName(c.name); setCNpwp(c.npwp||''); setCAddress(c.billingAddress||c.address||'');
     setCPic(c.contactPerson||''); setCPhone(c.phone||''); setCEmail(c.email||'');
-    setCTerms(c.paymentTermsDays||30); setCTemplate(c.invoiceTemplateId||'');
+    setCTerms(c.paymentTermsDays||30); setCTax(c.taxRatePercent ?? 11); setCTemplate(c.invoiceTemplateId||'');
     setShowCustomerModal(true);
   };
   const handleDeleteCustomer = (id: string) => {
@@ -129,9 +131,9 @@ export const CustomersProjectsView: React.FC = () => {
     e.preventDefault();
     if (editingCustomerId) {
       const orig = customers.find((c:any)=>c.id===editingCustomerId);
-      if (orig) saveCustomer({ ...orig, name: cName.trim(), npwp: cNpwp.trim(), billingAddress: cAddress.trim(), address: cAddress.trim(), contactPerson: cPic.trim(), phone: cPhone.trim(), email: cEmail.trim(), paymentTermsDays: Number(cTerms)||30, invoiceTemplateId: cTemplate || undefined } as any);
+      if (orig) saveCustomer({ ...orig, name: cName.trim(), npwp: cNpwp.trim(), billingAddress: cAddress.trim(), address: cAddress.trim(), contactPerson: cPic.trim(), phone: cPhone.trim(), email: cEmail.trim(), paymentTermsDays: Number(cTerms)||30, taxRatePercent: Number(cTax), invoiceTemplateId: cTemplate || undefined } as any);
     } else {
-      addCustomer({ name: cName.trim(), npwp: cNpwp.trim(), billingAddress: cAddress.trim(), contactPerson: cPic.trim(), phone: cPhone.trim(), email: cEmail.trim(), paymentTermsDays: Number(cTerms) || 30, isActive: true, invoiceTemplateId: cTemplate || undefined } as any);
+      addCustomer({ name: cName.trim(), npwp: cNpwp.trim(), billingAddress: cAddress.trim(), contactPerson: cPic.trim(), phone: cPhone.trim(), email: cEmail.trim(), paymentTermsDays: Number(cTerms) || 30, isActive: true, taxRatePercent: Number(cTax), invoiceTemplateId: cTemplate || undefined } as any);
     }
     setShowCustomerModal(false); setEditingCustomerId(null);
   };
@@ -221,6 +223,10 @@ export const CustomersProjectsView: React.FC = () => {
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-mono">
                   <span className="text-slate-500">Termin Pembayaran:</span>
                   <span className="font-bold text-slate-900">{cust.paymentTermsDays} Hari</span>
+                </div>
+                <div className="pt-1 flex items-center justify-between text-xs font-mono">
+                  <span className="text-slate-500">PPN Default:</span>
+                  <span className="font-bold text-slate-900">{(cust as any).taxRatePercent ?? 11}%</span>
                 </div>
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-mono">
                   <span className="text-slate-500">Kontrak Aktif:</span>
@@ -357,15 +363,25 @@ export const CustomersProjectsView: React.FC = () => {
                   />
                 </div>
               </div>
-              <div>
-                <label className={labelCls}>Termin Pembayaran (hari)</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={cTerms}
-                  onChange={(e) => setCTerms(Number(e.target.value))}
-                  className={inputCls}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Termin Pembayaran (hari)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={cTerms}
+                    onChange={(e) => setCTerms(Number(e.target.value))}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>PPN Default (%)</label>
+                  <select value={String(cTax)} onChange={(e) => setCTax(Number(e.target.value))} className={inputCls}>
+                    <option value={0}>0% (Non-PPN)</option>
+                    <option value={11}>11%</option>
+                    <option value={12}>12% (2025)</option>
+                  </select>
+                </div>
               </div>
               <div>
                 <label className={labelCls}>Template Faktur</label>
