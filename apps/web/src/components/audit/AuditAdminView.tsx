@@ -80,6 +80,8 @@ export const AuditAdminView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTableFilter, setSelectedTableFilter] = useState('ALL');
   const [selectedLogForDetails, setSelectedLogForDetails] = useState<AuditLog | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
 
   // New correction request state
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
@@ -96,15 +98,22 @@ export const AuditAdminView: React.FC = () => {
   const [reviewingRequest, setReviewingRequest] = useState<CorrectionRequest | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
 
-  // Filtered audit logs
-  const filteredLogs = auditLogs.filter((log) => {
+  // Filtered audit logs + pagination + role-filter
+  const filteredLogsAll = auditLogs.filter((log) => {
     const matchesSearch =
       log.recordIdentifier.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.changedBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.action.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTable = selectedTableFilter === 'ALL' || log.tableName === selectedTableFilter;
-    return matchesSearch && matchesTable;
+    // role-filter: non SUPER_ADMIN/MANAGEMENT hanya lihat own logs (fallback)
+    const role = currentProfile.role;
+    const isPrivileged = role === 'SUPER_ADMIN' || role === 'MANAGEMENT';
+    const matchesRole = isPrivileged || log.changedBy === currentProfile.fullName;
+    return matchesSearch && matchesTable && matchesRole;
   });
+  const totalPages = Math.max(1, Math.ceil(filteredLogsAll.length / pageSize));
+  const filteredLogs = filteredLogsAll.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, selectedTableFilter, activeTab]);
 
   const handleExportAudit = () => {
     if (filteredLogs.length === 0) {
@@ -286,6 +295,13 @@ export const AuditAdminView: React.FC = () => {
                   ))}
                 </TableBody>
               </Table>
+              <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/30 text-xs">
+                <span className="text-muted-foreground">Menampilkan {(currentPage-1)*pageSize+1}–{Math.min(currentPage*pageSize, filteredLogsAll.length)} dari {filteredLogsAll.length} • Hal {currentPage}/{totalPages}</span>
+                <div className="flex gap-1">
+                  <Button variant="outline" size="sm" disabled={currentPage<=1} onClick={()=>setCurrentPage(p=>Math.max(1,p-1))} className="h-7 text-xs">Prev</Button>
+                  <Button variant="outline" size="sm" disabled={currentPage>=totalPages} onClick={()=>setCurrentPage(p=>Math.min(totalPages,p+1))} className="h-7 text-xs">Next</Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

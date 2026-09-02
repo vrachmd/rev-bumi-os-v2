@@ -294,6 +294,62 @@ export const CockpitDashboard: React.FC<CockpitDashboardProps> = ({ onNavigate }
         </div>
       </div>
 
+      {/* 2b. Tren 7 Hari — Revenue / Margin / Variance */}
+      <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-[#003C16]" /> Tren 7 Hari — Volume & Margin</h3>
+          <span className="text-[11px] text-slate-500">Klik bar untuk filter Laporan • Forecast burn-rate di bawah</span>
+        </div>
+        <div className="grid grid-cols-7 gap-2 items-end h-24">
+          {(() => {
+            const days: { date: string; vol: number; rev: number; margin: number; varCount: number }[] = [];
+            const today = new Date(); today.setHours(0,0,0,0);
+            for (let i = 6; i >= 0; i--) {
+              const d = new Date(today); d.setDate(today.getDate() - i);
+              const iso = d.toISOString().slice(0,10);
+              const dayDelivs = deliveries.filter((del) => del.scheduledDate === iso && del.approvedVolumeM3 > 0);
+              const vol = dayDelivs.reduce((s, del) => s + (del.approvedVolumeM3||0), 0);
+              const rev = dayDelivs.reduce((s, del) => s + (del.costRecord?.recognizedRevenueIdr||0), 0);
+              const hpp = dayDelivs.reduce((s, del) => s + (del.costRecord?.totalHppIdr||0), 0);
+              const margin = rev>0 ? ((rev-hpp)/rev*100) : 0;
+              const varCount = dayDelivs.filter((del) => del.reconciliation?.varianceStatus==='ABOVE_TOLERANCE').length;
+              days.push({ date: iso.slice(5), vol, rev, margin, varCount });
+            }
+            const maxVol = Math.max(1, ...days.map((d) => d.vol));
+            return days.map((day, idx) => {
+              const h = Math.max(8, (day.vol / maxVol) * 80);
+              const color = day.margin >= 25 ? '#10B981' : day.margin >= 15 ? '#F59E0B' : day.vol===0 ? '#E2E8F0' : '#EF4444';
+              return (
+                <div key={idx} className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => onNavigate('reports' as any)} title={`${day.date} • ${day.vol.toFixed(1)} m³ • Margin ${day.margin.toFixed(1)}%${day.varCount?` • ${day.varCount} above`:''}`}>
+                  <div className="text-[10px] font-mono font-bold" style={{ color }}>{day.margin>0 ? `${day.margin.toFixed(0)}%` : '-'}</div>
+                  <div className="w-full rounded-t" style={{ height: `${h}px`, backgroundColor: color, opacity: day.vol===0?0.3:1 }} />
+                  <div className="text-[10px] font-mono text-slate-600">{day.date}</div>
+                  <div className="text-[9px] text-slate-500">{day.vol.toFixed(0)} m³</div>
+                </div>
+              );
+            });
+          })()}
+        </div>
+        <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+          {(() => {
+            const activeContracts = contracts.filter((c) => c.status==='ACTIVE' && c.contractType!=='NON_PO');
+            const totalRemaining = activeContracts.reduce((sum,c) => {
+              const ful = deliveries.filter((d)=>d.contractId===c.id).reduce((s,d)=>s+(d.approvedVolumeM3||0),0);
+              return sum + Math.max(0, c.contractedVolumeM3 - ful);
+            },0);
+            const avgDailyVol = deliveries.filter((d)=>d.approvedVolumeM3>0).reduce((s,d)=>s+(d.approvedVolumeM3||0),0) / 30;
+            const forecastDays = avgDailyVol>0 ? Math.round(totalRemaining / avgDailyVol) : 0;
+            return (
+              <>
+                <div className="p-2 rounded bg-slate-50 border text-center"><span className="text-[10px] text-slate-500 block">Sisa Kuota Aktif</span><span className="font-bold font-mono">{totalRemaining.toLocaleString('id-ID')} m³</span></div>
+                <div className="p-2 rounded bg-slate-50 border text-center"><span className="text-[10px] text-slate-500 block">Rata-rata Harian (30d)</span><span className="font-bold font-mono">{avgDailyVol.toFixed(1)} m³/d</span></div>
+                <div className="p-2 rounded bg-emerald-50 border border-emerald-200 text-center"><span className="text-[10px] text-emerald-700 block">Forecast Habis</span><span className="font-bold font-mono text-emerald-800">~{forecastDays} hari</span></div>
+              </>
+            );
+          })()}
+        </div>
+      </div>
+
       {/* 3. Executive Financial Overview (Protected by Role) */}
       {isFinanceVisible ? (
         <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-2xs space-y-4">
