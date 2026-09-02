@@ -98,6 +98,7 @@
 - [x] **Rebranding** — ✅ `a25c556` `PT REV Bumi Nusantara Perkasa → REV BUMI NUSANTARA` + tagline `Sistem Operasional dan Management` di 16 file (AGENTS/ROADMAP/TASKS/README/layout/Brand/Navbar/Dashboard/Login).
 - [x] **Mobile polish Inter + header/status bar** — ✅ `4279e62` Inter `expo-font`, `KpiCard` `EvidenceViewer Clock/MapPin`, `4912044` `83da3a1` Quarry header viewport spacer dark + `77d5412` Bulk pindah Dashboard `QUARRY_CHECKER+MANAGEMENT` — **HOLD** setelah ini.
 - [ ] **Skema KBS Internal 1 Kontrak 2 Harga + Bulk** — ⏳ plan `.md` only `docs/plan/kbs-internal-1kontrak-2harga.md` dibuat 2026-08-30 (belum ubah aplikasi). Scope: `vendor-07 KBS-INT` + 5 `freight INTERNAL_KBS 0` + 10 `vehicles B 9xxx KBS` + `contracts unit_price_internal_m3 nullable` + `Bulk 15 kolom/10→20 baris` support internal. Harga fix menyusul fallback eksternal. **HOLD** sampai polish bisnis selesai.
+- [ ] **Push Notifikasi Expo (WA Hold)** — ⏳ plan `.md` only `docs/plan/push-expo-fcm.md` dibuat 2026-08-30 — Expo `push_tokens` + `push_outbox` + `send-push` Edge Function + `registerForPush` deep link; **WA di-HOLD mahal** (`docs/plan/whatsapp-cloud-api.md` hold).
 - [ ] **Polish Bisnis — Closing Periode & Lock** — ⏳ `docs/plan/polish-bisnis-pencatatan.md` #1 `closed_periods` + guard `createInvoice/recordPayment/updateContract` + `SUPER_ADMIN` unlock — prioritas 1.
 - [ ] **Polish Bisnis — PPN Dinamis + AR Aging Real + Addendum + Product CRUD + DRY HPP + Laporan PDF/Excel + Audit Pagination + Dashboard Tren** — ⏳ #2-#9 di `docs/plan/polish-bisnis-pencatatan.md` — est. 5-7 hari, semua di `apps/web` Commercial/Finance/Reports/Master/Dashboard/Audit.
 - [ ] UAT manual 3-role (quarry→site→admin) + bulk + HPP verifikasi langsung di `app.revbuminusantara.biz.id` — **siap dijalankan, checklist di `docs/UAT-20260823-bulk.md` + verifikasi HPP 15 kolom + Note SJ IMCI + pengeluaran per-rit** — konfirmasi user belum masuk — **HOLD lapangan, UAT bisnis dulu**.
@@ -122,11 +123,13 @@
 | File | Status |
 |---|---|
 | `docs/plan/kbs-internal-1kontrak-2harga.md` | **Baru 2026-08-30** — 1 kontrak 2 harga + vendor KBS-INT + bulk 15 kolom/10→20 (hanya .md, belum ubah app) |
+| `docs/plan/push-expo-fcm.md` | **Baru 2026-08-30** — Push Expo `push_tokens/outbox` + `send-push` Edge, WA hold mahal |
+| `docs/plan/polish-bisnis-pencatatan.md` | **Baru 2026-08-30** — 9 prioritas bisnis, hold lapangan |
 | `apps/mobile/src/screens/BulkQuarryScreen.tsx` | **Stabil 5b6f35b** — Select + VehiclePlateInput searchable header dark |
 | `apps/mobile/src/navigation/QuarryStack.tsx` | **Stabil 77d5412** — Bulk pindah Dashboard, spacer dark statusbar fix |
 | `apps/mobile/src/screens/DashboardScreen.tsx` | **Stabil 77d5412** — Bulk 10 Ritase di bawah Tambah Ritase Baru `QUARRY_CHECKER+MANAGEMENT` |
 | `docs/UAT-20260823-bulk.md` | **Baru** — checklist UAT web bulk 50 + mobile 10 (3-role + metode ALL_IN/PER_TRIP) + addendum 2026-08-29 |
-| `ROADMAP.md` / `TASKS.md` | **Update 2026-08-30** — rebranding + bulk internal plan (hanya .md) |
+| `ROADMAP.md` / `TASKS.md` | **Update 2026-08-30** — rebranding + push WA hold + bisnis hold |
 
 ### Sudah diubah (stabil, ter-commit)
 **Web (`apps/web/src`)**
