@@ -173,7 +173,8 @@ Prinsip: **jaga portabilitas dari hari pertama** agar keputusan Supabase tidak m
 
 ## 7. Catatan Proses untuk Agen Berikutnya
 
-0. **Fase UI shadcn — UI-Only**: selama `docs/plan/ui-shadcn-roadmap.md` aktif (2026-08-23→2026-08-24, lewat), **hanya ubah UI** (lihat AGENTS.md #8). Jangan sentuh logika bisnis/data — fase lewat, sekarang buka untuk fix ledger/bulk.
+0. **Fase Polish Bisnis — HOLD Lapangan**: mulai 2026-08-30, pengembangan fokus **pencatatan bisnis** (`docs/plan/polish-bisnis-pencatatan.md` 9 prioritas: closing, PPN dinamis, AR aging, addendum, Product CRUD, DRY HPP, laporan PDF/Excel, audit pagination, dashboard tren). **Operasional lapangan di-HOLD** (`Deliveries/Recon/Field/Bulk` + Mobile PWA tidak di-touch) sampai polish bisnis stabil. `docs/plan/kbs-internal-1kontrak-2harga.md` juga hold (harga fix menyusul).
+0b. **Fase UI shadcn — UI-Only**: selama `docs/plan/ui-shadcn-roadmap.md` aktif (2026-08-23→2026-08-24, lewat), **hanya ubah UI** (lihat AGENTS.md #8). Jangan sentuh logika bisnis/data — fase lewat, sekarang buka untuk fix ledger/bulk.
 1. **Tidak membangun fitur baru sebelum F-01 & F-02 selesai** — fondasi data & auth adalah prioritas mutlak.
 2. **Backend = Supabase** (free tier), target akhir GCP/Alibaba — selalu tulis kode & SQL yang **portabel** (env-driven, hindari vendor lock-in).
 3. Setiap perubahan skema data: tulis **SQL migration** (versioning), jangan mengubah langsung.

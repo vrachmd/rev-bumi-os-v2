@@ -87,17 +87,21 @@
 
 ## 3. Task yang Belum Selesai
 
-### Aktif — prioritas tinggi
+### Aktif — prioritas tinggi — **FOKUS PENCATATAN BISNIS (Operasional Lapangan HOLD)**
+> Mulai 2026-08-30: polish **pencatatan bisnis** saja (`docs/plan/polish-bisnis-pencatatan.md` 9 prioritas). Lapangan (`Quarry/Site/Bulk` + Mobile PWA) **di-HOLD** — tidak ada ubah `Deliveries/Bulk` + `apps/mobile/*` sampai bisnis stabil. `kbs-internal` juga hold.
+
 - [x] **Polish faktur PDF jsPDF agar identik pratinjau HTML** — ✅ selesai 2026-08-22 (mirror HTML, tema hijau `#003C16`, footer y=255, agregat IMCI group, pagination 20 baris) — verifikasi user `INV/RBN/20260821/004.pdf` approve.
-- [x] **Bulk Ritase Massal** — ✅ selesai 2026-08-23 (web CSV 50 chunk + mobile 10 baris max 20, 6 model ALL_IN/PER_TRIP primary, RLS patch 0012, E2E 20/20 + 50/50; SJ global NNN, bulk status DELIVERED, SJ/RBN murni tanpa suffix) — polish 2026-08-29: template 15 kolom hapus m3_otomatis, cm 2 des, plat normalisasi, sorting A-Z, other per-rit plant — polish 2026-08-30 `5b6f35b` mobile Bulk searchable `VehiclePlateInput` header dark.
+- [x] **Bulk Ritase Massal** — ✅ selesai 2026-08-23 (web CSV 50 chunk + mobile 10 baris max 20, 6 model ALL_IN/PER_TRIP primary, RLS patch 0012, E2E 20/20 + 50/50; SJ global NNN, bulk status DELIVERED, SJ/RBN murni tanpa suffix) — polish 2026-08-29: template 15 kolom hapus m3_otomatis, cm 2 des, plat normalisasi, sorting A-Z, other per-rit plant — polish 2026-08-30 `5b6f35b` mobile Bulk searchable `VehiclePlateInput` header dark — **HOLD** tidak di-touch lagi sampai Fase B selesai.
 - [x] **UI shadcn — UI-Only Fase (2026-08-23 → 2026-08-24)** — ✅ Fase 0-3 selesai (`fa79aa6→851c378`), polish HPP 15 kolom & audit/reports shadcn done; sisa Fase 4 polish responsive/a11y/skeleton (estimasi 1 hari, tidak blokir operasional) — lewat, tidak blokir.
 - [x] **Harga Quarry×Produk + HPP sinkron** — ✅ selesai 2026-08-24 (`0013` + `a2d4e3f`, HPP Ledger = Laporan 15 kolom alias dinamis) — fix ledger 2026-08-29 pakai cost_records `08cbde3`.
 - [x] **Keepalive Supabase anti-pause** — ✅ `3303638→13ae88c` cron `0 3 * * * UTC` daily + workflow `keepalive-supabase` Success 9s (29/08 manual run), manual ping 11 tabel `2026-08-29T17:17Z`.
 - [x] **Rebranding** — ✅ `a25c556` `PT REV Bumi Nusantara Perkasa → REV BUMI NUSANTARA` + tagline `Sistem Operasional dan Management` di 16 file (AGENTS/ROADMAP/TASKS/README/layout/Brand/Navbar/Dashboard/Login).
-- [x] **Mobile polish Inter + header/status bar** — ✅ `4279e62` Inter `expo-font`, `KpiCard` `EvidenceViewer Clock/MapPin`, `4912044` `83da3a1` Quarry header viewport spacer dark + `77d5412` Bulk pindah Dashboard `QUARRY_CHECKER+MANAGEMENT`.
-- [ ] **Skema KBS Internal 1 Kontrak 2 Harga + Bulk** — ⏳ plan `.md` only `docs/plan/kbs-internal-1kontrak-2harga.md` dibuat 2026-08-30 (belum ubah aplikasi). Scope: `vendor-07 KBS-INT` + 5 `freight INTERNAL_KBS 0` + 10 `vehicles B 9xxx KBS` + `contracts unit_price_internal_m3 nullable` + `Bulk 15 kolom/10→20 baris` support internal. Harga fix menyusul fallback eksternal. Eksekusi 1 hari setelah approved.
-- [ ] UAT manual 3-role (quarry→site→admin) + bulk + HPP verifikasi langsung di `app.revbuminusantara.biz.id` — **siap dijalankan, checklist di `docs/UAT-20260823-bulk.md` + verifikasi HPP 15 kolom + Note SJ IMCI + pengeluaran per-rit** — konfirmasi user belum masuk.
-- [ ] Lengkapi Fase B UI kontrak `ContractsView.tsx` dropdown Template Faktur (backend `contracts.template_id` sudah siap via `0010`, pelanggan sudah dropdown, tinggal kontrak) — **hanya UI, next setelah UAT**.
+- [x] **Mobile polish Inter + header/status bar** — ✅ `4279e62` Inter `expo-font`, `KpiCard` `EvidenceViewer Clock/MapPin`, `4912044` `83da3a1` Quarry header viewport spacer dark + `77d5412` Bulk pindah Dashboard `QUARRY_CHECKER+MANAGEMENT` — **HOLD** setelah ini.
+- [ ] **Skema KBS Internal 1 Kontrak 2 Harga + Bulk** — ⏳ plan `.md` only `docs/plan/kbs-internal-1kontrak-2harga.md` dibuat 2026-08-30 (belum ubah aplikasi). Scope: `vendor-07 KBS-INT` + 5 `freight INTERNAL_KBS 0` + 10 `vehicles B 9xxx KBS` + `contracts unit_price_internal_m3 nullable` + `Bulk 15 kolom/10→20 baris` support internal. Harga fix menyusul fallback eksternal. **HOLD** sampai polish bisnis selesai.
+- [ ] **Polish Bisnis — Closing Periode & Lock** — ⏳ `docs/plan/polish-bisnis-pencatatan.md` #1 `closed_periods` + guard `createInvoice/recordPayment/updateContract` + `SUPER_ADMIN` unlock — prioritas 1.
+- [ ] **Polish Bisnis — PPN Dinamis + AR Aging Real + Addendum + Product CRUD + DRY HPP + Laporan PDF/Excel + Audit Pagination + Dashboard Tren** — ⏳ #2-#9 di `docs/plan/polish-bisnis-pencatatan.md` — est. 5-7 hari, semua di `apps/web` Commercial/Finance/Reports/Master/Dashboard/Audit.
+- [ ] UAT manual 3-role (quarry→site→admin) + bulk + HPP verifikasi langsung di `app.revbuminusantara.biz.id` — **siap dijalankan, checklist di `docs/UAT-20260823-bulk.md` + verifikasi HPP 15 kolom + Note SJ IMCI + pengeluaran per-rit** — konfirmasi user belum masuk — **HOLD lapangan, UAT bisnis dulu**.
+- [ ] Lengkapi Fase B UI kontrak `ContractsView.tsx` dropdown Template Faktur (backend `contracts.template_id` sudah siap via `0010`, pelanggan sudah dropdown, tinggal kontrak) — **hanya UI, next setelah UAT** — termasuk Fase B.
 - [ ] Verifikasi end-to-end multi-template: IMCI vs Standard Per-Rit — **hanya verifikasi visual setelah Fase UI polish**.
 
 ### Menunggu / prioritas sedang
