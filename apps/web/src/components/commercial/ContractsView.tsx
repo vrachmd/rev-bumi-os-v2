@@ -264,6 +264,9 @@ export const ContractsView: React.FC = () => {
                     <span className="font-extrabold text-sm font-mono text-[#003C16]">
                       {formatIDR(contract.unitPricePerM3)} / m³
                     </span>
+                    {(contract as any).unitPriceInternalM3 && (
+                      <span className="text-[11px] font-bold text-emerald-700 block">Internal: {formatIDR((contract as any).unitPriceInternalM3)} / m³</span>
+                    )}
                   </div>
                   <div className="flex flex-col gap-1">
                     <Button variant="ghost" size="icon-xs" onClick={() => openVersionDialog(contract)} title="Addendum / Versi">

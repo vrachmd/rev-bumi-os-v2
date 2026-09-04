@@ -35,6 +35,7 @@ const DB_TO_PRICING: Record<string, FreightRateItem['pricingModel']> = {
   ALL_IN: 'ALL_IN',
   ROUTE_BASED: 'ROUTE_BASED',
   HYBRID: 'HYBRID',
+  INTERNAL_KBS: 'INTERNAL_KBS',
 };
 
 const dateToIso = (date: string | null | undefined): string =>
@@ -51,6 +52,8 @@ interface ContractDbRow {
   product_id: string;
   quarry_id: string;
   unit_price_per_m3: number | string | null;
+  unit_price_internal_m3?: number | string | null;
+  material_cost_per_m3?: number | string | null;
 }
 
 interface ProjectDbRow {
@@ -152,7 +155,7 @@ export async function fetchMobileMasterFromSupabase(): Promise<MobileMasterBundl
     id: v.id,
     name: v.name,
     detail: `${vehicles.filter((vh) => vh.vendorId === v.id).length} armada`,
-    supplyType: v.supply_type === 'MATERIAL_AND_TRANSPORT' ? 'MATERIAL_AND_TRANSPORT' : 'TRANSPORT_ONLY',
+    supplyType: v.supply_type === 'INTERNAL' ? 'INTERNAL' : v.supply_type === 'MATERIAL_AND_TRANSPORT' ? 'MATERIAL_AND_TRANSPORT' : 'TRANSPORT_ONLY',
   }));
 
   const contracts: ContractItem[] = (contractRes.data ?? []).map((c) => {
@@ -163,6 +166,8 @@ export async function fetchMobileMasterFromSupabase(): Promise<MobileMasterBundl
       contractNumber: row.contract_number,
       projectId: row.project_id,
       unitPricePerM3: row.unit_price_per_m3 != null ? Number(row.unit_price_per_m3) : 0,
+      unitPriceInternalM3: (row as any).unit_price_internal_m3 != null ? Number((row as any).unit_price_internal_m3) : undefined,
+      materialCostPerM3: (row as any).material_cost_per_m3 != null ? Number((row as any).material_cost_per_m3) : undefined,
       name: project?.name ?? row.contract_number,
       detail: row.contract_number,
       gps:

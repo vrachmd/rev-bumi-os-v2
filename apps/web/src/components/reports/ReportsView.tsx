@@ -665,6 +665,9 @@ export const ReportsView: React.FC = () => {
                         <span className="font-medium text-[11px] px-1.5 py-0.5 rounded bg-slate-100 border text-slate-700">
                           {vendorAliasFin(vendor)}
                         </span>
+                        {(d.transportVendorId === 'vendor-07' || (cost as any).freightPricingModel === 'INTERNAL_KBS') && (
+                          <span className="ml-1 px-1 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">INTERNAL</span>
+                        )}
                       </TableCell>
                       <TableCell className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
                         {formatIDR(cost.recognizedRevenueIdr)}

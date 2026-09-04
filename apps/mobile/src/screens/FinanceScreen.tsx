@@ -61,19 +61,24 @@ export const FinanceScreen: React.FC = () => {
         }
         continue;
       }
-      const contract = contracts.find((c) => c.id === d.contractId);
+      const contract: any = contracts.find((c) => c.id === d.contractId);
       const vol = d.approvedVolumeM3 ?? d.receivedVolumeM3 ?? d.loadedVolumeM3 ?? 0;
       approvedM3 += vol;
       if (!contract) continue;
       const asOf = d.scheduledAt.slice(0, 10);
-      const unitPrice = contract.unitPricePerM3 || 175000;
+      const vendor: any = (store as any).vendors?.find((v: any) => v.id === d.transportVendorId);
+      const isInternal = vendor?.supplyType === 'INTERNAL' || d.transportVendorId === 'vendor-07';
+      const unitPrice = isInternal ? (contract.unitPriceInternalM3 ?? contract.unitPricePerM3) || 175000 : contract.unitPricePerM3 || 175000;
       const rev = vol * unitPrice;
       revenue += rev;
       const qmc = resolveQmc(d.quarryId, d.productId, asOf);
       const rate = resolveRate(d.transportVendorId, d.quarryId, contract.projectId, asOf);
-      const isAllIn = rate?.pricingModel === 'ALL_IN';
+      const isAllIn = !isInternal && rate?.pricingModel === 'ALL_IN';
       let mat = 0, fr = 0;
-      if (isAllIn) {
+      if (isInternal) {
+        mat = vol * (contract.materialCostPerM3 ?? qmc?.costPerM3 ?? 95000);
+        fr = 0; // IMCI tanggung ongkos
+      } else if (isAllIn) {
         fr = vol * rate!.ratePerUnit;
       } else {
         mat = vol * (qmc?.costPerM3 ?? 95000);

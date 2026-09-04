@@ -47,9 +47,10 @@ export type FreightPricingModel =
   | 'PER_M3'
   | 'ROUTE_BASED'
   | 'HYBRID'
-  | 'ALL_IN';
+  | 'ALL_IN'
+  | 'INTERNAL_KBS';
 
-export type VendorSupplyType = 'TRANSPORT_ONLY' | 'MATERIAL_AND_TRANSPORT';
+export type VendorSupplyType = 'TRANSPORT_ONLY' | 'MATERIAL_AND_TRANSPORT' | 'INTERNAL';
 
 export type AllInVolumeBasis = 'PER_M3_RECEIVED';
 
@@ -181,6 +182,9 @@ export interface Contract {
   contractType: 'PO_BASED' | 'NON_PO';
   contractedVolumeM3: number;
   unitPricePerM3: number;
+  unitPriceInternalM3?: number;
+  materialCostPerM3?: number;
+  pricingVariant?: 'EXTERNAL' | 'BOTH';
   tolerancePercent: number; // e.g. 2.0%
   overDeliveryPolicy: OverDeliveryPolicy;
   startDate: string;

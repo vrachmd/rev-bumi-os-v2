@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS contract_versions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  contract_id uuid NOT NULL REFERENCES contracts(id) ON DELETE CASCADE,
+  contract_id text NOT NULL REFERENCES contracts(id) ON DELETE CASCADE,
   version_number int NOT NULL,
   unit_price_per_m3 numeric NOT NULL,
   tolerance_percent numeric NOT NULL,

@@ -236,23 +236,29 @@ React.useEffect(() => {
   const todayStr = new Date().toISOString().slice(0, 10);
   const todayCount = deliveries.filter((d) => (d.scheduledAt || d.createdAt).slice(0, 10) === todayStr).length;
 
-  // Finance harian khusus MANAGEMENT — biar 3-3
+  // Finance harian khusus MANAGEMENT — biar 3-3 (handle internal KBS)
   const isFinanceRole = profile.role === 'MANAGEMENT';
   const todayFinance = (() => {
     if (!isFinanceRole) return null;
     const todayDelivered = deliveries.filter((d) => d.status === 'DELIVERED' && (d.scheduledAt || d.createdAt).slice(0, 10) === todayStr);
     let rev = 0, mat = 0, fr = 0, vol = 0;
     for (const d of todayDelivered) {
-      const c = contracts.find((x) => x.id === d.contractId);
+      const c: any = contracts.find((x) => x.id === d.contractId);
       const v = d.approvedVolumeM3 ?? d.receivedVolumeM3 ?? d.loadedVolumeM3 ?? 0;
       vol += v;
       if (!c) continue;
-      const unitPrice = c.unitPricePerM3 || 175000;
+      const vendor: any = vendors.find((vv: any) => vv.id === d.transportVendorId);
+      const isInternal = vendor?.supplyType === 'INTERNAL' || d.transportVendorId === 'vendor-07';
+      const unitPrice = isInternal ? (c.unitPriceInternalM3 ?? c.unitPricePerM3) || 175000 : c.unitPricePerM3 || 175000;
       rev += v * unitPrice;
-      const qmc = quarryMaterialCosts.find((x) => x.productId === d.productId && x.quarryId === d.quarryId);
-      const rate = freightRates.find((r) => r.quarryId === d.quarryId && r.projectId === c.projectId);
-      const isAllIn = rate?.pricingModel === 'ALL_IN';
-      if (isAllIn) {
+      const qmc: any = quarryMaterialCosts.find((x: any) => x.productId === d.productId && x.quarryId === d.quarryId);
+      const rate: any = freightRates.find((r: any) => r.quarryId === d.quarryId && r.projectId === c.projectId && r.vendorId === d.transportVendorId) || freightRates.find((r: any) => r.quarryId === d.quarryId && r.projectId === c.projectId);
+      const isAllIn = !isInternal && rate?.pricingModel === 'ALL_IN';
+      if (isInternal) {
+        const cost = c.materialCostPerM3 ?? qmc?.costPerM3 ?? 95000;
+        mat += v * cost;
+        // fr 0 — IMCI tanggung
+      } else if (isAllIn) {
         fr += v * rate!.ratePerUnit; // ALL_IN sudah include material+angkut
       } else {
         const cost = qmc?.costPerM3 ?? 95000;

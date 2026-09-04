@@ -2,7 +2,7 @@ import type { DeliveryStatus } from 'shared-types';
 
 export type MobileRole = 'QUARRY_CHECKER' | 'SITE_CHECKER' | 'MANAGEMENT';
 
-export type MobileVendorSupplyType = 'TRANSPORT_ONLY' | 'MATERIAL_AND_TRANSPORT';
+export type MobileVendorSupplyType = 'TRANSPORT_ONLY' | 'MATERIAL_AND_TRANSPORT' | 'INTERNAL';
 
 export type MobileFreightPricingModel =
   | 'PER_TRIP'
@@ -10,7 +10,8 @@ export type MobileFreightPricingModel =
   | 'PER_M3'
   | 'ROUTE_BASED'
   | 'HYBRID'
-  | 'ALL_IN';
+  | 'ALL_IN'
+  | 'INTERNAL_KBS';
 
 export interface FieldProfile {
   name: string;
@@ -36,6 +37,8 @@ export interface ContractItem extends PickItem {
   contractNumber: string;
   projectId: string;
   unitPricePerM3: number;
+  unitPriceInternalM3?: number;
+  materialCostPerM3?: number;
 }
 
 export interface FreightRateItem {

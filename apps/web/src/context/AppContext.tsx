@@ -1098,15 +1098,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     // Resolusi harga beli material: prioritas override per quarry, fallback ke default product.
-    const materialCostPerM3 =
-      quarry?.materialCostOverrides?.find((o) => o.productId === delivery.productId)?.costPerM3 ??
-      product.defaultMaterialCost;
+    const isInternalForMat = (vendor as any)?.supplyType === 'INTERNAL' || delivery.transportVendorId === 'vendor-07' || (rate as any)?.pricingModel === 'INTERNAL_KBS';
+    const materialCostPerM3 = isInternalForMat
+      ? ((contract as any).materialCostPerM3 ?? quarry?.materialCostOverrides?.find((o) => o.productId === delivery.productId)?.costPerM3 ?? product.defaultMaterialCost)
+      : (quarry?.materialCostOverrides?.find((o) => o.productId === delivery.productId)?.costPerM3 ?? product.defaultMaterialCost);
 
+    const sellingPriceForRec = isInternalForMat ? ((contract as any).unitPriceInternalM3 ?? contract.unitPricePerM3) : contract.unitPricePerM3;
     const recResult = reconcileQuantity({
       loadedVolumeM3: delivery.loadedVolumeM3,
       receivedVolumeM3,
       tolerancePercent: contract.tolerancePercent,
-      sellingPricePerM3: contract.unitPricePerM3,
+      sellingPricePerM3: sellingPriceForRec,
       commercialAdjustmentM3,
       varianceReason: reason,
       reviewNotes: notes,
@@ -1117,25 +1119,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const approvedWeight = roundVolume(approvedVol * densityApplied * 1000);
 
     // Compute Financials — exception 29-06 Sunter Ivan per-trip: hanya ALL_IN jika rate === ALL_IN
-    const isAllInVendor = rate.pricingModel === 'ALL_IN';
+    const isAllInVendor = !isInternalForMat && rate.pricingModel === 'ALL_IN';
 
     const OTHER_COST_PER_RIT: Record<string, number> = { 'proj-04': 100000, 'proj-06': 100000, 'proj-05': 150000, 'proj-07': 150000, 'proj-08': 150000 };
     const otherPerRit = OTHER_COST_PER_RIT[contract.projectId] ?? 100000;
+    const sellingPriceForFin = isInternalForMat ? ((contract as any).unitPriceInternalM3 ?? contract.unitPricePerM3) : contract.unitPricePerM3;
     let finResult = calculateDeliveryFinance({
       deliveryId,
       approvedVolumeM3: approvedVol,
       loadedVolumeM3: delivery.loadedVolumeM3,
       approvedWeightKg: approvedWeight,
-      sellingPricePerM3: contract.unitPricePerM3,
+      sellingPricePerM3: sellingPriceForFin,
       materialCostPerM3,
-      freightPricingModel: isAllInVendor ? 'ALL_IN' : vendor?.defaultPricingModel || 'PER_M3',
-      freightRatePerUnit: rate.ratePerUnit,
+      freightPricingModel: isInternalForMat ? 'INTERNAL_KBS' as any : isAllInVendor ? 'ALL_IN' : vendor?.defaultPricingModel || 'PER_M3',
+      freightRatePerUnit: isInternalForMat ? 0 : rate.ratePerUnit,
       allInPricePerM3: isAllInVendor ? rate.ratePerUnit : undefined,
       allInVolumeBasis: isAllInVendor ? 'PER_M3_RECEIVED' : undefined,
       otherOperationalCostPerM3: 0,
-      tollFee: isAllInVendor ? 0 : rate.tollFee || 0,
-      loadingFee: isAllInVendor ? 0 : rate.loadingFee || 0,
-      unloadingFee: isAllInVendor ? 0 : rate.unloadingFee || 0,
+      tollFee: isAllInVendor || isInternalForMat ? 0 : rate.tollFee || 0,
+      loadingFee: isAllInVendor || isInternalForMat ? 0 : rate.loadingFee || 0,
+      unloadingFee: isAllInVendor || isInternalForMat ? 0 : rate.unloadingFee || 0,
       isActualFinalized: true,
     });
     // override otherOperational dengan per-rit per plant (bukan 5k/m3)
@@ -1581,9 +1584,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           onDate: d.scheduledDate || new Date().toISOString().slice(0, 10),
         });
         if (!rate) continue;
+        const isInternal = (vendor as any)?.supplyType === 'INTERNAL' || d.transportVendorId === 'vendor-07' || (rate as any).pricingModel === 'INTERNAL_KBS';
         const qmc = quarryMaterialCosts.find((q) => q.quarryId === d.quarryId && q.productId === d.productId);
-        const materialCostPerM3 = qmc?.costPerM3 ?? product.defaultMaterialCost;
-        const isAllIn = rate.pricingModel === 'ALL_IN';
+        const materialCostPerM3 = isInternal ? ((contract as any).materialCostPerM3 ?? qmc?.costPerM3 ?? product.defaultMaterialCost) : (qmc?.costPerM3 ?? product.defaultMaterialCost);
+        const sellingPriceForR = isInternal ? ((contract as any).unitPriceInternalM3 ?? contract.unitPricePerM3) : contract.unitPricePerM3;
+        const isAllIn = !isInternal && rate.pricingModel === 'ALL_IN';
         const OTHER_PER_RIT2: Record<string, number> = { 'proj-04': 100000, 'proj-06': 100000, 'proj-05': 150000, 'proj-07': 150000, 'proj-08': 150000 };
         const otherPerRit2 = OTHER_PER_RIT2[contract.projectId] ?? 100000;
         let fin = calculateDeliveryFinance({
@@ -1591,16 +1596,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           approvedVolumeM3: d.approvedVolumeM3,
           loadedVolumeM3: d.loadedVolumeM3,
           approvedWeightKg: d.approvedWeightKg,
-          sellingPricePerM3: contract.unitPricePerM3,
+          sellingPricePerM3: sellingPriceForR,
           materialCostPerM3,
-          freightPricingModel: isAllIn ? 'ALL_IN' : (vendor?.defaultPricingModel as any) || (rate.pricingModel as any) || 'PER_M3',
-          freightRatePerUnit: rate.ratePerUnit,
+          freightPricingModel: isInternal ? 'INTERNAL_KBS' as any : isAllIn ? 'ALL_IN' : (vendor?.defaultPricingModel as any) || (rate.pricingModel as any) || 'PER_M3',
+          freightRatePerUnit: isInternal ? 0 : rate.ratePerUnit,
           allInPricePerM3: isAllIn ? rate.ratePerUnit : undefined,
           allInVolumeBasis: isAllIn ? 'PER_M3_RECEIVED' : undefined,
           otherOperationalCostPerM3: 0,
-          tollFee: isAllIn ? 0 : (rate.tollFee as any) || 0,
-          loadingFee: isAllIn ? 0 : (rate.loadingFee as any) || 0,
-          unloadingFee: isAllIn ? 0 : (rate.unloadingFee as any) || 0,
+          tollFee: isInternal || isAllIn ? 0 : (rate.tollFee as any) || 0,
+          loadingFee: isInternal || isAllIn ? 0 : (rate.loadingFee as any) || 0,
+          unloadingFee: isInternal || isAllIn ? 0 : (rate.unloadingFee as any) || 0,
           isActualFinalized: true,
         });
         fin.costRecord.otherOperationalCostIdr = otherPerRit2;

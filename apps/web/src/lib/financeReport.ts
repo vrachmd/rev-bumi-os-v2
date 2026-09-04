@@ -40,10 +40,16 @@ export function getDynamicCost(
     quarryId: delivery.quarryId,
     onDate: delivery.scheduledDate,
   });
-  if (!rate) return delivery.costRecord;
+  const isInternalKbs = (vendor as any)?.supplyType === 'INTERNAL' || delivery.transportVendorId === 'vendor-07' || (rate as any)?.pricingModel === 'INTERNAL_KBS';
+  if (!isInternalKbs && !rate) return delivery.costRecord;
   const qmc = resolveQuarryCost(deps.quarryMaterialCosts as any, delivery.quarryId, delivery.productId, delivery.scheduledDate);
-  const materialCostPerM3 = qmc?.costPerM3 ?? (product as any).defaultMaterialCost;
-  const isAllIn = (rate as any).pricingModel === 'ALL_IN';
+  const materialCostPerM3 = isInternalKbs
+    ? ((contract as any).materialCostPerM3 ?? qmc?.costPerM3 ?? (product as any).defaultMaterialCost)
+    : (qmc?.costPerM3 ?? (product as any).defaultMaterialCost);
+  const sellingPricePerM3 = isInternalKbs
+    ? ((contract as any).unitPriceInternalM3 ?? (contract as any).unitPricePerM3)
+    : (contract as any).unitPricePerM3;
+  const isAllIn = !isInternalKbs && (rate as any).pricingModel === 'ALL_IN';
   const otherPerRit = getOtherPerRit((contract as any).projectId);
   try {
     let res = calculateDeliveryFinance({
@@ -51,16 +57,16 @@ export function getDynamicCost(
       approvedVolumeM3: delivery.approvedVolumeM3,
       loadedVolumeM3: delivery.loadedVolumeM3,
       approvedWeightKg: delivery.approvedWeightKg,
-      sellingPricePerM3: (contract as any).unitPricePerM3,
+      sellingPricePerM3,
       materialCostPerM3,
-      freightPricingModel: isAllIn ? 'ALL_IN' : (((vendor as any)?.defaultPricingModel as any) || (rate as any).pricingModel as any),
-      freightRatePerUnit: (rate as any).ratePerUnit,
+      freightPricingModel: isInternalKbs ? 'INTERNAL_KBS' as any : isAllIn ? 'ALL_IN' : (((vendor as any)?.defaultPricingModel as any) || (rate as any).pricingModel as any),
+      freightRatePerUnit: isInternalKbs ? 0 : (rate as any).ratePerUnit,
       allInPricePerM3: isAllIn ? (rate as any).ratePerUnit : undefined,
       allInVolumeBasis: isAllIn ? 'PER_M3_RECEIVED' : undefined,
       otherOperationalCostPerM3: 0,
-      tollFee: isAllIn ? 0 : ((rate as any).tollFee as any) || 0,
-      loadingFee: isAllIn ? 0 : ((rate as any).loadingFee as any) || 0,
-      unloadingFee: isAllIn ? 0 : ((rate as any).unloadingFee as any) || 0,
+      tollFee: isInternalKbs || isAllIn ? 0 : ((rate as any).tollFee as any) || 0,
+      loadingFee: isInternalKbs || isAllIn ? 0 : ((rate as any).loadingFee as any) || 0,
+      unloadingFee: isInternalKbs || isAllIn ? 0 : ((rate as any).unloadingFee as any) || 0,
       isActualFinalized: true,
     });
     res.costRecord.otherOperationalCostIdr = otherPerRit;
