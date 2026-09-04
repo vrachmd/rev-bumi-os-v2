@@ -25,6 +25,13 @@ export interface QuarryMaterialCost {
   effectiveDate?: string;
 }
 
+export interface ProjectOtherCost {
+  projectId: string;
+  costPerRit: number;
+  effectiveDate?: string;
+  notes?: string;
+}
+
 export interface MasterDataBundle {
   products: Product[];
   quarries: Quarry[];
@@ -36,6 +43,7 @@ export interface MasterDataBundle {
   drivers: Driver[];
   freightRates: FreightRate[];
   quarryMaterialCosts: QuarryMaterialCost[];
+  projectOtherCosts: ProjectOtherCost[];
 }
 
 export interface MasterSyncResult {
@@ -182,7 +190,7 @@ const mapFreightRate = (r: any): FreightRate => ({
  * Ambil seluruh master data dari Supabase.
  */
 export async function fetchMasterFromSupabase(): Promise<MasterDataBundle> {
-  const [prod, quar, cust, proj, contr, vend, veh, drv, rate, src, qmc] = await Promise.all([
+  const [prod, quar, cust, proj, contr, vend, veh, drv, rate, src, qmc, poc] = await Promise.all([
     supabase.from('products').select('*'),
     supabase.from('quarries').select('*'),
     supabase.from('customers').select('*'),
@@ -194,6 +202,7 @@ export async function fetchMasterFromSupabase(): Promise<MasterDataBundle> {
     supabase.from('freight_rates').select('*'),
     supabase.from('contract_source_quarries').select('*'),
     supabase.from('quarry_material_costs').select('quarry_id, product_id, cost_per_m3, density, effective_date'),
+    supabase.from('project_other_costs').select('project_id, cost_per_rit, effective_date, notes'),
   ]);
 
   if (prod.error) throw prod.error;
@@ -228,6 +237,12 @@ export async function fetchMasterFromSupabase(): Promise<MasterDataBundle> {
       costPerM3: num(r.cost_per_m3),
       density: r.density != null ? num(r.density) : null,
       effectiveDate: r.effective_date ?? undefined,
+    })),
+    projectOtherCosts: (poc.data ?? []).map((r: any) => ({
+      projectId: r.project_id,
+      costPerRit: num(r.cost_per_rit),
+      effectiveDate: r.effective_date ?? undefined,
+      notes: r.notes ?? undefined,
     })),
   };
 }
@@ -432,6 +447,20 @@ export async function upsertMasterToSupabase(bundle: MasterDataBundle): Promise<
         is_active: true,
       })),
       'quarry_id,product_id,effective_date'
+    ));
+  }
+
+  // Project other costs — biaya operasional per-rit per proyek dengan history
+  if ((bundle as any).projectOtherCosts && (bundle as any).projectOtherCosts.length > 0) {
+    results.push(await genericUpsert(
+      'project_other_costs',
+      (bundle as any).projectOtherCosts.map((p: any) => ({
+        project_id: p.projectId,
+        cost_per_rit: p.costPerRit,
+        effective_date: p.effectiveDate ?? new Date().toISOString().slice(0, 10),
+        notes: (p as any).notes ?? null,
+      })),
+      'project_id,effective_date'
     ));
   }
 

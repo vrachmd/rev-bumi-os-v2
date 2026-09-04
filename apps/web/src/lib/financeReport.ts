@@ -14,8 +14,24 @@ export const OTHER_PER_RIT: Record<string, number> = {
   'proj-08': 150000, // KBS Bogor
 };
 
+export interface ProjectOtherCost {
+  projectId: string;
+  costPerRit: number;
+  effectiveDate?: string;
+}
+
 export function getOtherPerRit(projectId: string): number {
   return OTHER_PER_RIT[projectId] ?? 100000;
+}
+
+export function resolveOtherPerRit(projectId: string, onDate: string, list: ProjectOtherCost[] = []): number {
+  if (!list || list.length === 0) return getOtherPerRit(projectId);
+  const as = onDate.slice(0, 10);
+  const candidates = list.filter((c) => c.projectId === projectId);
+  if (candidates.length === 0) return getOtherPerRit(projectId);
+  const eligible = candidates.filter((c) => !c.effectiveDate || c.effectiveDate.slice(0, 10) <= as);
+  const pick = (eligible.length > 0 ? eligible : candidates).sort((a, b) => (b.effectiveDate ?? '').localeCompare(a.effectiveDate ?? ''))[0];
+  return pick ? pick.costPerRit : getOtherPerRit(projectId);
 }
 
 // Hitung costRecord dinamis fallback jika ledger belum ada atau perlu rekalkulasi
@@ -28,6 +44,7 @@ export function getDynamicCost(
     transportVendors: any[];
     freightRates: any[];
     quarryMaterialCosts: any[];
+    projectOtherCosts?: ProjectOtherCost[];
   }
 ) {
   const contract = deps.contracts.find((c: any) => c.id === delivery.contractId);
@@ -50,7 +67,9 @@ export function getDynamicCost(
     ? ((contract as any).unitPriceInternalM3 ?? (contract as any).unitPricePerM3)
     : (contract as any).unitPricePerM3;
   const isAllIn = !isInternalKbs && (rate as any).pricingModel === 'ALL_IN';
-  const otherPerRit = getOtherPerRit((contract as any).projectId);
+  const otherPerRit = (deps as any).projectOtherCosts
+    ? resolveOtherPerRit((contract as any).projectId, delivery.scheduledDate, (deps as any).projectOtherCosts)
+    : getOtherPerRit((contract as any).projectId);
   try {
     let res = calculateDeliveryFinance({
       deliveryId: delivery.id,
@@ -99,6 +118,7 @@ export function recalcHppForDeliveries(
     transportVendors: any[];
     freightRates: any[];
     quarryMaterialCosts: any[];
+    projectOtherCosts?: ProjectOtherCost[];
   }
 ): Map<string, any> {
   const map = new Map<string, any>();

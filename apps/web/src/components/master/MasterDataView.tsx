@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { ProjectOtherCostManager } from './ProjectOtherCostManager';
 
 export const MasterDataView: React.FC = () => {
   const { products, quarries, saveQuarry, saveProduct } = useApp() as any;
@@ -352,6 +353,8 @@ export const MasterDataView: React.FC = () => {
             </div>
             ))}
         </div>
+
+      <ProjectOtherCostManager />
 
       {/* Quarry Edit / Add Modal (Produk kelola via Quarry → Harga) */}
       {/* Quarry Edit / Add Modal */}

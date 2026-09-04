@@ -41,6 +41,7 @@ export const ReportsView: React.FC = () => {
     transportVendors,
     freightRates,
     quarryMaterialCosts,
+    projectOtherCosts,
   } = useApp() as any;
 
   const [selectedReportType, setSelectedReportType] = useState<
@@ -143,9 +144,9 @@ export const ReportsView: React.FC = () => {
     return matchesCustomer && matchesQuarry && matchesProduct && matchesDate;
   });
 
-  // DRY — pakai lib/financeReport single source
+  // DRY — pakai lib/financeReport single source (dengan otherPerRit dari DB)
   function getDynamicCost(d: any) {
-    return getDynamicCostLib(d, { contracts, products, transportVendors, freightRates, quarryMaterialCosts } as any);
+    return getDynamicCostLib(d, { contracts, products, transportVendors, freightRates, quarryMaterialCosts, projectOtherCosts } as any);
   }
 
   // Aggregations — DRY via financeReport

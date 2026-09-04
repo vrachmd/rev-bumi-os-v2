@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Download, Filter } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { formatIDR, formatVolumeM3 } from '../../lib/formatters';
-import { getDynamicCost as getDynamicCostLib, aggregateFinance, getOtherPerRit } from '../../lib/financeReport';
+import { getDynamicCost as getDynamicCostLib, aggregateFinance, getOtherPerRit, recalcHppForDeliveries } from '../../lib/financeReport';
+import { supabase } from '../../lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,6 +25,7 @@ export const HppFinanceView: React.FC = () => {
     transportVendors,
     freightRates,
     quarryMaterialCosts,
+    projectOtherCosts,
   } = useApp() as any;
 
   const [selectedCustomerId, setSelectedCustomerId] = useState('ALL');
@@ -105,9 +107,9 @@ export const HppFinanceView: React.FC = () => {
     return matchesCustomer && matchesQuarry && matchesProduct && matchesDate;
   });
 
-  // DRY — pakai lib/financeReport single source
+  // DRY — pakai lib/financeReport single source (dengan otherPerRit dari DB)
   function getDynamicCost(d: any) {
-    return getDynamicCostLib(d, { contracts, products, transportVendors, freightRates, quarryMaterialCosts } as any);
+    return getDynamicCostLib(d, { contracts, products, transportVendors, freightRates, quarryMaterialCosts, projectOtherCosts } as any);
   }
 
   // Aggregations — DRY via financeReport
@@ -165,6 +167,52 @@ export const HppFinanceView: React.FC = () => {
       toast.success(`Ledger HPP berhasil diunduh — ${rows.length} baris (satuan baku)`);
     } catch (e: any) {
       toast.error(e?.message || 'Gagal ekspor CSV');
+    }
+  };
+
+  const [isRecalculating, setIsRecalculating] = useState(false);
+  const handleRecalc = async () => {
+    if (filteredDeliveries.length === 0) { toast.error('Tidak ada data untuk rekalkulasi'); return; }
+    // guard closing period untuk tanggal pertama filter
+    const firstDate = filteredDeliveries[0]?.scheduledDate;
+    if (firstDate) {
+      const { isDateInClosedPeriod } = await import('../../lib/supabaseClosedPeriod');
+      const { fetchClosedPeriods } = await import('../../lib/supabaseClosedPeriod');
+      try {
+        const periods = await fetchClosedPeriods();
+        if (isDateInClosedPeriod(firstDate, periods)) {
+          toast.error(`Periode ${firstDate.slice(0,7)} sudah tutup — hubungi SUPER_ADMIN untuk unlock sebelum rekalkulasi`);
+          return;
+        }
+      } catch {}
+    }
+    if (!confirm(`Rekalkulasi HPP untuk ${filteredDeliveries.length} ritase dengan tarif & biaya operasional terbaru?`)) return;
+    setIsRecalculating(true);
+    try {
+      const map = recalcHppForDeliveries(filteredDeliveries as any, { contracts, products, transportVendors, freightRates, quarryMaterialCosts, projectOtherCosts } as any);
+      let ok = 0;
+      for (const [id, cost] of map.entries()) {
+        const { error } = await supabase.from('cost_records').update({
+          material_cost_per_m3: cost.materialCostPerM3,
+          total_material_cost_idr: cost.totalMaterialCostIdr,
+          freight_rate_per_unit: cost.freightRatePerUnit,
+          freight_pricing_model: cost.freightPricingModel,
+          total_freight_cost_idr: cost.totalFreightCostIdr,
+          other_operational_cost_idr: cost.otherOperationalCostIdr,
+          total_hpp_idr: cost.totalHppIdr,
+          gross_profit_idr: cost.grossProfitIdr,
+          gross_margin_percent: cost.grossMarginPercent,
+          selling_price_per_m3: cost.sellingPricePerM3,
+          recognized_revenue_idr: cost.recognizedRevenueIdr,
+        }).eq('delivery_id', id);
+        if (!error) ok++;
+      }
+      toast.success(`Rekalkulasi selesai — ${ok}/${map.size} ritase terupdate`);
+      if (ok > 0) window.location.reload();
+    } catch (e: any) {
+      toast.error(e.message || 'Gagal rekalkulasi');
+    } finally {
+      setIsRecalculating(false);
     }
   };
 
@@ -300,6 +348,9 @@ export const HppFinanceView: React.FC = () => {
             <span className="text-[11px] text-muted-foreground font-medium">
               Menampilkan {filteredDeliveries.length} data record
             </span>
+            <Button size="sm" variant="outline" onClick={handleRecalc} disabled={isRecalculating} className="h-7 text-xs gap-1">
+              {isRecalculating ? 'Menghitung...' : 'Rekalkulasi HPP'}
+            </Button>
             <Button size="sm" onClick={handleExport} className="h-7 text-xs gap-1 bg-emerald-700 hover:bg-emerald-800">
               <Download className="w-3.5 h-3.5" /> Unduh Ledger (CSV Baku)
             </Button>

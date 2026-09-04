@@ -49,6 +49,7 @@ import {
   deleteMasterEntityFromSupabase,
   MasterDataBundle,
   QuarryMaterialCost,
+  ProjectOtherCost,
 } from '../lib/supabaseMaster';
 import {
   AuditLog,
@@ -96,6 +97,7 @@ interface AppContextType {
   drivers: Driver[];
   freightRates: FreightRate[];
   quarryMaterialCosts: QuarryMaterialCost[];
+  projectOtherCosts: ProjectOtherCost[];
   deliveries: Delivery[];
   invoices: Invoice[];
   payments: Payment[];
@@ -383,6 +385,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setDrivers(bundle.drivers);
         setFreightRates(bundle.freightRates);
         setQuarryMaterialCosts(bundle.quarryMaterialCosts);
+        setProjectOtherCosts((bundle as any).projectOtherCosts ?? []);
       } catch {
         // Offline / belum punya akses; pertahankan state lokal (seed/demo).
       }
@@ -426,6 +429,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [drivers, setDrivers] = useState<Driver[]>(() => safeLoad('rev_drivers', initialDrivers));
   const [freightRates, setFreightRates] = useState<FreightRate[]>(() => safeLoad('rev_freight_rates', initialFreightRates));
   const [quarryMaterialCosts, setQuarryMaterialCosts] = useState<QuarryMaterialCost[]>([]);
+  const [projectOtherCosts, setProjectOtherCosts] = useState<ProjectOtherCost[]>([]);
   const [deliveries, setDeliveries] = useState<Delivery[]>(() => safeLoad('rev_deliveries', initialDeliveries));
   const [invoices, setInvoices] = useState<Invoice[]>(() => safeLoad('rev_invoices', initialInvoices));
   const [payments, setPayments] = useState<Payment[]>(() => safeLoad('rev_payments', initialPayments));
@@ -553,6 +557,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       drivers: [],
       freightRates: [],
       quarryMaterialCosts: [],
+      projectOtherCosts: [],
     };
     upsertMasterToSupabase({ ...empty, ...partial })
       .then((results) => {
@@ -1894,6 +1899,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         drivers,
         freightRates,
         quarryMaterialCosts,
+        projectOtherCosts,
         deliveries,
         invoices,
         payments,
