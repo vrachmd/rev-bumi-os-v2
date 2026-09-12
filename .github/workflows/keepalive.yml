@@ -2,17 +2,39 @@ name: keepalive-supabase
 
 on:
   schedule:
-    - cron: "0 3 * * *" # tiap hari 03:00 UTC anti-pause 7 hari (daily, aman)
+    - cron: "0 3,15 * * *" # tiap 12 jam anti-pause 7 hari (toleran 1-2 run gagal)
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Ping Supabase (prevent 7-day pause)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          curl -s -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY" "$SUPABASE_URL/rest/v1/deliveries?select=id&limit=1" | head -c 200
-          echo " keepalive ok $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          set -e
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::SUPABASE_URL / SUPABASE_ANON_KEY belum di-set di repo Secrets"
+            exit 1
+          fi
+          AUTH="apikey: $SUPABASE_ANON_KEY"
+          BEARER="Authorization: Bearer $SUPABASE_ANON_KEY"
+          hit() {
+            code=$(curl -s -o /tmp/out.txt -w "%{http_code}" --max-time 25 -H "$AUTH" -H "$BEARER" "$1")
+            bytes=$(wc -c < /tmp/out.txt | tr -d ' ')
+            echo "$2 -> HTTP $code (${bytes}B) $(head -c 120 /tmp/out.txt)"
+            case "$code" in 2*|3*|4*) ;; *) echo "::warning::$2 HTTP $code"; ;; esac
+          }
+          # 1) Auth + REST root = aktivitas Auth & PostgREST (yang dihitung anti-pause)
+          hit "$SUPABASE_URL/auth/v1/health" "auth/health"
+          hit "$SUPABASE_URL/rest/v1/" "rest/root"
+          # 2) 11 tabel inti (operasional + master + finance + audit) — limit=1 biar ringan
+          for t in profiles products quarries customers projects contracts transport_vendors deliveries weighbridge_records delivery_pods quantity_reconciliations invoices payments audit_logs; do
+            hit "$SUPABASE_URL/rest/v1/$t?select=id&limit=1" "table/$t"
+          done
+          # 3) Storage buckets (aktivitas storage, ringan)
+          hit "$SUPABASE_URL/storage/v1/bucket" "storage/buckets"
+          echo "keepalive ok $(date -u +%Y-%m-%dT%H:%M:%SZ)"
